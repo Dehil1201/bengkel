@@ -290,7 +290,7 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                     </a>
                 </li>
 
-                <li class="treeview <?php echo (in_array($page, ['penjualan', 'jasa_services', 'pembelian', 'piutang', 'hutang', 'return_penjualan', 'return_pembelian'])) ? 'active menu-open' : ''; ?>">
+                <li class="treeview <?php echo (in_array($page, ['penjualan', 'jasa_services_report', 'pembelian', 'piutang', 'hutang', 'return_penjualan', 'return_pembelian'])) ? 'active menu-open' : ''; ?>">
                     <a href="#">
                         <i class="fa fa-exchange"></i><span>Transaksi</span>
                         <span class="pull-right-container">
@@ -301,8 +301,8 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         <li class="<?php echo ($page === 'penjualan') ? 'active' : ''; ?>">
                             <a href="?page=penjualan"><i class="fa fa-list"></i> Penjualan</a>
                         </li>
-                        <li class="<?php echo ($page === 'jasa_services') ? 'active' : ''; ?>">
-                            <a href="?page=jasa_services"><i class="fa fa-list"></i> Jasa Services</a>
+                        <li class="<?php echo ($page === 'jasa_services_report') ? 'active' : ''; ?>">
+                            <a href="?page=jasa_services_report"><i class="fa fa-list"></i> Jasa Services</a>
                         </li>
                         <li class="<?php echo ($page === 'pembelian') ? 'active' : ''; ?>">
                             <a href="?page=pembelian"><i class="fa fa-list"></i> Pembelian</a>

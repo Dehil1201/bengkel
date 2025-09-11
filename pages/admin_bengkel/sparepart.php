@@ -55,6 +55,12 @@ if ($selected_bengkel_id) {
     $query_selected_bengkel = mysqli_query($conn, "SELECT nama_bengkel FROM bengkels WHERE id_bengkel = '$selected_bengkel_id'");
     if (mysqli_num_rows($query_selected_bengkel) > 0) { $data_selected_bengkel = mysqli_fetch_assoc($query_selected_bengkel); $selected_bengkel_name = $data_selected_bengkel['nama_bengkel']; }
 }
+
+$total_aset = 0;
+$query_aset = mysqli_query($conn, "SELECT stok_pcs, harga_beli FROM spareparts WHERE bengkel_id IN ($bengkel_ids_string)");
+while($row_aset = mysqli_fetch_assoc($query_aset)) {
+    $total_aset += $row_aset['stok_pcs'] * $row_aset['harga_beli'];
+}
 ?>
 
 <div class="row">
@@ -67,7 +73,7 @@ if ($selected_bengkel_id) {
                 </div>
             </div>
             <div class="box-body">
-                <div class="form-group col-md-4">
+                <div class="form-group col-md-12 pull-left">
                     <label for="filter_bengkel">Pilih Bengkel:</label>
                     <select id="filter_bengkel" class="form-control">
                         <?php foreach ($bengkels as $bengkel): ?>
@@ -76,9 +82,12 @@ if ($selected_bengkel_id) {
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    
+                    <div class="pull-right" style="font-size: 28px; font-weight: bold; text-align: justify; margin-bottom: 20px;">
+                        Total Aset Spare Part: Rp <?= number_format($total_aset, 0, ',', '.'); ?>
+                    </div>
                 </div>
                 <div class="clearfix"></div>
-                <hr>
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped" id="dataTable">
                         <thead>
@@ -214,7 +223,6 @@ if ($selected_bengkel_id) {
                         <div class="col-md-6">
                         </div>
                     </div>
-                    <hr>
                     <div class="row">
                         <div class="col-md-6">
                             <h4 class="text-bold">Data Pembelian</h4>
@@ -253,7 +261,6 @@ if ($selected_bengkel_id) {
                         <div class="col-md-6">
                             <h4 class="text-bold">Data Penjualan</h4>
                             <?php for ($i = 1; $i <= 4; $i++): ?>
-                            <hr class="mt-1 mb-1">
                             <p>Harga Jual <?= $i; ?></p>
                             <div class="row">
                                 <div class="col-xs-3">
@@ -318,7 +325,7 @@ foreach ($master_data_config as $type => $config): ?>
                     <input type="text" class="form-control" id="nama_<?= $type; ?>_baru">
                 </div>
                 <button type="button" class="btn btn-primary btn-tambah-master" data-master="<?= $type; ?>">Tambah <?= $config['name']; ?></button>
-                <hr>
+                
                 <table class="table table-bordered tabel-master" id="tabel<?= ucfirst($type); ?>">
                     <thead>
                         <tr>
