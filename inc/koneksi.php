@@ -3,8 +3,8 @@
 
     // Definisikan konstanta untuk kredensial database
     define('DB_HOST', 'localhost');
-    define('DB_USER', 'root');
-    define('DB_PASS', ''); // Jika ada password, isi di sini. Contoh: 'your_password'
+    define('DB_USER', 'rcmotor');
+    define('DB_PASS', 'Sande12011998!'); // Jika ada password, isi di sini. Contoh: 'your_password'
     define('DB_NAME', 'rcmotor'); // Ganti dengan nama database kamu: lms_sekolah
 
     // Buat koneksi menggunakan konstanta
