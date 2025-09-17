@@ -231,92 +231,117 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="modalSelesaiTransaksi" tabindex="-1" role="dialog" aria-labelledby="modalSelesaiLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <form id="formSelesaiTransaksi">
         <div class="modal-header">
-          <h5 class="modal-title" id="modalSelesaiLabel"><i class="fa fa-check"></i> Konfirmasi Selesai Transaksi</h5>
+          <h5 class="modal-title" id="modalSelesaiLabel">
+            <i class="fa fa-check"></i> Konfirmasi Selesai Transaksi
+          </h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        
+
         <div class="modal-body">
-          <div class="form-group">
-            <label for="textNoFakturModal">No Faktur</label>
-            <input type="hidden" id="textUserId" name="id_user" value="<?= $_SESSION['id_user']; ?>">
-            <input type="text" id="textNoFakturModal" name="no_faktur" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label for="textNoFakturModal">Kendaraan</label>
-            <input type="text" id="textKendaraan" name="kendaraan" class="form-control" >
-          </div>
-          <div class="form-group">
-            <label for="textNoFakturModal">No Polisi</label>
-            <input type="text" id="textNoPolisi" name="no_polisi" class="form-control" >
-          </div>
-          <!-- Pelanggan -->
-          <div class="form-group">
-            <label for="pelanggan">Pelanggan</label>
-            <select id="pelanggan" name="id_pelanggan" class="form-control" style="width:100%">
-              <option value="">-- Pilih Pelanggan --</option>
-              <?php
-              $qPelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM pelanggans ORDER BY nama_pelanggan ASC");
-              while($row = mysqli_fetch_assoc($qPelanggan)){
-                  echo '
-                  <option value="'.$row['id_pelanggan'].'">'.$row['nama_pelanggan'].'</option>';
-              }
-              ?>
-            </select>
-          </div>
+          <div class="row">
+            <!-- Kolom Kiri -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="textNoFakturModal">No Faktur</label>
+                <input type="hidden" id="textUserId" name="id_user" value="<?= $_SESSION['id_user']; ?>">
+                <input type="text" id="textNoFakturModal" name="no_faktur" class="form-control" readonly>
+              </div>
 
-          <!-- Teknisi -->
-          <div class="form-group">
-            <label for="teknisi">Teknisi</label>
-            <select id="teknisi" name="id_teknisi" class="form-control" style="width:100%">
-              <option value="">-- Pilih Teknisi --</option>
-              <?php
-              $qTeknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknisis ORDER BY nama_teknisi ASC");
-              while($row = mysqli_fetch_assoc($qTeknisi)){
-                  echo '
-                  
-                  <option value="'.$row['id_teknisi'].'">'.$row['nama_teknisi'].'</option>';
-              }
-              ?>
-            </select>
-          </div>
+              <div class="form-group">
+                <label for="textKendaraan">Kendaraan</label>
+                <input type="text" id="textKendaraan" name="kendaraan" class="form-control">
+              </div>
 
-          <!-- Status Transaksi -->
-          <div class="form-group">
-            <label for="statusTransaksi">Status Transaksi</label>
-            <select id="statusTransaksi" name="status" class="form-control" required>
-                <option value="">-- Pilih Status --</option>
-                <option value="selesai">Selesai</option>
-                <option value="pending">Pending</option>
-            </select>
-          </div>
+              <div class="form-group">
+                <label for="textNoPolisi">No Polisi</label>
+                <input type="text" id="textNoPolisi" name="no_polisi" class="form-control">
+              </div>
 
-          <!-- Total Bayar -->
-          <div class="form-group">
-            <label for="totalBayar">Total Bayar</label>
-            <input type="text" id="totalBayar" name="totalBayar" class="form-control" readonly>
-          </div>
+              <div class="form-group">
+                <label for="pelanggan">Pelanggan</label>
+                <select id="pelanggan" name="id_pelanggan" class="form-control" style="width:100%">
+                  <option value="">-- Pilih Pelanggan --</option>
+                  <?php
+                  $qPelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM pelanggans ORDER BY nama_pelanggan ASC");
+                  while($row = mysqli_fetch_assoc($qPelanggan)){
+                      echo '<option value="'.$row['id_pelanggan'].'">'.$row['nama_pelanggan'].'</option>';
+                  }
+                  ?>
+                </select>
+              </div>
 
-          <!-- Uang Bayar -->
-          <div class="form-group">
-            <label for="uangBayar">Uang Dibayar</label>
-            <input type="number" id="uangBayar" name="uangBayar" class="form-control" >
-          </div>
+              <div class="form-group">
+                <label for="teknisi">Teknisi</label>
+                <select id="teknisi" name="id_teknisi" class="form-control" style="width:100%">
+                  <option value="">-- Pilih Teknisi --</option>
+                  <?php
+                  $qTeknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknisis ORDER BY nama_teknisi ASC");
+                  while($row = mysqli_fetch_assoc($qTeknisi)){
+                      echo '<option value="'.$row['id_teknisi'].'">'.$row['nama_teknisi'].'</option>';
+                  }
+                  ?>
+                </select>
+              </div>
+            </div>
 
-          <!-- Kembalian -->
-          <div class="form-group">
-            <label for="kembalian">Kembalian</label>
-            <input type="text" id="kembalian" name="kembalian" class="form-control" readonly>
+            <!-- Kolom Kanan -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="statusTransaksi">Status Transaksi</label>
+                <select id="statusTransaksi" name="status" class="form-control" required>
+                  <option value="">-- Pilih Status --</option>
+                  <option value="selesai">Selesai</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Metode Bayar</label><br>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="metode_bayar" value="Tunai" id="bayarTunai">
+                  <label class="form-check-label" for="bayarTunai">Tunai</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="metode_bayar" value="Non Tunai" id="bayarNonTunai">
+                  <label class="form-check-label" for="bayarNonTunai">Non Tunai / Kredit</label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="totalAwal">Total Awal</label>
+                <input type="text" id="totalAwal" name="totalAwal" class="form-control" readonly value="0">
+              </div>
+
+              <div class="form-group">
+                <label for="diskon">Diskon (%)</label>
+                <input type="number" id="diskon" name="diskon" class="form-control" min="0" max="100" value="0">
+              </div>
+
+              <div class="form-group">
+                <label for="totalBayar">Total Bayar (Setelah Diskon)</label>
+                <input type="text" id="totalBayar" name="total_bayar" class="form-control" readonly>
+              </div>
+
+              <div class="form-group">
+                <label for="uangBayar">Uang Dibayar</label>
+                <input type="number" id="uangBayar" name="uangBayar" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label for="kembalian">Kembalian</label>
+                <input type="text" id="kembalian" name="kembalian" class="form-control" readonly>
+              </div>
+            </div>
           </div>
         </div>
-        
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
           <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan & Cetak</button>
@@ -325,6 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
   </div>
 </div>
+
 
 <div class="modal fade" id="modalPendingServis" tabindex="-1" role="dialog" aria-labelledby="modalPendingServisLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
@@ -421,7 +447,7 @@ $(document).ready(function() {
                         pelanggan = res.data.transaksi.pelanggan;
                         teknisi = res.data.transaksi.teknisi;
                     }
-                    $("#totalBayar").val(total.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
+                    $("#totalAwal").val(total.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
                     $("#uangBayar").val(uang_bayar.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
                     $("#kembalian").val(kembalian.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
                     $("#textKendaraan").val();
@@ -490,14 +516,34 @@ $(document).ready(function() {
         $('#modalPendingServis').modal('hide');
     });
 
-    // Hitung kembalian
-    $("#uangBayar").on("input", function(){
-        let totalText = $("#totalBayar").val().replace(/[^\d]/g,''); 
-        let total = parseInt(totalText) || 0;
-        let bayar = parseInt($(this).val()) || 0;
-        let kembali = bayar - total;
-        $("#kembalian").val(kembali >= 0 ? kembali : "0");
-    });
+    function formatAngka(angka) {
+      return angka.toLocaleString('id-ID');
+    }
+
+    function parseAngka(str) {
+      return parseInt(str.replace(/[^\d]/g, '')) || 0;
+    }
+
+    function hitungTransaksi() {
+      let totalAwal = parseAngka($("#totalAwal").val());
+      let diskon = parseFloat($("#diskon").val()) || 0;
+      let uangBayar = parseAngka($("#uangBayar").val());
+
+      // Hitung total setelah diskon
+      let totalSetelahDiskon = totalAwal - (totalAwal * diskon / 100);
+      let totalPembayaran = Math.floor(totalSetelahDiskon); // atau gunakan toFixed(2) jika desimal dibutuhkan
+
+      // Hitung kembalian
+      let kembalian = uangBayar - totalPembayaran;
+      if (kembalian < 0) kembalian = 0;
+
+      // Tampilkan hasil
+      $("#totalBayar").val(totalPembayaran);
+      $("#kembalian").val(kembalian);
+    }
+
+    // Trigger saat input berubah
+    $("#diskon, #uangBayar").on("input", hitungTransaksi);
 
     // Submit form selesai transaksi
     $("#formSelesaiTransaksi").on("submit", function(e){

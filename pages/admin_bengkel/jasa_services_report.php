@@ -27,7 +27,7 @@ $query_laporan = mysqli_query($conn, "
     t.tanggal, 
     p.nama_pelanggan, 
     u.nama_lengkap, 
-    t.total, 
+    t.total_bayar, 
     t.status, 
     tk.nama_teknisi,
 
@@ -60,7 +60,7 @@ $total_servis_all = 0;
 
 mysqli_data_seek($query_laporan, 0);
 while ($row = mysqli_fetch_assoc($query_laporan)) {
-    $total_semua += $row['total'];
+    $total_semua += $row['total_bayar'];
     $total_sparepart_all += $row['total_sparepart'];
     $total_servis_all += $row['total_servis'];
 }
@@ -176,7 +176,7 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                                 <span class="label label-warning"><?= htmlspecialchars($row['status']); ?></span>
                             <?php endif; ?>
                         </td>
-                        <td>Rp <?= number_format($row['total'], 0, ',', '.'); ?></td>
+                        <td>Rp <?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['total_sparepart'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['total_servis'], 0, ',', '.'); ?></td>
                         <td><?= htmlspecialchars($row['nama_teknisi'] ?? '-'); ?></td>

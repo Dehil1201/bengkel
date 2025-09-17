@@ -266,6 +266,9 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         </span>
                     </a>
                     <ul class="treeview-menu">
+                        <li class="<?php echo ($page === 'akun') ? 'active' : ''; ?>">
+                            <a href="?page=akun"><i class="fa fa-list"></i> Akun</a>
+                        </li>
                         <li class="<?php echo ($page === 'asset') ? 'active' : ''; ?>">
                             <a href="?page=asset"><i class="fa fa-list"></i> Aset</a>
                         </li>

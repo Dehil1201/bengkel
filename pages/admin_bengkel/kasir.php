@@ -189,7 +189,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
   </div>
 </div>
-
 <!-- Modal Selesai Transaksi -->
 <div class="modal fade" id="modalSelesaiTransaksi" tabindex="-1" role="dialog" aria-labelledby="modalSelesaiLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
@@ -201,61 +200,85 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
+
         <div class="modal-body">
-          <div class="form-group">
-            <label for="textNoFakturModal">No Faktur</label>
-            <input type="hidden" id="textUserId" name="id_user" value="<?= $_SESSION['id_user']; ?>">
-            <input type="text" id="textNoFakturModal" name="no_faktur" class="form-control" readonly>
-          </div>
-          <div class="form-group">
-            <label for="dateTanggal">Tanggal</label>
-            <input type="date" id="dateTanggal" name="tanggal" class="form-control" readonly value="<?= date("Y-m-d") ?>">
-          </div>
-          <div class="form-group">
-            <label>Metode Bayar</label><br>
-            <div class="radio">
-              <label><input type="radio" name="metode_bayar" value="Tunai"> Tunai</label>
+          <div class="row">
+            <!-- KIRI -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="textNoFakturModal">No Faktur</label>
+                <input type="hidden" id="textUserId" name="id_user" value="<?= $_SESSION['id_user']; ?>">
+                <input type="text" id="textNoFakturModal" name="no_faktur" class="form-control" readonly>
+              </div>
+
+              <div class="form-group">
+                <label for="dateTanggal">Tanggal</label>
+                <input type="date" id="dateTanggal" name="tanggal" class="form-control" readonly value="<?= date("Y-m-d") ?>">
+              </div>
+
+              <div class="form-group">
+                <label>Metode Bayar</label><br>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Tunai"> Tunai</label>
+                </div>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Non Tunai"> Non Tunai / Kredit</label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="statusTransaksi">Status Transaksi</label>
+                <select id="statusTransaksi" name="status" class="form-control" required>
+                  <option value="">-- Pilih Status --</option>
+                  <option value="selesai">Selesai</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
             </div>
-            <div class="radio">
-              <label><input type="radio" name="metode_bayar" value="Non Tunai"> Non Tunai / Kredit</label>
+
+            <!-- KANAN -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="pelanggan">Pelanggan</label>
+                <select id="pelanggan" name="id_pelanggan" class="form-control" style="width:100%">
+                  <option value="">-- Pilih Pelanggan --</option>
+                  <?php
+                  $qPelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM pelanggans ORDER BY nama_pelanggan ASC");
+                  while($row = mysqli_fetch_assoc($qPelanggan)){
+                      echo '<option value="'.htmlspecialchars($row['id_pelanggan']).'">'.htmlspecialchars($row['nama_pelanggan']).'</option>';
+                  }
+                  ?>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="totalAwal">Total Awal</label>
+                <input type="text" id="totalAwal" name="totalAwal" class="form-control" readonly value="0">
+              </div>
+
+              <div class="form-group">
+                <label for="diskon">Diskon (%)</label>
+                <input type="number" id="diskon" name="diskon" class="form-control" min="0" max="100" value="0">
+              </div>
+
+              <div class="form-group">
+                <label for="totalBayar">Total Bayar (Setelah Diskon)</label>
+                <input type="text" id="totalBayar" name="total_bayar" class="form-control" readonly>
+              </div>
+
+              <div class="form-group">
+                <label for="uangBayar">Uang Dibayar</label>
+                <input type="number" id="uangBayar" name="uangBayar" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label for="kembalian">Kembalian</label>
+                <input type="text" id="kembalian" name="kembalian" class="form-control" readonly>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label for="pelanggan">Pelanggan</label>
-            <select id="pelanggan" name="id_pelanggan" class="form-control" style="width:100%">
-              <option value="">-- Pilih Pelanggan --</option>
-              <?php
-              $qPelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM pelanggans ORDER BY nama_pelanggan ASC");
-              while($row = mysqli_fetch_assoc($qPelanggan)){
-                  echo '<option value="'.htmlspecialchars($row['id_pelanggan']).'">'.htmlspecialchars($row['nama_pelanggan']).'</option>';
-              }
-              ?>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="statusTransaksi">Status Transaksi</label>
-            <select id="statusTransaksi" name="status" class="form-control" required>
-              <option value="">-- Pilih Status --</option>
-              <option value="selesai">Selesai</option>
-              <option value="pending">Pending</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="totalBayar">Total Bayar</label>
-            <input type="text" id="totalBayar" name="totalBayar" class="form-control" readonly>
-          </div>
-
-          <div class="form-group">
-            <label for="uangBayar">Uang Dibayar</label>
-            <input type="number" id="uangBayar" name="uangBayar" class="form-control" >
-          </div>
-
-          <div class="form-group">
-            <label for="kembalian">Kembalian</label>
-            <input type="text" id="kembalian" name="kembalian" class="form-control" readonly>
           </div>
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
           <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan & Cetak</button>
@@ -346,11 +369,11 @@ $(document).ready(function() {
                     maximumFractionDigits: 0
                 }).format(total);
                 $("#total-display").html(totalIDR);
-                $("#totalBayar").val(totalIDR);
+                $("#totalAwal").val(totalIDR);
             },
             error: function() {
                 $("#total-display").html("Rp 0");
-                $("#totalBayar").val("Rp 0");
+                $("#totalAwal").val("Rp 0");
             }
         });
     }
@@ -392,16 +415,36 @@ $(document).ready(function() {
     $('#modalSelesaiTransaksi').on('show.bs.modal', function () {
         let noFaktur = $("#noFakturText").val();
         $("#textNoFakturModal").val(noFaktur);
-        sumTotal(); // pastikan totalBayar diperbarui
+        sumTotal(); // pastikan totalAwal diperbarui
     });
+    function formatAngka(angka) {
+      return angka.toLocaleString('id-ID');
+    }
 
-    $("#uangBayar").on("input", function(){
-        let totalText = $("#totalBayar").val().replace(/[^\d]/g,'');
-        let total = parseInt(totalText) || 0;
-        let bayar = parseInt($(this).val()) || 0;
-        let kembali = bayar - total;
-        $("#kembalian").val(kembali >= 0 ? kembali : "0");
-    });
+    function parseAngka(str) {
+      return parseInt(str.replace(/[^\d]/g, '')) || 0;
+    }
+
+    function hitungTransaksi() {
+      let totalAwal = parseAngka($("#totalAwal").val());
+      let diskon = parseFloat($("#diskon").val()) || 0;
+      let uangBayar = parseAngka($("#uangBayar").val());
+
+      // Hitung total setelah diskon
+      let totalSetelahDiskon = totalAwal - (totalAwal * diskon / 100);
+      let totalPembayaran = Math.floor(totalSetelahDiskon); // atau gunakan toFixed(2) jika desimal dibutuhkan
+
+      // Hitung kembalian
+      let kembalian = uangBayar - totalPembayaran;
+      if (kembalian < 0) kembalian = 0;
+
+      // Tampilkan hasil
+      $("#totalBayar").val(totalPembayaran);
+      $("#kembalian").val(kembalian);
+    }
+
+    // Trigger saat input berubah
+    $("#diskon, #uangBayar").on("input", hitungTransaksi);
 
     $("#formSelesaiTransaksi").on("submit", function(e){
         e.preventDefault();
@@ -409,14 +452,37 @@ $(document).ready(function() {
         if (!metode) {
             Swal.fire('Mohon pilih metode bayar!');
             return false;
-        }
-        let pelanggan = $("#pelanggan").val();
-        if (!pelanggan) {
-            Swal.fire('Mohon pilih pelanggan!');
-            return false;
-        }
-        this.submit();
+        }e.preventDefault();
+        let dataForm = $(this).serialize();
+        $.ajax({
+            url: "pages/admin_bengkel/api_selesai_transaksi.php",
+            type: "POST",
+            data: dataForm,
+            dataType: "json",
+            success: function(res){
+                if(res.status_code == 200){
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil",
+                        text: res.message
+                    }).then(() => {
+                        // redirect ke halaman cetak dan auto print
+                        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
+                        // window.open("pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur, "_blank");
+
+                        // reload halaman
+                        // location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", res.message, "error");
+                }
+            },
+            error: function(){
+                Swal.fire("Error", "Terjadi kesalahan koneksi!", "error");
+            }
+        });
     });
+
 
     reloadSparepartTable();
     sumTotal();

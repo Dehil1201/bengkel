@@ -19,7 +19,7 @@ if ($id_user) {
 // ADD: Total penjualan
 $total_penjualan = 0;
 $q_total = mysqli_query($conn, "
-    SELECT SUM(t.total) as total_penjualan
+    SELECT SUM(t.total_bayar) as total_penjualan
     FROM transaksi t
     $where AND id_bengkel = '$id_bengkel'
 ");
@@ -29,7 +29,7 @@ if ($row = mysqli_fetch_assoc($q_total)) {
 
 // Get transaksi
 $query_laporan = mysqli_query($conn, "
-    SELECT t.no_faktur, t.tanggal, p.nama_pelanggan, u.nama_lengkap, t.total, t.status
+    SELECT t.no_faktur, t.tanggal, p.nama_pelanggan, u.nama_lengkap, t.total_bayar, t.status, t.total, t.discount,t.uang_bayar, t.kembalian
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
@@ -106,6 +106,10 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                     <th>User Input</th>
                     <th>Status</th>
                     <th>Total</th>
+                    <th>Diskon(%)</th>
+                    <th>Total Bayar</th>
+                    <th>Uang Bayar</th>
+                    <th>Kembalian</th>
                     <th>Detail</th>
                 </tr>
             </thead>
@@ -124,6 +128,10 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                             <?php endif; ?>
                         </td>
                         <td>Rp <?= number_format($row['total'], 0, ',', '.'); ?></td>
+                        <td><?= number_format($row['discount'], 0, ',', '.'); ?></td>
+                        <td><?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
+                        <td><?= number_format($row['uang_bayar'], 0, ',', '.'); ?></td>
+                        <td><?= number_format($row['kembalian'], 0, ',', '.'); ?></td>
                         <td>
                             <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
                                 <i class="fa fa-eye"></i> Detail
