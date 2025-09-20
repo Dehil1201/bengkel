@@ -1,7 +1,7 @@
 <?php
 // Filter
-$tgl_dari = $_GET['tgl_dari'] ?? '';
-$tgl_sampai = $_GET['tgl_sampai'] ?? '';
+$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-d');
+$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
 $id_supplier = $_GET['id_supplier'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 
@@ -207,67 +207,88 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
         <div class="modal-body">
           <div class="row">
             <!-- LEFT SIDE -->
-            <div class="col-md-6">
-              <div class="form-group">
-                <label>Tanggal</label>
-                <input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required>
-              </div>
+            <div class="col-md-12">
+              <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Tanggal</label>
+                        <input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                    </div>
 
-              <div class="form-group">
-                <label>Faktur</label>
-                <input type="text" id="noFakturText" name="no_faktur" class="form-control" readonly value="<?= generateNoFaktur($conn); ?>">
-                <input type="hidden" id="jenisTransaksiInput" name="jenis" class="form-control" readonly value="pembelian">
-              </div>
+                    <div class="form-group">
+                        <label>Faktur</label>
+                        <input type="text" id="noFakturText" name="no_faktur" class="form-control" readonly value="<?= generateNoFaktur($conn); ?>">
+                        <input type="hidden" id="jenisTransaksiInput" name="jenis" class="form-control" readonly value="pembelian">
+                    </div>
 
-              <div class="form-group">
-                <label>Supplier</label>
-                <select id='selectSupplierInput' name="id_supplier" class="form-control" required style="width:100%">
-                  <option value="">-- Pilih Supplier --</option>
-                  <?php
-                  $qSupplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM suppliers WHERE bengkel_id = '$id_bengkel'");
-                  while ($s = mysqli_fetch_assoc($qSupplier)) {
-                      echo '<option value="'.$s['id_supplier'].'">'.htmlspecialchars($s['nama_supplier']).'</option>';
-                  }
-                  ?>
-                </select>
-              </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <select id='selectSupplierInput' name="id_supplier" class="form-control" required style="width:100%">
+                        <option value="">-- Pilih Supplier --</option>
+                        <?php
+                        $qSupplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM suppliers WHERE bengkel_id = '$id_bengkel'");
+                        while ($s = mysqli_fetch_assoc($qSupplier)) {
+                            echo '<option value="'.$s['id_supplier'].'">'.htmlspecialchars($s['nama_supplier']).'</option>';
+                        }
+                        ?>
+                        </select>
+                    </div>
 
-              <div class="form-group">
-                <label>Nama Akun</label>
-                <select id='akunSelected' name="id_akun" class="form-control" required style="width:100%">
-                  <option value="">-- Pilih Akun --</option>
-                  <?php
-                  $qAkun = mysqli_query($conn, "SELECT id_akun, nama_akun FROM akun WHERE id_bengkel = '$id_bengkel'");
-                  while ($s = mysqli_fetch_assoc($qAkun)) {
-                      echo '<option value="'.$s['id_akun'].'">'.htmlspecialchars($s['nama_akun']).'</option>';
-                  }
-                  ?>
-                </select>
-              </div>
+                    <div class="form-group">
+                        <label>Nama Akun</label>
+                        <select id='akunSelected' name="id_akun" class="form-control" required style="width:100%">
+                        <option value="">-- Pilih Akun --</option>
+                        <?php
+                        $qAkun = mysqli_query($conn, "SELECT id_akun, nama_akun FROM akun WHERE id_bengkel = '$id_bengkel'");
+                        while ($s = mysqli_fetch_assoc($qAkun)) {
+                            echo '<option value="'.$s['id_akun'].'">'.htmlspecialchars($s['nama_akun']).'</option>';
+                        }
+                        ?>
+                        </select>
+                    </div>
 
-              <div class="form-group">
-                <label>No. Akun</label>
-                <input type="text" name="no_akun" class="form-control">
-              </div>
+                    <div class="form-group">
+                        <label>No. Akun</label>
+                        <input type="text" name="no_akun" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Metode Pembayaran:</label><br>
+                        <label><input type="radio" name="metode_bayar" value="Tunai" checked> Tunai</label>
+                        <label style="margin-left: 15px;"><input type="radio" name="metode_bayar" value="Non Tunai"> Non Tunai</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="statusTransaksi">Status Transaksi</label>
+                        <select id="statusTransaksi" name="status" class="form-control" required>
+                        <option value="">-- Pilih Status --</option>
+                        <option value="selesai">Selesai</option>
+                        <option value="pending">Pending</option>
+                        </select>
+                    </div>
 
-              <div class="form-group">
-                <label>Metode Pembayaran:</label><br>
-                <label><input type="radio" name="metode_bayar" value="Tunai" checked> Tunai</label>
-                <label style="margin-left: 15px;"><input type="radio" name="metode_bayar" value="Non Tunai"> Non Tunai</label>
+                    <div class="form-group">
+                        <label>Jatuh Tempo</label>
+                        <input type="date" name="tanggal_pelunasan" class="form-control" id="jatuhTempo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="totalBayar">Total Bayar</label>
+                        <input type="text" id="totalBayar" name="total_bayar" class="form-control" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="uangBayar">Uang Dibayar</label>
+                        <input type="number" id="uangBayar" name="uangBayar" class="form-control">
+                    </div>
+                </div>
               </div>
               
-              <div class="form-group">
-                <label for="statusTransaksi">Status Transaksi</label>
-                <select id="statusTransaksi" name="status" class="form-control" required>
-                  <option value="">-- Pilih Status --</option>
-                  <option value="selesai">Selesai</option>
-                  <option value="pending">Pending</option>
-                </select>
-              </div>
+            <hr>
             </div>
-
             <!-- RIGHT SIDE -->
-            <div class="col-md-6">
+            <div class="col-md-12">
               <div class="form-group">
                 <label>Pilih Sparepart</label>
                 <select class="form-control" id="sparepart-select" style="width:100%;">
@@ -307,7 +328,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                 <label>Jumlah</label>
                 <input type="number" id="jumlahBarang" class="form-control" value="1" min="1">
               </div>
-
+              
               <div class="form-group">
                 <label>Diskon (%)</label>
                 <input type="number" id="diskonBarang" class="form-control" min="0" max="100" value="0">
@@ -360,7 +381,9 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
 <script>
 $(document).ready(function () {
-    $('#tableLaporan').DataTable();
+    $('#tableLaporan').DataTable({
+        order: [[1, 'desc']]
+    });
     $('#selectSupplierInput').select2();
     $('#sparepart-select').select2();
 
@@ -397,6 +420,7 @@ $(document).ready(function () {
         let harga = parseInt($("#sparepart-select option:selected").data("harga"));
         let satuan = $("#sparepart-select option:selected").data("satuan");
         let qty = parseInt($("#jumlahBarang").val());
+        let diskon = parseInt($("#diskonBarang").val());
 
         if (!kode) {
             Swal.fire('Pilih sparepart dulu!');
@@ -416,6 +440,7 @@ $(document).ready(function () {
             satuan: satuan,
             qty: qty,
             harga: harga,
+            discount: diskon,
             jenis_transaksi: 'pembelian'
         }, function(res){
             if (res.status_code == 400) {
@@ -445,6 +470,7 @@ $(document).ready(function () {
                     maximumFractionDigits: 0
                 }).format(total);
                 $("#totalPembelian").html(totalIDR);
+                $("#totalBayar").val(total)
                 $("#inputTotalHidden").val(total);
             },
             error: function() {
@@ -486,8 +512,7 @@ $(document).ready(function () {
                 { data: "qty" },
                 { data: "satuan" },
                 {
-                data: "discount",
-                render: data => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(data)
+                data: "discount"
                 },
                 {
                 data: "subtotal",

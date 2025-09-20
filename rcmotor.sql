@@ -77,6 +77,138 @@ INSERT INTO `bengkels` VALUES (2,'RC MOTOR 2','INDIHIANG','11651655165',NULL,'ak
 UNLOCK TABLES;
 
 --
+-- Table structure for table `cicilan_hutang`
+--
+
+DROP TABLE IF EXISTS `cicilan_hutang`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cicilan_hutang` (
+  `id_cicilan` int(11) NOT NULL AUTO_INCREMENT,
+  `id_hutang` int(11) NOT NULL,
+  `tanggal_bayar` date NOT NULL,
+  `jumlah_bayar` decimal(15,2) NOT NULL,
+  `metode_bayar` varchar(50) DEFAULT NULL,
+  `keterangan` text DEFAULT NULL,
+  PRIMARY KEY (`id_cicilan`),
+  KEY `id_hutang` (`id_hutang`),
+  CONSTRAINT `cicilan_hutang_ibfk_1` FOREIGN KEY (`id_hutang`) REFERENCES `hutang` (`id_hutang`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cicilan_hutang`
+--
+
+LOCK TABLES `cicilan_hutang` WRITE;
+/*!40000 ALTER TABLE `cicilan_hutang` DISABLE KEYS */;
+INSERT INTO `cicilan_hutang` VALUES (1,1,'2025-09-20',5000.00,'Tunai',NULL),(2,1,'2025-09-20',5000.00,'Tunai',NULL),(3,2,'2025-09-20',80000.00,'Tunai',NULL);
+/*!40000 ALTER TABLE `cicilan_hutang` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER trg_update_status_hutang_after_insert
+AFTER INSERT ON cicilan_hutang
+FOR EACH ROW
+BEGIN
+    DECLARE total_bayar DECIMAL(15,2);
+    DECLARE total_hutang DECIMAL(15,2);
+
+    SELECT IFNULL(SUM(jumlah_bayar), 0) INTO total_bayar
+    FROM cicilan_hutang
+    WHERE id_hutang = NEW.id_hutang;
+
+    SELECT jumlah INTO total_hutang
+    FROM hutang
+    WHERE id_hutang = NEW.id_hutang;
+
+    IF total_bayar >= total_hutang THEN
+        UPDATE hutang
+        SET status = 'lunas',
+            tanggal_pelunasan = CURDATE()
+        WHERE id_hutang = NEW.id_hutang;
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `cicilan_piutang`
+--
+
+DROP TABLE IF EXISTS `cicilan_piutang`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cicilan_piutang` (
+  `id_cicilan` int(11) NOT NULL AUTO_INCREMENT,
+  `id_piutang` int(11) NOT NULL,
+  `tanggal_bayar` date NOT NULL,
+  `jumlah_bayar` decimal(15,2) NOT NULL,
+  `metode_bayar` varchar(50) DEFAULT NULL,
+  `keterangan` text DEFAULT NULL,
+  PRIMARY KEY (`id_cicilan`),
+  KEY `id_piutang` (`id_piutang`),
+  CONSTRAINT `cicilan_piutang_ibfk_1` FOREIGN KEY (`id_piutang`) REFERENCES `piutang` (`id_piutang`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cicilan_piutang`
+--
+
+LOCK TABLES `cicilan_piutang` WRITE;
+/*!40000 ALTER TABLE `cicilan_piutang` DISABLE KEYS */;
+INSERT INTO `cicilan_piutang` VALUES (1,2,'2025-09-20',150000.00,'Tunai','50000'),(2,3,'2025-09-20',50000.00,'Tunai',NULL),(3,3,'2025-09-20',25000.00,'Tunai',NULL),(4,3,'2025-09-20',50000.00,'Transfer','Rek : 348938490384'),(5,3,'2025-09-20',1000.00,'Tunai',NULL),(6,3,'2025-09-20',1000.00,'Tunai',NULL),(7,3,'2025-09-20',1000.00,'Tunai',NULL),(8,3,'2025-09-20',1000.00,'Tunai',NULL),(9,3,'2025-09-20',1000.00,'Tunai',NULL),(10,3,'2025-09-20',5000.00,'Tunai',NULL),(11,3,'2025-09-20',5000.00,'Tunai',NULL),(12,3,'2025-09-20',5000.00,'Tunai',NULL),(13,3,'2025-09-20',80000.00,'Tunai',NULL),(14,5,'2025-09-20',100000.00,'Tunai',NULL),(15,6,'2025-09-20',50000.00,'Tunai',NULL),(16,1,'2025-09-20',33000.00,'Tunai',NULL);
+/*!40000 ALTER TABLE `cicilan_piutang` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER trg_update_status_piutang_after_insert
+AFTER INSERT ON cicilan_piutang
+FOR EACH ROW
+BEGIN
+    DECLARE total_bayar DECIMAL(15,2);
+    DECLARE total_piutang DECIMAL(15,2);
+
+    SELECT IFNULL(SUM(jumlah_bayar), 0) INTO total_bayar
+    FROM cicilan_piutang
+    WHERE id_piutang = NEW.id_piutang;
+
+    SELECT jumlah INTO total_piutang
+    FROM piutang
+    WHERE id_piutang = NEW.id_piutang;
+
+    IF total_bayar >= total_piutang THEN
+        UPDATE piutang
+        SET status = 'lunas',
+            tanggal_pelunasan = CURDATE()
+        WHERE id_piutang = NEW.id_piutang;
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
 -- Table structure for table `harga_jual_sparepart`
 --
 
@@ -107,6 +239,37 @@ LOCK TABLES `harga_jual_sparepart` WRITE;
 /*!40000 ALTER TABLE `harga_jual_sparepart` DISABLE KEYS */;
 INSERT INTO `harga_jual_sparepart` VALUES (1,1,1,0.00,130.00,1,1),(2,1,2,0.00,1300.00,2,0),(3,2,1,0.00,100.00,1,1),(4,3,1,0.00,2500.00,1,1),(5,3,2,0.00,25000.00,2,10),(7,4,1,0.00,20000.00,1,1);
 /*!40000 ALTER TABLE `harga_jual_sparepart` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `hutang`
+--
+
+DROP TABLE IF EXISTS `hutang`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `hutang` (
+  `id_hutang` int(11) NOT NULL AUTO_INCREMENT,
+  `no_faktur` varchar(50) NOT NULL,
+  `tanggal_hutang` date NOT NULL,
+  `jumlah` decimal(15,2) NOT NULL,
+  `keterangan` text DEFAULT NULL,
+  `status` enum('belum lunas','lunas') DEFAULT 'belum lunas',
+  `tanggal_pelunasan` date DEFAULT NULL,
+  PRIMARY KEY (`id_hutang`),
+  KEY `no_faktur` (`no_faktur`),
+  CONSTRAINT `hutang_ibfk_1` FOREIGN KEY (`no_faktur`) REFERENCES `transaksi` (`no_faktur`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `hutang`
+--
+
+LOCK TABLES `hutang` WRITE;
+/*!40000 ALTER TABLE `hutang` DISABLE KEYS */;
+INSERT INTO `hutang` VALUES (1,'PB.20250920.8.4.0004','2025-09-20',10000.00,NULL,'lunas','2025-09-20'),(2,'PB.20250920.8.4.0005','2025-09-20',80000.00,NULL,'lunas','2025-09-20');
+/*!40000 ALTER TABLE `hutang` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -246,6 +409,155 @@ INSERT INTO `pelanggans` VALUES (1,'mdfndsk','kndkjfnk','knsdfks',4,'2025-08-30 
 UNLOCK TABLES;
 
 --
+-- Table structure for table `piutang`
+--
+
+DROP TABLE IF EXISTS `piutang`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `piutang` (
+  `id_piutang` int(11) NOT NULL AUTO_INCREMENT,
+  `no_faktur` varchar(50) NOT NULL,
+  `tanggal_piutang` date NOT NULL,
+  `jumlah` decimal(15,2) NOT NULL,
+  `keterangan` text DEFAULT NULL,
+  `status` enum('belum lunas','lunas') DEFAULT 'belum lunas',
+  `tanggal_pelunasan` date DEFAULT NULL,
+  PRIMARY KEY (`id_piutang`),
+  KEY `no_faktur` (`no_faktur`),
+  CONSTRAINT `piutang_ibfk_1` FOREIGN KEY (`no_faktur`) REFERENCES `transaksi` (`no_faktur`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `piutang`
+--
+
+LOCK TABLES `piutang` WRITE;
+/*!40000 ALTER TABLE `piutang` DISABLE KEYS */;
+INSERT INTO `piutang` VALUES (1,'PJ.20250918.8.4.0004','2025-09-18',33000.00,NULL,'lunas','2025-09-20'),(2,'PJ.20250920.8.4.0001','2025-09-20',150000.00,NULL,'lunas','2025-09-20'),(3,'PJ.20250920.8.4.0002','2025-09-20',225000.00,NULL,'lunas','2025-09-20'),(4,'PJ.20250920.8.4.0003','2025-09-20',80000.00,NULL,'belum lunas',NULL),(5,'PJ.20250920.8.4.0004','2025-09-20',100000.00,NULL,'lunas','2025-09-20'),(6,'PJ.20250920.8.4.0005','2025-09-20',50000.00,NULL,'lunas','2025-09-20');
+/*!40000 ALTER TABLE `piutang` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `retur_pembelian`
+--
+
+DROP TABLE IF EXISTS `retur_pembelian`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `retur_pembelian` (
+  `id_retur_pembelian` int(11) NOT NULL AUTO_INCREMENT,
+  `no_retur` varchar(50) NOT NULL,
+  `no_faktur` varchar(50) NOT NULL,
+  `id_supplier` int(11) NOT NULL,
+  `tanggal_retur` date NOT NULL,
+  `alasan` text DEFAULT NULL,
+  `total_retur` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_retur_pembelian`),
+  UNIQUE KEY `no_retur` (`no_retur`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `retur_pembelian`
+--
+
+LOCK TABLES `retur_pembelian` WRITE;
+/*!40000 ALTER TABLE `retur_pembelian` DISABLE KEYS */;
+/*!40000 ALTER TABLE `retur_pembelian` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `retur_pembelian_detail`
+--
+
+DROP TABLE IF EXISTS `retur_pembelian_detail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `retur_pembelian_detail` (
+  `id_detail` int(11) NOT NULL AUTO_INCREMENT,
+  `no_retur` varchar(50) NOT NULL,
+  `kode_sparepart` varchar(50) NOT NULL,
+  `nama_sparepart` varchar(100) NOT NULL,
+  `qty` int(11) NOT NULL,
+  `harga` int(11) NOT NULL,
+  `subtotal` int(11) NOT NULL,
+  `alasan` text DEFAULT NULL,
+  PRIMARY KEY (`id_detail`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `retur_pembelian_detail`
+--
+
+LOCK TABLES `retur_pembelian_detail` WRITE;
+/*!40000 ALTER TABLE `retur_pembelian_detail` DISABLE KEYS */;
+/*!40000 ALTER TABLE `retur_pembelian_detail` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `retur_penjualan`
+--
+
+DROP TABLE IF EXISTS `retur_penjualan`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `retur_penjualan` (
+  `id_retur_penjualan` int(11) NOT NULL AUTO_INCREMENT,
+  `no_retur` varchar(50) NOT NULL,
+  `no_faktur` varchar(50) NOT NULL,
+  `id_pelanggan` int(11) NOT NULL,
+  `tanggal_retur` date NOT NULL,
+  `alasan` text DEFAULT NULL,
+  `total_retur` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_retur_penjualan`),
+  UNIQUE KEY `no_retur` (`no_retur`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `retur_penjualan`
+--
+
+LOCK TABLES `retur_penjualan` WRITE;
+/*!40000 ALTER TABLE `retur_penjualan` DISABLE KEYS */;
+/*!40000 ALTER TABLE `retur_penjualan` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `retur_penjualan_detail`
+--
+
+DROP TABLE IF EXISTS `retur_penjualan_detail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `retur_penjualan_detail` (
+  `id_detail` int(11) NOT NULL AUTO_INCREMENT,
+  `no_retur` varchar(50) NOT NULL,
+  `kode_sparepart` varchar(50) NOT NULL,
+  `nama_sparepart` varchar(100) NOT NULL,
+  `qty` int(11) NOT NULL,
+  `harga` int(11) NOT NULL,
+  `subtotal` int(11) NOT NULL,
+  `alasan` text DEFAULT NULL,
+  PRIMARY KEY (`id_detail`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `retur_penjualan_detail`
+--
+
+LOCK TABLES `retur_penjualan_detail` WRITE;
+/*!40000 ALTER TABLE `retur_penjualan_detail` DISABLE KEYS */;
+/*!40000 ALTER TABLE `retur_penjualan_detail` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `satuan`
 --
 
@@ -346,7 +658,7 @@ CREATE TABLE `spareparts` (
 
 LOCK TABLES `spareparts` WRITE;
 /*!40000 ALTER TABLE `spareparts` DISABLE KEYS */;
-INSERT INTO `spareparts` VALUES (1,'SP-1755528666','TEST',1,1,'',1000.00,2,10,100.00,59,10,4),(2,'4-SPART-816110258','kjdbfkjdnk',1,1,'',1000.00,2,100,10.00,59,10,4),(3,'4-SPART-357233986','jbvjsdbjsj',1,1,'',20000.00,2,10,2000.00,17,1,4),(4,'4-SPART-741863857','dsjdncdjsk',1,1,'',10000.00,1,1,10000.00,10,5,4);
+INSERT INTO `spareparts` VALUES (1,'SP-1755528666','TEST',1,1,'',1000.00,2,10,100.00,35,10,4),(2,'4-SPART-816110258','kjdbfkjdnk',1,1,'',1000.00,2,100,10.00,41,10,4),(3,'4-SPART-357233986','jbvjsdbjsj',1,1,'',20000.00,2,10,2000.00,30,1,4),(4,'4-SPART-741863857','dsjdncdjsk',1,1,'',10000.00,1,1,10000.00,95,5,4);
 /*!40000 ALTER TABLE `spareparts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -408,7 +720,7 @@ CREATE TABLE `stok_opnames` (
   KEY `spare_part_id` (`spare_part_id`),
   CONSTRAINT `stok_opnames_ibfk_2` FOREIGN KEY (`bengkel_id`) REFERENCES `bengkels` (`id_bengkel`) ON DELETE CASCADE,
   CONSTRAINT `stok_opnames_ibfk_3` FOREIGN KEY (`spare_part_id`) REFERENCES `spareparts` (`id_sparepart`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -417,7 +729,7 @@ CREATE TABLE `stok_opnames` (
 
 LOCK TABLES `stok_opnames` WRITE;
 /*!40000 ALTER TABLE `stok_opnames` DISABLE KEYS */;
-INSERT INTO `stok_opnames` VALUES (4,'2025-08-30',1,100,90,-10,'',4,'2025-08-30 05:31:56','2025-08-30 05:31:56'),(5,'2025-08-30',1,90,100,10,'',4,'2025-08-30 05:32:53','2025-08-30 05:32:53'),(6,'2025-09-11',3,0,10,10,'',4,'2025-09-11 11:58:32','2025-09-11 11:58:32'),(7,'2025-09-11',2,80,80,0,'',4,'2025-09-11 11:58:32','2025-09-11 11:58:32'),(8,'2025-09-11',1,65,65,0,'',4,'2025-09-11 11:58:32','2025-09-11 11:58:32');
+INSERT INTO `stok_opnames` VALUES (4,'2025-08-30',1,100,90,-10,'',4,'2025-08-30 05:31:56','2025-08-30 05:31:56'),(5,'2025-08-30',1,90,100,10,'',4,'2025-08-30 05:32:53','2025-08-30 05:32:53'),(6,'2025-09-11',3,0,10,10,'',4,'2025-09-11 11:58:32','2025-09-11 11:58:32'),(7,'2025-09-11',2,80,80,0,'',4,'2025-09-11 11:58:32','2025-09-11 11:58:32'),(8,'2025-09-11',1,65,65,0,'',4,'2025-09-11 11:58:32','2025-09-11 11:58:32'),(9,'2025-09-20',4,0,40,40,'',4,'2025-09-20 03:47:20','2025-09-20 03:47:20'),(10,'2025-09-20',3,0,40,40,'',4,'2025-09-20 03:47:20','2025-09-20 03:47:20'),(11,'2025-09-20',2,41,41,0,'',4,'2025-09-20 03:47:20','2025-09-20 03:47:20'),(12,'2025-09-20',1,35,35,0,'',4,'2025-09-20 03:47:20','2025-09-20 03:47:20');
 /*!40000 ALTER TABLE `stok_opnames` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -537,15 +849,15 @@ CREATE TABLE `transaksi` (
   `no_polisi` varchar(50) DEFAULT NULL,
   `id_bengkel` int(11) NOT NULL,
   `status` enum('selesai','pending') DEFAULT 'selesai',
+  `status_pembayaran` enum('lunas','belum lunas') NOT NULL,
   PRIMARY KEY (`id_transaksi`),
   UNIQUE KEY `no_faktur` (`no_faktur`),
   KEY `id_supplier` (`id_supplier`),
   KEY `id_pelanggan` (`id_pelanggan`),
   KEY `id_bengkel` (`id_bengkel`),
-  CONSTRAINT `transaksi_ibfk_1` FOREIGN KEY (`id_supplier`) REFERENCES `suppliers` (`id_supplier`) ON DELETE SET NULL,
   CONSTRAINT `transaksi_ibfk_2` FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggans` (`id_pelanggan`) ON DELETE SET NULL,
   CONSTRAINT `transaksi_ibfk_3` FOREIGN KEY (`id_bengkel`) REFERENCES `bengkels` (`id_bengkel`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -554,7 +866,7 @@ CREATE TABLE `transaksi` (
 
 LOCK TABLES `transaksi` WRITE;
 /*!40000 ALTER TABLE `transaksi` DISABLE KEYS */;
-INSERT INTO `transaksi` VALUES (1,'PJ.20250906.8.4.0001','2025-09-07 15:13:04','penjualan','',40000.00,0.00,0.00,50000.00,10000.00,8,NULL,1,1,'Satria FU','Z01DF',4,'selesai'),(2,'PJ.20250906.8.4.0002','2025-09-16 18:18:47','penjualan','Tunai',22200.00,10.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai'),(3,'PJ.20250906.8.4.0003','2025-09-16 18:37:29','penjualan','Tunai',15650.00,5.00,14867.00,20000.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'pending'),(4,'PJ.20250906.8.4.0004','2025-09-16 18:01:59','penjualan','',15650.00,10.00,0.00,15000.00,915.00,8,NULL,NULL,NULL,NULL,NULL,4,'pending'),(5,'PJ.20250906.8.4.0005','2025-09-06 16:42:41','penjualan','',910.00,0.00,0.00,0.00,0.00,8,NULL,NULL,1,'','',4,'pending'),(6,'PJ.20250911.8.4.0001','2025-09-11 19:37:54','penjualan','',25000.00,0.00,0.00,50000.00,25000.00,8,NULL,1,NULL,NULL,NULL,4,'selesai'),(7,'PJ.20250915.8.4.0001','2025-09-15 22:39:40','penjualan','',25000.00,0.00,0.00,50000.00,25000.00,8,NULL,1,NULL,NULL,NULL,4,'selesai'),(8,'PS.20250915.8.4.0002','2025-09-15 22:40:40','penjualan','',40000.00,0.00,0.00,50000.00,10000.00,8,NULL,1,1,'jsfdsj','knsdfjs',4,'selesai'),(9,'PJ.20250916.8.4.0001','2025-09-16 17:45:04','penjualan','Tunai',1300.00,2.00,0.00,2000.00,726.00,8,NULL,1,NULL,NULL,NULL,4,'selesai'),(10,'PS.20250916.8.4.0002','2025-09-16 17:57:03','penjualan','Non Tunai',15130.00,10.00,0.00,15000.00,1.38,8,NULL,NULL,NULL,NULL,NULL,4,'pending'),(11,'PJ.20250916.8.4.0006','2025-09-16 18:39:13','penjualan','Non Tunai',2600.00,5.00,2470.00,10000.00,7.53,8,NULL,NULL,NULL,NULL,NULL,4,'selesai'),(12,'PB.20250917.8.4.0001','2025-09-17 20:18:02','pembelian','Tunai',10010.00,0.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai'),(13,'PB.20250917.8.4.0002','2025-09-17 20:19:45','pembelian','Tunai',20000.00,0.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai'),(14,'PB.20250917.8.4.0003','2025-09-17 20:20:53','pembelian','Tunai',2000.00,0.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai'),(15,'PB.20250917.8.4.0004','2025-09-17 20:23:27','pembelian','Tunai',30000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai'),(16,'PB.20250917.8.4.0005','2025-09-17 20:28:54','pembelian','Tunai',18000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai'),(17,'PB.20250917.8.4.0006','2025-09-17 20:30:23','pembelian','Tunai',16000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai');
+INSERT INTO `transaksi` VALUES (1,'PJ.20250906.8.4.0001','2025-09-07 15:13:04','penjualan','',40000.00,0.00,0.00,50000.00,10000.00,8,NULL,1,1,'Satria FU','Z01DF',4,'selesai','lunas'),(2,'PJ.20250906.8.4.0002','2025-09-16 18:18:47','penjualan','Tunai',22200.00,10.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(3,'PJ.20250906.8.4.0003','2025-09-16 18:37:29','penjualan','Tunai',15650.00,5.00,14867.00,20000.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'pending','lunas'),(4,'PJ.20250906.8.4.0004','2025-09-16 18:01:59','penjualan','',15650.00,10.00,0.00,15000.00,915.00,8,NULL,NULL,NULL,NULL,NULL,4,'pending','lunas'),(5,'PJ.20250906.8.4.0005','2025-09-06 16:42:41','penjualan','',910.00,0.00,0.00,0.00,0.00,8,NULL,NULL,1,'','',4,'pending','lunas'),(6,'PJ.20250911.8.4.0001','2025-09-11 19:37:54','penjualan','',25000.00,0.00,0.00,50000.00,25000.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','lunas'),(7,'PJ.20250915.8.4.0001','2025-09-15 22:39:40','penjualan','',25000.00,0.00,0.00,50000.00,25000.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','lunas'),(8,'PS.20250915.8.4.0002','2025-09-15 22:40:40','penjualan','',40000.00,0.00,0.00,50000.00,10000.00,8,NULL,1,1,'jsfdsj','knsdfjs',4,'selesai','lunas'),(9,'PJ.20250916.8.4.0001','2025-09-16 17:45:04','penjualan','Tunai',1300.00,2.00,0.00,2000.00,726.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','lunas'),(10,'PS.20250916.8.4.0002','2025-09-16 17:57:03','penjualan','Non Tunai',15130.00,10.00,0.00,15000.00,1.38,8,NULL,NULL,NULL,NULL,NULL,4,'pending','lunas'),(11,'PJ.20250916.8.4.0006','2025-09-16 18:39:13','penjualan','Non Tunai',2600.00,5.00,2470.00,10000.00,7.53,8,NULL,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(12,'PB.20250917.8.4.0001','2025-09-17 20:18:02','pembelian','Tunai',10010.00,0.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(13,'PB.20250917.8.4.0002','2025-09-17 20:19:45','pembelian','Tunai',20000.00,0.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(14,'PB.20250917.8.4.0003','2025-09-17 20:20:53','pembelian','Tunai',2000.00,0.00,0.00,0.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(15,'PB.20250917.8.4.0004','2025-09-17 20:23:27','pembelian','Tunai',30000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(16,'PB.20250917.8.4.0005','2025-09-17 20:28:54','pembelian','Tunai',18000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(17,'PB.20250917.8.4.0006','2025-09-17 20:30:23','pembelian','Tunai',16000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(23,'PS.20250918.8.4.0001','2025-09-18 21:31:26','penjualan','Tunai',20000.00,10.00,18000.00,20000.00,2000.00,8,NULL,1,1,NULL,NULL,4,'selesai','lunas'),(24,'PS.20250918.8.4.0002','2025-09-18 21:34:07','penjualan','Tunai',55000.00,0.00,55000.00,60000.00,5000.00,8,NULL,1,1,NULL,NULL,4,'selesai','lunas'),(25,'PJ.20250918.8.4.0003','2025-09-18 21:41:12','penjualan','Tunai',80000.00,0.00,80000.00,100000.00,20000.00,8,NULL,NULL,NULL,NULL,NULL,4,'pending','lunas'),(26,'PJ.20250918.8.4.0004','2025-09-18 22:02:58','penjualan','Non Tunai',33000.00,0.00,33000.00,15000.00,0.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','belum lunas'),(27,'PJ.20250920.8.4.0001','2025-09-20 10:44:15','penjualan','Non Tunai',150000.00,0.00,150000.00,100000.00,0.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','belum lunas'),(28,'PJ.20250920.8.4.0002','2025-09-20 10:46:37','penjualan','Non Tunai',225000.00,0.00,225000.00,100000.00,0.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','belum lunas'),(29,'PJ.20250920.8.4.0003','2025-09-20 10:48:08','penjualan','Non Tunai',80000.00,0.00,80000.00,50000.00,0.00,8,NULL,NULL,NULL,NULL,NULL,4,'selesai','belum lunas'),(30,'PJ.20250920.8.4.0004','2025-09-20 10:53:26','penjualan','Non Tunai',200000.00,0.00,200000.00,100000.00,0.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','belum lunas'),(31,'PJ.20250920.8.4.0005','2025-09-20 10:57:23','penjualan','Non Tunai',100000.00,0.00,100000.00,50000.00,0.00,8,NULL,1,NULL,NULL,NULL,4,'selesai','belum lunas'),(32,'PB.20250920.8.4.0001','2025-09-20 15:27:58','pembelian','Non Tunai',50000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(33,'PB.20250920.8.4.0002','2025-09-20 16:09:30','pembelian','Non Tunai',137000.00,0.00,0.00,0.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(34,'PB.20250920.8.4.0003','2025-09-20 16:17:05','pembelian','Non Tunai',237500.00,0.00,0.00,10000.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','lunas'),(35,'PB.20250920.8.4.0004','2025-09-20 16:19:51','pembelian','Non Tunai',60000.00,0.00,60000.00,50000.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','belum lunas'),(36,'PB.20250920.8.4.0005','2025-09-20 16:23:31','pembelian','Non Tunai',90000.00,0.00,90000.00,10000.00,0.00,8,1,NULL,NULL,NULL,NULL,4,'selesai','belum lunas');
 /*!40000 ALTER TABLE `transaksi` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -572,7 +884,7 @@ CREATE TABLE `transaksi_detail_servis` (
   `nama_servis` varchar(100) NOT NULL,
   `biaya` decimal(15,2) NOT NULL,
   PRIMARY KEY (`id_detail`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -581,7 +893,7 @@ CREATE TABLE `transaksi_detail_servis` (
 
 LOCK TABLES `transaksi_detail_servis` WRITE;
 /*!40000 ALTER TABLE `transaksi_detail_servis` DISABLE KEYS */;
-INSERT INTO `transaksi_detail_servis` VALUES (7,'PJ.20250906.8.4.0001','1','Ganti Oli',15000.00),(8,'PJ.20250906.8.4.0002','1','Ganti Oli',15000.00),(9,'PJ.20250906.8.4.0003','1','Ganti Oli',15000.00),(10,'PJ.20250906.8.4.0004','1','Ganti Oli',15000.00),(11,'PJ.20250907.8.4.0001','1','Ganti Oli',15000.00),(12,'PS.20250915.8.4.0002','1','Ganti Oli',15000.00),(13,'PS.20250916.8.4.0002','1','Ganti Oli',15000.00);
+INSERT INTO `transaksi_detail_servis` VALUES (7,'PJ.20250906.8.4.0001','1','Ganti Oli',15000.00),(8,'PJ.20250906.8.4.0002','1','Ganti Oli',15000.00),(9,'PJ.20250906.8.4.0003','1','Ganti Oli',15000.00),(10,'PJ.20250906.8.4.0004','1','Ganti Oli',15000.00),(11,'PJ.20250907.8.4.0001','1','Ganti Oli',15000.00),(12,'PS.20250915.8.4.0002','1','Ganti Oli',15000.00),(13,'PS.20250916.8.4.0002','1','Ganti Oli',15000.00),(14,'PS.20250918.8.4.0001','1','Ganti Oli',15000.00),(15,'PS.20250918.8.4.0002','1','Ganti Oli',15000.00);
 /*!40000 ALTER TABLE `transaksi_detail_servis` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -603,7 +915,7 @@ CREATE TABLE `transaksi_detail_sparepart` (
   `discount` decimal(15,2) NOT NULL,
   `subtotal` decimal(15,2) NOT NULL,
   PRIMARY KEY (`id_detail`)
-) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -612,7 +924,7 @@ CREATE TABLE `transaksi_detail_sparepart` (
 
 LOCK TABLES `transaksi_detail_sparepart` WRITE;
 /*!40000 ALTER TABLE `transaksi_detail_sparepart` DISABLE KEYS */;
-INSERT INTO `transaksi_detail_sparepart` VALUES (36,'PJ.20250906.8.4.0001','4-SPART-357233986','jbvjsdbjsj',2500.00,10,'PCS',0.00,25000.00),(37,'PJ.20250906.8.4.0002','4-SPART-816110258','kjdbfkjdnk',100.00,20,'PCS',0.00,2000.00),(38,'PJ.20250906.8.4.0002','SP-1755528666','TEST',1300.00,4,'KARTON',0.00,5200.00),(39,'PJ.20250906.8.4.0003','SP-1755528666','TEST',130.00,5,'PCS',0.00,650.00),(40,'PJ.20250906.8.4.0004','SP-1755528666','TEST',130.00,5,'PCS',0.00,650.00),(41,'PJ.20250906.8.4.0005','SP-1755528666','TEST',130.00,7,'PCS',0.00,910.00),(42,'PJ.20250907.8.4.0001','SP-1755528666','TEST',130.00,14,'PCS',0.00,1820.00),(43,'PS.20250911.8.4.0001','4-SPART-357233986','jbvjsdbjsj',2500.00,1,'PCS',0.00,2500.00),(44,'PJ.20250911.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,1,'KARTON',0.00,25000.00),(45,'PJ.20250915.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,1,'KARTON',0.00,25000.00),(46,'PS.20250915.8.4.0002','4-SPART-357233986','jbvjsdbjsj',25000.00,1,'KARTON',0.00,25000.00),(47,'PJ.20250915.8.4.0003','4-SPART-816110258','kjdbfkjdnk',100.00,21,'PCS',0.00,2100.00),(48,'PJ.20250915.8.4.0003','4-SPART-357233986','jbvjsdbjsj',2500.00,5,'PCS',0.00,125000.00),(49,'PS.20250915.8.4.0003','4-SPART-357233986','jbvjsdbjsj',2500.00,1,'PCS',0.00,2500.00),(50,'PJ.20250916.8.4.0001','SP-1755528666','TEST',1300.00,1,'KARTON',0.00,1300.00),(51,'PS.20250916.8.4.0002','SP-1755528666','TEST',130.00,1,'PCS',0.00,130.00),(52,'PJ.20250916.8.4.0006','SP-1755528666','TEST',1300.00,2,'KARTON',0.00,2600.00),(53,'PB.20250917.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,10,'KARTON',0.00,0.00),(54,'PJ.20250917.8.4.0001','SP-1755528666','TEST',1300.00,2,'KARTON',0.00,2600.00),(55,'PB.20250917.8.4.0001','4-SPART-741863857','dsjdncdjsk',10000.00,1,'PCS',0.00,10000.00),(56,'PB.20250917.8.4.0001','4-SPART-816110258','kjdbfkjdnk',10.00,1,'PCS',0.00,10.00),(57,'PB.20250917.8.4.0002','4-SPART-741863857','dsjdncdjsk',10000.00,2,'PCS',0.00,20000.00),(58,'PB.20250917.8.4.0003','4-SPART-357233986','jbvjsdbjsj',2000.00,1,'KARTON',0.00,2000.00),(59,'PB.20250917.8.4.0004','4-SPART-741863857','dsjdncdjsk',10000.00,3,'PCS',0.00,30000.00),(60,'PB.20250917.8.4.0005','4-SPART-357233986','jbvjsdbjsj',2000.00,9,'KARTON',0.00,18000.00),(61,'PB.20250917.8.4.0006','4-SPART-357233986','jbvjsdbjsj',2000.00,8,'KARTON',0.00,16000.00);
+INSERT INTO `transaksi_detail_sparepart` VALUES (36,'PJ.20250906.8.4.0001','4-SPART-357233986','jbvjsdbjsj',2500.00,10,'PCS',0.00,25000.00),(37,'PJ.20250906.8.4.0002','4-SPART-816110258','kjdbfkjdnk',100.00,20,'PCS',0.00,2000.00),(38,'PJ.20250906.8.4.0002','SP-1755528666','TEST',1300.00,4,'KARTON',0.00,5200.00),(39,'PJ.20250906.8.4.0003','SP-1755528666','TEST',130.00,5,'PCS',0.00,650.00),(40,'PJ.20250906.8.4.0004','SP-1755528666','TEST',130.00,5,'PCS',0.00,650.00),(41,'PJ.20250906.8.4.0005','SP-1755528666','TEST',130.00,7,'PCS',0.00,910.00),(42,'PJ.20250907.8.4.0001','SP-1755528666','TEST',130.00,14,'PCS',0.00,1820.00),(43,'PS.20250911.8.4.0001','4-SPART-357233986','jbvjsdbjsj',2500.00,1,'PCS',0.00,2500.00),(44,'PJ.20250911.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,1,'KARTON',0.00,25000.00),(45,'PJ.20250915.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,1,'KARTON',0.00,25000.00),(46,'PS.20250915.8.4.0002','4-SPART-357233986','jbvjsdbjsj',25000.00,1,'KARTON',0.00,25000.00),(47,'PJ.20250915.8.4.0003','4-SPART-816110258','kjdbfkjdnk',100.00,21,'PCS',0.00,2100.00),(48,'PJ.20250915.8.4.0003','4-SPART-357233986','jbvjsdbjsj',2500.00,5,'PCS',0.00,125000.00),(49,'PS.20250915.8.4.0003','4-SPART-357233986','jbvjsdbjsj',2500.00,1,'PCS',0.00,2500.00),(50,'PJ.20250916.8.4.0001','SP-1755528666','TEST',1300.00,1,'KARTON',0.00,1300.00),(51,'PS.20250916.8.4.0002','SP-1755528666','TEST',130.00,1,'PCS',0.00,130.00),(52,'PJ.20250916.8.4.0006','SP-1755528666','TEST',1300.00,2,'KARTON',0.00,2600.00),(53,'PB.20250917.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,10,'KARTON',0.00,0.00),(54,'PJ.20250917.8.4.0001','SP-1755528666','TEST',1300.00,2,'KARTON',0.00,2600.00),(55,'PB.20250917.8.4.0001','4-SPART-741863857','dsjdncdjsk',10000.00,1,'PCS',0.00,10000.00),(56,'PB.20250917.8.4.0001','4-SPART-816110258','kjdbfkjdnk',10.00,1,'PCS',0.00,10.00),(57,'PB.20250917.8.4.0002','4-SPART-741863857','dsjdncdjsk',10000.00,2,'PCS',0.00,20000.00),(58,'PB.20250917.8.4.0003','4-SPART-357233986','jbvjsdbjsj',2000.00,1,'KARTON',0.00,2000.00),(59,'PB.20250917.8.4.0004','4-SPART-741863857','dsjdncdjsk',10000.00,3,'PCS',0.00,30000.00),(60,'PB.20250917.8.4.0005','4-SPART-357233986','jbvjsdbjsj',2000.00,9,'KARTON',0.00,18000.00),(61,'PB.20250917.8.4.0006','4-SPART-357233986','jbvjsdbjsj',2000.00,8,'KARTON',0.00,16000.00),(62,'PJ.20250918.8.4.0001','4-SPART-741863857','dsjdncdjsk',20000.00,4,'PCS',0.00,80000.00),(63,'PS.20250918.8.4.0001','4-SPART-357233986','jbvjsdbjsj',2500.00,2,'PCS',0.00,5000.00),(64,'PS.20250918.8.4.0002','4-SPART-741863857','dsjdncdjsk',20000.00,2,'PCS',0.00,40000.00),(65,'PJ.20250918.8.4.0003','4-SPART-741863857','dsjdncdjsk',20000.00,4,'PCS',0.00,80000.00),(66,'PJ.20250918.8.4.0004','4-SPART-816110258','kjdbfkjdnk',100.00,18,'PCS',0.00,1800.00),(67,'PJ.20250918.8.4.0004','SP-1755528666','TEST',1300.00,24,'KARTON',0.00,31200.00),(68,'PJ.20250920.8.4.0001','4-SPART-357233986','jbvjsdbjsj',25000.00,6,'KARTON',0.00,150000.00),(69,'PJ.20250920.8.4.0002','4-SPART-357233986','jbvjsdbjsj',25000.00,9,'KARTON',0.00,225000.00),(70,'PJ.20250920.8.4.0003','4-SPART-741863857','dsjdncdjsk',20000.00,4,'PCS',0.00,80000.00),(71,'PJ.20250920.8.4.0004','4-SPART-357233986','jbvjsdbjsj',25000.00,8,'KARTON',0.00,200000.00),(72,'PJ.20250920.8.4.0005','4-SPART-357233986','jbvjsdbjsj',25000.00,4,'KARTON',0.00,100000.00),(73,'PB.20250920.8.4.0001','4-SPART-741863857','dsjdncdjsk',10000.00,5,'PCS',0.00,50000.00),(74,'PB.20250920.8.4.0002','4-SPART-741863857','dsjdncdjsk',10000.00,14,'PCS',5.00,133000.00),(75,'PB.20250920.8.4.0002','4-SPART-357233986','jbvjsdbjsj',2000.00,2,'KARTON',0.00,4000.00),(76,'PB.20250920.8.4.0003','4-SPART-741863857','dsjdncdjsk',10000.00,25,'PCS',5.00,237500.00),(77,'PB.20250920.8.4.0004','4-SPART-741863857','dsjdncdjsk',10000.00,6,'PCS',0.00,60000.00),(78,'PB.20250920.8.4.0005','4-SPART-741863857','dsjdncdjsk',10000.00,9,'PCS',0.00,90000.00);
 /*!40000 ALTER TABLE `transaksi_detail_sparepart` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -658,4 +970,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-09-17 20:31:56
+-- Dump completed on 2025-09-20 17:03:00

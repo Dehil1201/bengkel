@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               <div class="form-group">
                 <label>Metode Bayar</label><br>
                 <div class="radio">
-                  <label><input type="radio" name="metode_bayar" value="Tunai"> Tunai</label>
+                  <label><input type="radio" name="metode_bayar" value="Tunai" checked> Tunai</label>
                 </div>
                 <div class="radio">
                   <label><input type="radio" name="metode_bayar" value="Non Tunai"> Non Tunai / Kredit</label>
@@ -233,6 +233,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   <option value="selesai">Selesai</option>
                   <option value="pending">Pending</option>
                 </select>
+              </div>
+
+              <div class="form-group">
+                <label for="jatuhTempo">Jatuh Tempo</label>
+                <input id="jatuhTempo" name="tanggal_pelunasan" class="form-control" type="date" disabled readonly>
               </div>
             </div>
 
@@ -416,6 +421,7 @@ $(document).ready(function() {
         let noFaktur = $("#noFakturText").val();
         $("#textNoFakturModal").val(noFaktur);
         sumTotal(); // pastikan totalAwal diperbarui
+        toggleJatuhTempo();
     });
     function formatAngka(angka) {
       return angka.toLocaleString('id-ID');
@@ -482,6 +488,18 @@ $(document).ready(function() {
             }
         });
     });
+
+    function toggleJatuhTempo() {
+      const metode = $('input[name="metode_bayar"]:checked').val();
+      if (metode === 'Tunai') {
+        $('#jatuhTempo').prop('disabled', true).prop('readonly', true).val('');
+      } else {
+        $('#jatuhTempo').prop('disabled', false).prop('readonly', false);
+      }
+    }
+
+    
+    $('input[name="metode_bayar"]').on('change', toggleJatuhTempo);
 
 
     reloadSparepartTable();

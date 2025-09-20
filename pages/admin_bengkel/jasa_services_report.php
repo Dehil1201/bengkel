@@ -1,7 +1,7 @@
 <?php
 // Filter
-$tgl_dari = $_GET['tgl_dari'] ?? '';
-$tgl_sampai = $_GET['tgl_sampai'] ?? '';
+$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-d');
+$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
 $id_pelanggan = $_GET['id_pelanggan'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 $id_teknisi = $_GET['id_teknisi'] ?? '';
@@ -224,7 +224,9 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
 
 <script>
 $(document).ready(function () {
-    $('#tableLaporan').DataTable();
+    $('#tableLaporan').DataTable({
+        order: [[1, 'desc']]
+    });
 
     $('.btn-detail').on('click', function () {
         const faktur = $(this).data('faktur');

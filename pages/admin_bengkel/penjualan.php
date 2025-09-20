@@ -1,7 +1,7 @@
 <?php
 // Filter
-$tgl_dari = $_GET['tgl_dari'] ?? '';
-$tgl_sampai = $_GET['tgl_sampai'] ?? '';
+$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-d');
+$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
 $id_pelanggan = $_GET['id_pelanggan'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 
@@ -29,12 +29,12 @@ if ($row = mysqli_fetch_assoc($q_total)) {
 
 // Get transaksi
 $query_laporan = mysqli_query($conn, "
-    SELECT t.no_faktur, t.tanggal, p.nama_pelanggan, u.nama_lengkap, t.total_bayar, t.status, t.total, t.discount,t.uang_bayar, t.kembalian
+    SELECT t.no_faktur, t.tanggal, p.nama_pelanggan, u.nama_lengkap, t.total_bayar, t.status, t.total, t.discount,t.uang_bayar, t.kembalian, t.metode_bayar
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
     $where AND id_bengkel = '$id_bengkel'
-    ORDER BY t.tanggal DESC
+    ORDER BY t.tanggal desc
 ");
 
 // Dropdown data
@@ -105,6 +105,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                     <th>Pelanggan</th>
                     <th>User Input</th>
                     <th>Status</th>
+                    <th>Metode</th>
                     <th>Total</th>
                     <th>Diskon(%)</th>
                     <th>Total Bayar</th>
@@ -125,6 +126,13 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                                 <span class="label label-success">selesai</span>
                             <?php else : ?>
                                 <span class="label label-warning"><?= htmlspecialchars($row['status']); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($row['metode_bayar'] == 'Tunai') : ?>
+                                <span class="label label-info">Tunai</span>
+                            <?php else : ?>
+                                <span class="label label-danger"><?= htmlspecialchars($row['metode_bayar']); ?></span>
                             <?php endif; ?>
                         </td>
                         <td>Rp <?= number_format($row['total'], 0, ',', '.'); ?></td>
@@ -176,7 +184,9 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
 <script>
 $(document).ready(function () {
-    $('#tableLaporan').DataTable();
+    $('#tableLaporan').DataTable({
+        order: [[1, 'desc']]
+    });
 
     $('.btn-detail').on('click', function () {
         const faktur = $(this).data('faktur');

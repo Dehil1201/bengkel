@@ -10,7 +10,8 @@ $nama_sparepart   = $_POST['nama_sparepart'] ?? '';
 $satuan           = $_POST['satuan'] ?? '';
 $qty              = (int)($_POST['qty'] ?? 0);
 $harga            = (int)($_POST['harga'] ?? 0);
-$jenis_transaksi  = $_POST['jenis_transaksi'] ?? ''; // penting
+$discount         = (float)($_POST['discount'] ?? 0); // 💡 sekarang dalam %
+$jenis_transaksi  = $_POST['jenis_transaksi'] ?? '';
 
 mysqli_begin_transaction($conn);
 
@@ -26,17 +27,16 @@ try {
                                             WHERE kode_sparepart='$kode_sparepart' 
                                             FOR UPDATE");
             $stokRow = mysqli_fetch_assoc($cekStok);
-
-            if (!$stokRow) {
-                throw new Exception("Sparepart tidak ditemukan", 404);
-            }
-
-            if ($stokRow['stok_pcs'] < $qty) {
-                throw new Exception("Stok tidak mencukupi! Sisa stok: ".$stokRow['stok_pcs'], 400);
-            }
+            if (!$stokRow) throw new Exception("Sparepart tidak ditemukan", 404);
+            if ($stokRow['stok_pcs'] < $qty) throw new Exception("Stok tidak mencukupi! Sisa stok: ".$stokRow['stok_pcs'], 400);
         }
 
-        // ✅ Cek apakah sparepart sudah ada di transaksi
+        // Total dan diskon
+        $total = $qty * $harga;
+        $nilai_diskon = ($discount / 100) * $total;
+        $subtotal = $total - $nilai_diskon;
+
+        // Cek apakah sparepart sudah ada
         $cek = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart 
                                     WHERE no_faktur='$no_faktur' 
                                     AND kode_sparepart='$kode_sparepart' 
@@ -45,21 +45,21 @@ try {
 
         if ($row) {
             $newQty = $row['qty'] + $qty;
-            $newSubtotal = $newQty * $harga;
+            $newTotal = $newQty * $harga;
+            $newSubtotal = $newTotal - (($discount / 100) * $newTotal);
 
             $update = mysqli_query($conn, "UPDATE transaksi_detail_sparepart 
-                                           SET qty='$newQty', subtotal='$newSubtotal' 
+                                           SET qty='$newQty', discount='$discount', subtotal='$newSubtotal' 
                                            WHERE id_detail='".$row['id_detail']."'");
             if (!$update) throw new Exception("Gagal update sparepart: ".mysqli_error($conn), 500);
         } else {
-            $subtotal = $qty * $harga;
             $insert = mysqli_query($conn, "INSERT INTO transaksi_detail_sparepart 
-                (no_faktur, kode_sparepart, satuan, nama_sparepart, qty, harga, subtotal) 
-                VALUES ('$no_faktur','$kode_sparepart','$satuan', '$nama_sparepart', '$qty', '$harga', '$subtotal')");
+                (no_faktur, kode_sparepart, satuan, nama_sparepart, qty, harga, discount, subtotal) 
+                VALUES ('$no_faktur','$kode_sparepart','$satuan', '$nama_sparepart', '$qty', '$harga', '$discount', '$subtotal')");
             if (!$insert) throw new Exception("Gagal input sparepart: ".mysqli_error($conn), 500);
         }
 
-        // ✅ Kurangi stok hanya jika bukan pembelian
+        // Kurangi stok
         if ($jenis_transaksi != 'pembelian') {
             $kurangStok = mysqli_query($conn, "UPDATE spareparts 
                                                SET stok_pcs = stok_pcs - $qty 
@@ -80,7 +80,7 @@ try {
 
         $selisih = $qty - $old['qty'];
 
-        // ✅ Jika ada tambahan qty dan bukan pembelian, cek stok
+        // Cek stok jika bertambah
         if ($selisih > 0 && $jenis_transaksi != 'pembelian') {
             $cekStok = mysqli_query($conn, "SELECT stok_pcs FROM spareparts 
                                             WHERE kode_sparepart='$kode_sparepart' 
@@ -91,14 +91,17 @@ try {
             }
         }
 
-        $subtotal = $qty * $harga;
+        $total = $qty * $harga;
+        $nilai_diskon = ($discount / 100) * $total;
+        $subtotal = $total - $nilai_diskon;
+
         $update = mysqli_query($conn, "UPDATE transaksi_detail_sparepart 
             SET kode_sparepart='$kode_sparepart', nama_sparepart='$nama_sparepart', 
-                qty='$qty', harga='$harga', subtotal='$subtotal' 
+                qty='$qty', harga='$harga', discount='$discount', subtotal='$subtotal' 
             WHERE id_detail='$id_detail'");
         if (!$update) throw new Exception("Gagal update sparepart: ".mysqli_error($conn), 500);
 
-        // ✅ Perbarui stok hanya jika bukan pembelian
+        // Update stok
         if ($selisih != 0 && $jenis_transaksi != 'pembelian') {
             $updateStok = mysqli_query($conn, "UPDATE spareparts 
                                                SET stok_pcs = stok_pcs - $selisih 
@@ -120,7 +123,7 @@ try {
         $delete = mysqli_query($conn, "DELETE FROM transaksi_detail_sparepart WHERE id_detail='$id_detail'");
         if (!$delete) throw new Exception("Gagal hapus sparepart: ".mysqli_error($conn), 500);
 
-        // ✅ Kembalikan stok hanya jika bukan pembelian
+        // Kembalikan stok
         if ($jenis_transaksi != 'pembelian') {
             $restoreStok = mysqli_query($conn, "
                 UPDATE spareparts 
