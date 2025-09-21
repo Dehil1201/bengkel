@@ -29,11 +29,15 @@ if ($row = mysqli_fetch_assoc($q_total)) {
 
 // Get transaksi
 $query_laporan = mysqli_query($conn, "
-    SELECT t.no_faktur, t.tanggal, p.nama_pelanggan, u.nama_lengkap, t.total_bayar, t.status, t.total, t.discount,t.uang_bayar, t.kembalian, t.metode_bayar
+    SELECT t.no_faktur, t.tanggal, p.nama_pelanggan, u.nama_lengkap, t.total_bayar, t.status, t.total, t.discount,t.uang_bayar, t.kembalian, t.metode_bayar,
+    GROUP_CONCAT(s.nama_sparepart SEPARATOR ', ') AS daftar_barang
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
+    LEFT JOIN transaksi_detail_sparepart td ON t.no_faktur = td.no_faktur
+    LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
     $where AND id_bengkel = '$id_bengkel'
+    GROUP BY t.no_faktur
     ORDER BY t.tanggal desc
 ");
 
@@ -111,6 +115,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                     <th>Total Bayar</th>
                     <th>Uang Bayar</th>
                     <th>Kembalian</th>
+                    <th>Daftar Barang</th>
                     <th>Detail</th>
                 </tr>
             </thead>
@@ -140,6 +145,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                         <td><?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
                         <td><?= number_format($row['uang_bayar'], 0, ',', '.'); ?></td>
                         <td><?= number_format($row['kembalian'], 0, ',', '.'); ?></td>
+                        <td><?= $row['daftar_barang']; ?></td>
                         <td>
                             <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
                                 <i class="fa fa-eye"></i> Detail

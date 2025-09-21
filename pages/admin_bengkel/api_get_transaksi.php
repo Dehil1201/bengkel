@@ -64,14 +64,14 @@ if ($jenis != '') {
 $sql_transaksi = mysqli_query($conn, "SELECT * FROM transaksi $where_faktur LIMIT 1");
 $transaksi = mysqli_fetch_assoc($sql_transaksi);
 
-if (!$transaksi) {
-    echo json_encode([
-        "status_code" => 404,
-        "message" => "Transaksi tidak ditemukan.",
-        "data" => []
-    ], JSON_PRETTY_PRINT);
-    exit;
-}
+// if (!$transaksi) {
+//     echo json_encode([
+//         "status_code" => 404,
+//         "message" => "Transaksi tidak ditemukan.",
+//         "data" => []
+//     ], JSON_PRETTY_PRINT);
+//     exit;
+// }
 
 // Ambil detail servis
 $sql_detail_servis = mysqli_query($conn, "SELECT * FROM transaksi_detail_servis WHERE no_faktur='$no_faktur'");
