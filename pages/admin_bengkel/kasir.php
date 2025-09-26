@@ -112,36 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
           <h4><b>Daftar Sparepart</b></h4>
           <div class="form-group">
-            <label>Pilih Sparepart [F1]</label>
+          <label>Pilih Sparepart [F1]</label>
             <select class="form-control" id="sparepart-select" style="width:100%;">
-              <option value="">-- Pilih Sparepart --</option>
-              <?php
-              $id_user_sess = $_SESSION['id_user'];
-              $q2 = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user_sess' LIMIT 1");
-              $d2 = mysqli_fetch_assoc($q2);
-              $id_bengkel2 = $d2['bengkel_id'];
-
-              $qsp = mysqli_query($conn, "SELECT 
-                  sp.kode_sparepart, 
-                  sp.nama_sparepart, 
-                  sp.hpp_per_pcs, 
-                  st.nama_satuan as satuan,
-                  hjs.harga_jual
-                  FROM spareparts sp
-                  JOIN harga_jual_sparepart hjs ON sp.id_sparepart = hjs.sparepart_id
-                  JOIN satuan st ON hjs.satuan_jual_id = st.id_satuan
-                  WHERE sp.bengkel_id = '$id_bengkel2'
-                  ORDER BY sp.nama_sparepart ASC
-              ");
-              while($row = mysqli_fetch_assoc($qsp)) {
-                  echo '<option 
-                    value="'.htmlspecialchars($row['kode_sparepart']).'" 
-                    data-harga="'.htmlspecialchars($row['harga_jual']).'" 
-                    data-nama_sparepart="'.htmlspecialchars($row['nama_sparepart']).'" 
-                    data-satuan="'.htmlspecialchars($row['satuan']).'">'
-                    .htmlspecialchars($row['nama_sparepart']).' - '.number_format($row['harga_jual']).'/'.htmlspecialchars($row['satuan']).'</option>';
-              }
-              ?>
+              <!-- opsi akan di-load otomatis lewat ajax -->
             </select>
           </div>
           <div class="form-group">
@@ -295,7 +268,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <script>
 $(document).ready(function() {
-    $('#sparepart-select').select2({ placeholder: "Cari sparepart...", allowClear: true });
+    $('#sparepart-select').select2({
+      placeholder: '-- Pilih Sparepart --',
+      allowClear: true,
+      ajax: {
+        url: 'pages/admin_bengkel/api_get_spareparts.php', // API khusus untuk select2
+        type: 'POST',
+        dataType: 'json',
+        delay: 250,   // biar gak ngegas query tiap ketik
+        data: function(params) {
+          return {
+            search: params.term || "",   // pencarian sparepart
+            page: params.page || 1
+          };
+        },
+        processResults: function(data, params) {
+          params.page = params.page || 1;
+          return {
+            results: data.items, // hasil json
+            pagination: {
+              more: data.more
+            }
+          };
+        },
+        cache: true
+      },
+      templateResult: function(item) {
+        if (item.loading) return item.text;
+        return `${item.nama_sparepart} - Rp${item.harga_jual}/ ${item.satuan}`;
+      },
+      templateSelection: function(item) {
+        return item.nama_sparepart || item.text;
+      }
+    });
+
     $('#pelanggan').select2({ placeholder: "Pilih Pelanggan", allowClear: true, width: "100%" });
 
     function reloadSparepartTable() {
@@ -385,9 +391,9 @@ $(document).ready(function() {
 
     $("#btn-add-sparepart").on("click", function() {
         let kode = $("#sparepart-select").val();
-        let nama = $("#sparepart-select option:selected").data("nama_sparepart");
-        let harga = parseInt($("#sparepart-select option:selected").data("harga"));
-        let satuan = $("#sparepart-select option:selected").data("satuan");
+        let nama = $('#sparepart-select').select2('data')[0].nama_sparepart;
+        let harga = parseInt($('#sparepart-select').select2('data')[0].harga_jual);
+        let satuan = $('#sparepart-select').select2('data')[0].satuan;
         let qty = parseInt($("#jumlah-barang-input").val());
 
         if (!kode) {

@@ -104,62 +104,6 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                                 <th>Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php
-                            $no = 1;
-                            $sql_where = "WHERE sp.bengkel_id IN ($bengkel_ids_string)";
-                            if ($selected_bengkel_id) {
-                                $sql_where = "WHERE sp.bengkel_id = '$selected_bengkel_id'";
-                            }
-                            $query_spareparts = mysqli_query($conn, "SELECT sp.*, b.nama_bengkel, k.nama_kategori, m.nama_merk, s.nama_satuan AS nama_satuan_beli FROM spareparts sp JOIN bengkels b ON sp.bengkel_id = b.id_bengkel JOIN kategori_sparepart k ON sp.kategori_id = k.id_kategori JOIN merk_sparepart m ON sp.merk_id = m.id_merk JOIN satuan s ON sp.satuan_beli_id = s.id_satuan $sql_where ORDER BY sp.nama_sparepart ASC");
-                            if (mysqli_num_rows($query_spareparts) > 0) {
-                                while ($data_part = mysqli_fetch_assoc($query_spareparts)) {
-                                    $query_harga_jual = mysqli_query($conn, "SELECT hj.*, s.nama_satuan FROM harga_jual_sparepart hj JOIN satuan s ON hj.satuan_jual_id = s.id_satuan WHERE hj.sparepart_id = '{$data_part['id_sparepart']}' ORDER BY hj.tipe_harga ASC");
-                                    $harga_jual_data = [];
-                                    while ($hj_row = mysqli_fetch_assoc($query_harga_jual)) {
-                                        $harga_jual_data[] = $hj_row;
-                                    }
-                            ?>
-                                    <tr>
-                                        <td><?= $no++; ?></td>
-                                        <td><?= htmlspecialchars($data_part['kode_sparepart']); ?></td>
-                                        <td><?= htmlspecialchars($data_part['nama_sparepart']); ?></td>
-                                        <td><?= htmlspecialchars($data_part['nama_merk']); ?></td>
-                                        <td><?= htmlspecialchars($data_part['nama_kategori']); ?></td>
-                                        <td><?= htmlspecialchars($data_part['stok_pcs']); ?></td>
-                                        <td><?= "Rp " . number_format($data_part['harga_beli'], 0, ',', '.'); ?></td>
-                                        <td>
-                                            <?php foreach ($harga_jual_data as $hj): ?>
-                                                <p><strong><?= htmlspecialchars($hj['nama_satuan']); ?>:</strong> Rp <?= number_format($hj['harga_jual'], 0, ',', '.'); ?></p>
-                                            <?php endforeach; ?>
-                                        </td>
-                                        <td><?= htmlspecialchars($data_part['nama_bengkel']); ?></td>
-                                        <td>
-                                            <a href="#" class="btn btn-warning btn-xs btn-edit"
-                                                data-id="<?= $data_part['id_sparepart']; ?>"
-                                                data-kode="<?= htmlspecialchars($data_part['kode_sparepart']); ?>"
-                                                data-nama="<?= htmlspecialchars($data_part['nama_sparepart']); ?>"
-                                                data-kategori-id="<?= htmlspecialchars($data_part['kategori_id']); ?>"
-                                                data-merk-id="<?= htmlspecialchars($data_part['merk_id']); ?>"
-                                                data-lokasi-rak="<?= htmlspecialchars($data_part['lokasi_rak']); ?>"
-                                                data-harga-beli="<?= htmlspecialchars($data_part['harga_beli']); ?>"
-                                                data-satuan-beli-id="<?= htmlspecialchars($data_part['satuan_beli_id']); ?>"
-                                                data-isi-per-pcs-beli="<?= htmlspecialchars($data_part['isi_per_pcs_beli']); ?>"
-                                                data-stok-pcs="<?= htmlspecialchars($data_part['stok_pcs']); ?>"
-                                                data-stok-minimal="<?= htmlspecialchars($data_part['stok_minimal']); ?>"
-                                                data-bengkel-id="<?= htmlspecialchars($data_part['bengkel_id']); ?>"
-                                                data-harga-jual='<?= json_encode($harga_jual_data); ?>'>
-                                                <i class="fa fa-pencil"></i> Edit
-                                            </a>
-                                            <button type="button" class="btn btn-danger btn-xs btn-hapus" data-id="<?= $data_part['id_sparepart']; ?>">
-                                                <i class="fa fa-trash"></i> Hapus
-                                            </button>
-                                        </td>
-                                    </tr>
-                            <?php
-                                }
-                            } ?>
-                        </tbody>
                     </table>
                 </div>
             </div>
@@ -345,7 +289,27 @@ foreach ($master_data_config as $type => $config): ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
-    $('#dataTable').DataTable();
+    $('#dataTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: 'pages/admin_bengkel/get_sparepart_list.php',
+            type: 'GET'
+        },
+        columns: [
+            { title: "No" },
+            { title: "Kode" },
+            { title: "Nama" },
+            { title: "Merk" },
+            { title: "Kategori" },
+            { title: "Stok" },
+            { title: "Harga Beli" },
+            { title: "Harga Jual" },
+            { title: "Bengkel" },
+            { title: "Aksi" }
+        ]
+    });
+
     
     // Fungsi untuk memuat ulang tabel spare part
     function loadSpareParts() {
