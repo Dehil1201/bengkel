@@ -97,7 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $id_teknisi = sanitize_input($_POST['id_teknisi']);
 
         // Pastikan teknisi milik bengkel yang bisa diakses user
-        $check_query = mysqli_query($conn, "SELECT bengkel_id FROM teknisi WHERE id_teknisi = '$id_teknisi'");
+        $check_query = mysqli_query($conn, "SELECT bengkel_id FROM teknisis WHERE id_teknisi = '$id_teknisi'");
         if ($check_row = mysqli_fetch_assoc($check_query)) {
             if (!in_array($check_row['bengkel_id'], $accessible_bengkel_ids)) {
                 header("Location: $current_page&status=error&message=Akses ditolak. Teknisi tidak valid.");

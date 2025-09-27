@@ -19,8 +19,8 @@ $query = "SELECT
             pl.nama_pelanggan,
             t.id_pelanggan
           FROM piutang p
-          LEFT JOIN transaksi t ON p.no_faktur = t.no_faktur
-          LEFT JOIN pelanggans pl ON t.id_pelanggan = pl.id_pelanggan";
+          JOIN transaksi t ON p.no_faktur = t.no_faktur
+          JOIN pelanggans pl ON t.id_pelanggan = pl.id_pelanggan";
 
 // Filter dinamis
 $where = [];

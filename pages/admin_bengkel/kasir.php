@@ -302,7 +302,64 @@ $(document).ready(function() {
       }
     });
 
+    
+    // shortcut keyboard
+    $(document).on('keydown', function(e) {
+        // F1 → Sparepart
+        if (e.key === "F1") {
+            e.preventDefault(); // cegah browser help
+            $('#sparepart-select').select2('open');
+        }
+    });
+
     $('#pelanggan').select2({ placeholder: "Pilih Pelanggan", allowClear: true, width: "100%" });
+
+    $("#table-sparepart").on("change", ".input-qty", function() {
+        let id_detail = $(this).data("id");
+        let qty = $(this).val();
+
+        $.ajax({
+            url: "pages/admin_bengkel/api_update_qty_sparepart.php",
+            type: "POST",
+            data: { id_detail: id_detail, qty: qty },
+            success: function(res) {
+                // reload biar subtotal ikut update
+                reloadSparepartTable();
+                sumTotal();
+            },
+            error: function(err) {
+                alert("Gagal update qty");
+            }
+        });
+
+    });
+    $("#table-sparepart").on("click", ".btn-delete-sparepart", function() {
+        let id_detail = $(this).data("id");
+
+        if (!confirm("Yakin ingin menghapus sparepart ini?")) return;
+
+        $.ajax({
+            url: "pages/admin_bengkel/api_delete_sparepart.php",
+            type: "POST",
+            data: { id_detail: id_detail },
+            success: function(res) {
+                try {
+                    let json = JSON.parse(res);
+                    if (json.status === "success") {
+                        reloadSparepartTable(); // refresh tabel setelah hapus
+                        sumTotal();
+                    } else {
+                        alert("Gagal hapus: " + json.message);
+                    }
+                } catch(e) {
+                    alert("Response error: " + res);
+                }
+            },
+            error: function(err) {
+                alert("Terjadi error saat hapus sparepart");
+            }
+        });
+    });
 
     function reloadSparepartTable() {
         let noFaktur = $("#noFakturText").val();
@@ -331,7 +388,19 @@ $(document).ready(function() {
                       }).format(data);
                   }
                 },
-                { data: "qty", title: "Qty" },
+                { 
+                  data: "qty", 
+                  title: "Qty",
+                  render: function(data, type, row) {
+                      return `
+                        <input type="number" 
+                              class="form-control form-control-sm input-qty" 
+                              data-id="${row.id_detail}" 
+                              value="${data}" 
+                              min="1" style="width:80px">
+                      `;
+                  }
+                },
                 { data: "satuan", title: "Satuan" },
                 { 
                   data: "subtotal", 

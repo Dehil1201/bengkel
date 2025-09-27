@@ -118,29 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="form-group">
                         <label>Pilih Sparepart [F1]</label>
                         <select class="form-control" id="sparepart-select" style="width:100%;">
-                            <option value="">-- Pilih Sparepart --</option>
-                            <?php
-                            $qsp = mysqli_query($conn, "SELECT 
-                            sp.kode_sparepart, 
-                            sp.nama_sparepart, 
-                            sp.hpp_per_pcs, 
-                            st.nama_satuan as satuan,
-                            hjs.harga_jual
-                                FROM spareparts sp
-                                JOIN harga_jual_sparepart hjs ON sp.id_sparepart = hjs.sparepart_id
-                                JOIN satuan st ON hjs.satuan_jual_id = st.id_satuan
-                                WHERE sp.bengkel_id = '$id_bengkel'
-                                ORDER BY sp.nama_sparepart ASC
-                                ");
-                            while($row = mysqli_fetch_assoc($qsp)) {
-                                echo '<option 
-                                value="'.$row['kode_sparepart'].'" 
-                                data-harga="'.$row['harga_jual'].'"'.'" 
-                                data-nama_sparepart="'.$row['nama_sparepart'].'"'.'" 
-                                data-satuan="'.$row['satuan'].'">'
-                                .$row['nama_sparepart'].'-'.number_format($row['harga_jual']).'/'.$row['satuan'].'</option>';
-                            }
-                            ?>
                         </select>
                     </div>
                     <div class="form-group">
@@ -386,11 +363,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 $(document).ready(function() {
-    // aktifkan select2
-    $('#sparepart-select').select2({
-        placeholder: "Cari sparepart...",
-        allowClear: true
-    });
 
     $('#servis-select').select2({
         placeholder: "Cari jenis servis...",
@@ -545,6 +517,55 @@ $(document).ready(function() {
     // Trigger saat input berubah
     $("#diskon, #uangBayar").on("input", hitungTransaksi);
 
+    
+    $("#table-sparepart").on("change", ".input-qty", function() {
+        let id_detail = $(this).data("id");
+        let qty = $(this).val();
+
+        $.ajax({
+            url: "pages/admin_bengkel/api_update_qty_sparepart.php",
+            type: "POST",
+            data: { id_detail: id_detail, qty: qty },
+            success: function(res) {
+                // reload biar subtotal ikut update
+                reloadSparepartTable();
+                sumTotal();
+            },
+            error: function(err) {
+                alert("Gagal update qty");
+            }
+        });
+
+    });
+
+    $("#table-sparepart").on("click", ".btn-delete-sparepart", function() {
+        let id_detail = $(this).data("id");
+
+        if (!confirm("Yakin ingin menghapus sparepart ini?")) return;
+
+        $.ajax({
+            url: "pages/admin_bengkel/api_delete_sparepart.php",
+            type: "POST",
+            data: { id_detail: id_detail },
+            success: function(res) {
+                try {
+                    let json = JSON.parse(res);
+                    if (json.status === "success") {
+                        reloadSparepartTable(); // refresh tabel setelah hapus
+                        sumTotal();
+                    } else {
+                        alert("Gagal hapus: " + json.message);
+                    }
+                } catch(e) {
+                    alert("Response error: " + res);
+                }
+            },
+            error: function(err) {
+                alert("Terjadi error saat hapus sparepart");
+            }
+        });
+    });
+
     // Submit form selesai transaksi
     $("#formSelesaiTransaksi").on("submit", function(e){
         e.preventDefault();
@@ -592,14 +613,48 @@ $(document).ready(function() {
             $('#servis-select').select2('open');
         }
     });
+
+    $('#sparepart-select').select2({
+      placeholder: '-- Pilih Sparepart --',
+      allowClear: true,
+      ajax: {
+        url: 'pages/admin_bengkel/api_get_spareparts.php', // API khusus untuk select2
+        type: 'POST',
+        dataType: 'json',
+        delay: 250,   // biar gak ngegas query tiap ketik
+        data: function(params) {
+          return {
+            search: params.term || "",   // pencarian sparepart
+            page: params.page || 1
+          };
+        },
+        processResults: function(data, params) {
+          params.page = params.page || 1;
+          return {
+            results: data.items, // hasil json
+            pagination: {
+              more: data.more
+            }
+          };
+        },
+        cache: true
+      },
+      templateResult: function(item) {
+        if (item.loading) return item.text;
+        return `${item.nama_sparepart} - Rp${item.harga_jual}/ ${item.satuan}`;
+      },
+      templateSelection: function(item) {
+        return item.nama_sparepart || item.text;
+      }
+    });
     
     $("#btn-add-sparepart").on("click", function() {
         let noFaktur = $("#noFakturText").val();
         let kode = $("#sparepart-select").val();
-        let nama = $("#sparepart-select option:selected").data("nama_sparepart");
-        let harga = $("#sparepart-select option:selected").data("harga");
-        let satuan = $("#sparepart-select option:selected").data("satuan");
-        let qty = $("#jumlah-barang-input").val();
+        let nama = $('#sparepart-select').select2('data')[0].nama_sparepart;
+        let harga = parseInt($('#sparepart-select').select2('data')[0].harga_jual);
+        let satuan = $('#sparepart-select').select2('data')[0].satuan;
+        let qty = parseInt($("#jumlah-barang-input").val());
 
         if(kode == "") {
             alert("Pilih sparepart terlebih dahulu!");
@@ -678,7 +733,19 @@ $(document).ready(function() {
                         }).format(data);
                     }
                 },
-                { data: "qty", title: "Qty" },
+                { 
+                  data: "qty", 
+                  title: "Qty",
+                  render: function(data, type, row) {
+                      return `
+                        <input type="number" 
+                              class="form-control form-control-sm input-qty" 
+                              data-id="${row.id_detail}" 
+                              value="${data}" 
+                              min="1" style="width:80px">
+                      `;
+                  }
+                },
                 { data: "satuan", title: "Satuan" },
                 { 
                     data: "subtotal", 
