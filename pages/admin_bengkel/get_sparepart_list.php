@@ -41,7 +41,13 @@ $sql = "
            b.nama_bengkel, 
            k.nama_kategori, 
            m.nama_merk, 
-           s.nama_satuan AS nama_satuan_beli
+           s.nama_satuan AS nama_satuan_beli,
+           k.id_kategori,
+           m.id_merk,
+           sp.lokasi_rak,
+           sp.satuan_beli_id,
+           sp.isi_per_pcs_beli,
+           sp.stok_minimal
     FROM spareparts sp
     JOIN bengkels b ON sp.bengkel_id = b.id_bengkel
     JOIN kategori_sparepart k ON sp.kategori_id = k.id_kategori
@@ -90,7 +96,8 @@ $no = $start + 1;
 while ($row = mysqli_fetch_assoc($query)) {
     // ambil harga jual per satuan
     $hargaRows = mysqli_query($conn, "
-        SELECT hj.harga_jual, st.nama_satuan
+        SELECT hj.tipe_harga, hj.persentase_jual, hj.harga_jual,
+            hj.satuan_jual_id, st.nama_satuan, hj.isi_per_pcs_jual
         FROM harga_jual_sparepart hj
         JOIN satuan st ON hj.satuan_jual_id = st.id_satuan
         WHERE hj.sparepart_id = '{$row['id_sparepart']}'
@@ -98,30 +105,43 @@ while ($row = mysqli_fetch_assoc($query)) {
     ");
     $hargaList = [];
     while ($hj = mysqli_fetch_assoc($hargaRows)) {
-        $hargaList[] = "<p><strong>{$hj['nama_satuan']}:</strong> Rp " . number_format($hj['harga_jual'],0,',','.') . "</p>";
+        $hargaListHtml[] = "<p><strong>{$hj['nama_satuan']}:</strong> Rp " .
+                        number_format($hj['harga_jual'],0,',','.') . "</p>";
+
+        // untuk JS (edit modal)
+        $hargaListRaw[] = [
+            'tipe_harga'     => (int)$hj['tipe_harga'],
+            'persentase_jual'=> (float)$hj['persentase_jual'],
+            'harga_jual'     => (float)$hj['harga_jual'],
+            'satuan_jual_id' => (int)$hj['satuan_jual_id'],
+            'isi_per_pcs_jual' => (int)$hj['isi_per_pcs_jual']
+        ];
+    }
+    $lokasi_rak = '';
+    if ($row['lokasi_rak'] == 'null') {
+        $lokasi_rak = $lokasi_rak;
+    }else {
+        $lokasi_rak = $row['lokasi_rak'];
     }
 
-    // Tombol aksi
-    $aksi = '
-        <a href="#" class="btn btn-warning btn-xs btn-edit" data-id="'.$row['id_sparepart'].'">
-            <i class="fa fa-pencil"></i> Edit
-        </a>
-        <button type="button" class="btn btn-danger btn-xs btn-hapus" data-id="'.$row['id_sparepart'].'">
-            <i class="fa fa-trash"></i> Hapus
-        </button>
-    ';
-
     $data[] = [
-        $no++,
-        htmlspecialchars($row['kode_sparepart']),
-        htmlspecialchars($row['nama_sparepart']),
-        htmlspecialchars($row['nama_merk']),
-        htmlspecialchars($row['nama_kategori']),
-        htmlspecialchars($row['stok_pcs']),
-        "Rp " . number_format($row['harga_beli'],0,',','.'),
-        implode("", $hargaList),
-        htmlspecialchars($row['nama_bengkel']),
-        $aksi
+        "no"                 => $no++,
+        "id_sparepart"      => $row['id_sparepart'],
+        "kode_sparepart"    => htmlspecialchars($row['kode_sparepart']),
+        "nama_sparepart"    => htmlspecialchars($row['nama_sparepart']),
+        "nama_merk"      => htmlspecialchars($row['nama_merk']),
+        "nama_kategori"  => htmlspecialchars($row['nama_kategori']),
+        "stok_pcs"       => htmlspecialchars($row['stok_pcs']),
+        "harga_beli"     => $row['harga_beli'],
+        "harga_jual"     => implode("", $hargaListHtml),   // untuk display tabel
+        "harga_jual_raw" => $hargaListRaw, 
+        "nama_bengkel"   => htmlspecialchars($row['nama_bengkel']),
+        "id_kategori"       => $row['id_kategori'],
+        "id_merk"       => $row['id_merk'],
+        "lokasi_rak"    => $lokasi_rak,
+        "satuan_beli_id"     => $row['satuan_beli_id'],
+        "isi_per_pcs_beli"     => $row['isi_per_pcs_beli'],
+        "stok_minimal"     => $row['stok_minimal'],
     ];
 }
 

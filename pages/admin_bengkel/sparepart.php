@@ -297,16 +297,57 @@ $(document).ready(function() {
             type: 'GET'
         },
         columns: [
-            { title: "No" },
-            { title: "Kode" },
-            { title: "Nama" },
-            { title: "Merk" },
-            { title: "Kategori" },
-            { title: "Stok" },
-            { title: "Harga Beli" },
-            { title: "Harga Jual" },
-            { title: "Bengkel" },
-            { title: "Aksi" }
+            {   
+                title: "No",
+                data : 'no'
+            },
+            { 
+                title: "Kode",
+                data: 'kode_sparepart'
+            },
+            { 
+                title: "Nama",
+                data: 'nama_sparepart' 
+            },
+            { 
+                title: "Merk",
+                data: "nama_merk"
+            },
+            { 
+                title: "Kategori",
+                data: "nama_kategori"
+            },
+            { 
+                title: "Stok PCS",
+                data: "stok_pcs"
+            },
+            { 
+                title: "Harga Beli",
+                data: "harga_beli"
+            },
+            { 
+                title: "Harga Jual",
+                data: "harga_jual"
+            },
+            { 
+                title: "Nama Bengkel",
+                data: "nama_bengkel"
+            },
+            { 
+                title: "Aksi",
+                data: null,
+                render: function (data,type,row) {
+                    return `
+                    <a href="#" class="btn btn-warning btn-xs btn-edit">
+                        <i class="fa fa-pencil"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-danger btn-xs btn-hapus" data-id="${row.id_sparepart}">
+                        <i class="fa fa-trash"></i> Hapus
+                    </button>
+                    `
+                }
+            }
+            
         ]
     });
 
@@ -330,26 +371,34 @@ $(document).ready(function() {
         $('button[name="edit_sparepart"]').hide();
         $('#kode_sparepart').val('');
     });
+    const table = $('#dataTable').DataTable();
 
-    // Tangani event klik tombol edit
-    $(document).on('click', '.btn-edit', function() {
-        const data = $(this).data();
+    $('#dataTable tbody').on('click', '.btn-edit', function (e) {
+        e.preventDefault();
+
+        const data = table.row($(this).closest('tr')).data();
+        console.log(data);
+
         $('#myModalLabel').text('Edit Spare Part');
-        $('#id_sparepart_edit').val(data.id);
-        $('#kode_sparepart').val(data.kode);
-        $('#nama_sparepart').val(data.nama);
-        $('#kategori_id').val(data.kategoriId);
-        $('#merk_id').val(data.merkId);
-        $('#lokasi_rak').val(data.lokasiRak);
-        $('#harga_beli').val(data.hargaBeli);
-        $('#satuan_beli_id').val(data.satuanBeliId);
-        $('#isi_per_pcs_beli').val(data.isiPerPcsBeli);
-        $('#stok_pcs').val(data.stokPcs);
-        $('#stok_minimal').val(data.stokMinimal);
-        $('#form_bengkel_id').val(data.bengkelId);
+        $('#id_sparepart_edit').val(data.id_sparepart);
+        $('#kode_sparepart').val(data.kode_sparepart);
+        $('#nama_sparepart').val(data.nama_sparepart);
+        $('#kategori_id').val(data.id_kategori);
+        $('#merk_id').val(data.id_merk);
+        $('#lokasi_rak').val(data.lokasi_rak);
+        $('#harga_beli').val(data.harga_beli);
+        $('#satuan_beli_id').val(data.satuan_beli_id);
+        $('#isi_per_pcs_beli').val(data.isi_per_pcs_beli);
+        $('#stok_pcs').val(data.stok_pcs);
+        $('#stok_minimal').val(data.stok_minimal);
+        $('#form_bengkel_id').val(data.bengkel_id);
+
         $('button[name="tambah_sparepart"]').hide();
         $('button[name="edit_sparepart"]').show();
-        const hargaJualData = data.hargaJual || [];
+
+        // langsung assign karena backend sudah array, tidak perlu JSON.parse
+        let hargaJualData = data.harga_jual_raw || [];
+
         for (let i = 1; i <= 4; i++) {
             const hj = hargaJualData.find(item => item.tipe_harga == i);
             $(`[name="persentase_jual_${i}"]`).val(hj ? hj.persentase_jual : '');
@@ -357,8 +406,11 @@ $(document).ready(function() {
             $(`[name="satuan_jual_${i}"]`).val(hj ? hj.satuan_jual_id : '');
             $(`[name="isi_per_pcs_jual_${i}"]`).val(hj ? hj.isi_per_pcs_jual : '');
         }
+
         $('#modalTambahSparepart').modal('show');
     });
+
+
 
     // --- Logika Form Spare Part (AJAX) ---
     $('#formSparepart').on('submit', function(e) {
