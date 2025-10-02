@@ -22,7 +22,7 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
     if (!isset($_SESSION['role'])) {
         $query_user_role = mysqli_query($conn, "SELECT role FROM users WHERE email = '$_SESSION[email]'");
         $user_data_from_db = mysqli_fetch_array($query_user_role);
-        $_SESSION['role'] = $user_data_from_db['role'] ?? 'admin';
+        $_SESSION['role'] = $user_data_from_db['role'] ?? 'administrator';
     }
 
     $current_user_role = $_SESSION['role'];

@@ -16,6 +16,6 @@
     }
 
 
-    #error_reporting(0); // Jika ingin menonaktifkan error reporting
+    error_reporting(0); // Jika ingin menonaktifkan error reporting
     
 ?>
