@@ -191,7 +191,8 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 <script>
 $(document).ready(function () {
     $('#tableLaporan').DataTable({
-        order: [[1, 'desc']]
+        order: [[1, 'desc']],
+        scrollY: true,
     });
 
     $('.btn-detail').on('click', function () {

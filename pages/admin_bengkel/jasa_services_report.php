@@ -201,6 +201,7 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
+                <h3>Detail Sparepart</h3>
                 <table id="table-sparepart" class="table table-bordered table-striped">
                     <thead>
                         <tr>
@@ -214,6 +215,17 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                     </thead>
                     <tbody></tbody>
                 </table>
+                <h3>Detail Servis</h3>
+                <table class="table table-striped" id="table-servis">
+                    <thead>
+                        <tr>
+                            <th>Nama Servis</th>
+                            <th>Biaya</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart-servis-body">
+                    </tbody>
+                </table>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-default" data-dismiss="modal">Tutup</button>
@@ -225,12 +237,29 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
 <script>
 $(document).ready(function () {
     $('#tableLaporan').DataTable({
-        order: [[1, 'desc']]
+        order: [[1, 'desc']],
+        scrollY: true
     });
 
     $('.btn-detail').on('click', function () {
         const faktur = $(this).data('faktur');
         $('#modalDetail').modal('show');
+
+        $('#table-servis').DataTable({
+            destroy: true,
+            ajax: {
+                url: 'pages/admin_bengkel/api_get_transaksi.php',
+                type: 'GET',
+                data: { no_faktur: faktur },
+                dataSrc: function (json) {
+                    return json.data.detail_servis || [];
+                }
+            },
+            columns: [
+                { data: 'nama_servis' },
+                { data: 'biaya' }
+            ]
+        });
 
         $('#table-sparepart').DataTable({
             destroy: true,
