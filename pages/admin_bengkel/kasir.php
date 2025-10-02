@@ -186,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
               <div class="form-group">
                 <label for="dateTanggal">Tanggal</label>
-                <input type="date" id="dateTanggal" name="tanggal" class="form-control" readonly value="<?= date("Y-m-d") ?>">
+                <input type="date" id="dateTanggal" name="tanggal" class="form-control" value="<?= date("Y-m-d") ?>">
               </div>
 
               <div class="form-group">
