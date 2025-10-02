@@ -410,6 +410,14 @@ $(document).ready(function() {
         $('#modalTambahSparepart').modal('show');
     });
 
+    $(document).on('input', '.persentase-jual', function () {
+        var index = $(this).data('index');
+        var persen = parseFloat($(this).val()) || 0;
+        var hargaBeli = parseFloat($('#harga_beli').val()) || 0;
+        
+        var hargaJual = hargaBeli + (hargaBeli * persen / 100);
+        $('.harga-jual[data-index="' + index + '"]').val(hargaJual.toFixed(2));
+    });
 
 
     // --- Logika Form Spare Part (AJAX) ---
