@@ -59,12 +59,26 @@ $sql = "
 // Search
 if (!empty($searchValue)) {
     $searchValue = mysqli_real_escape_string($conn, $searchValue);
-    $sql .= " AND (
-        sp.nama_sparepart LIKE '%$searchValue%' OR
-        sp.kode_sparepart LIKE '%$searchValue%' OR
-        m.nama_merk LIKE '%$searchValue%' OR
-        k.nama_kategori LIKE '%$searchValue%'
-    ) ";
+    $keywords = explode(' ', $searchValue);
+
+    $searchConditions = [];
+    foreach ($keywords as $word) {
+        $word = trim($word);
+        if ($word !== '') {
+            $searchConditions[] = "
+                (
+                    sp.nama_sparepart LIKE '%$word%' OR
+                    sp.kode_sparepart LIKE '%$word%' OR
+                    m.nama_merk LIKE '%$word%' OR
+                    k.nama_kategori LIKE '%$word%'
+                )
+            ";
+        }
+    }
+
+    if (!empty($searchConditions)) {
+        $sql .= ' AND ' . implode(' AND ', $searchConditions);
+    }
 }
 
 // Hitung total setelah filter
