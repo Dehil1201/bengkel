@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 ob_start();
 // Pastikan session_start() sudah ada di awal script ini atau di file 'inc/koneksi.php'
 if (session_status() == PHP_SESSION_NONE) {
