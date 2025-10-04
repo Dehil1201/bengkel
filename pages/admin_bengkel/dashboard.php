@@ -33,7 +33,6 @@ $laba_bulan_ini = mysqli_fetch_assoc(mysqli_query($conn, "
 // --- 2. Grafik Omset & Laba per 12 bulan terakhir (1 query saja) ---
 $sql_bulanan = mysqli_query($conn, "
 SELECT 
-  DATE_FORMAT(t.tanggal, '%b %Y') AS bulan,
   YEAR(t.tanggal) AS thn,
   MONTH(t.tanggal) AS bln,
   SUM(t.total) AS omset,
@@ -45,6 +44,7 @@ WHERE t.tanggal >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 11 MONTH), '%Y-%m-01
   AND t.id_bengkel = '$id_bengkel'
 GROUP BY YEAR(t.tanggal), MONTH(t.tanggal)
 ORDER BY YEAR(t.tanggal), MONTH(t.tanggal)
+
 
 
 ");
