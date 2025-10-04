@@ -53,7 +53,7 @@ $labels_penjualan = [];
 $data_omset_per_bulan = [];
 $data_laba_per_bulan = [];
 while ($row = mysqli_fetch_assoc($sql_bulanan)) {
-    $labels_penjualan[] = $row['bulan'];
+    $labels_penjualan[] = date('M Y', strtotime("{$row['thn']}-{$row['bln']}-01"));
     $data_omset_per_bulan[] = (float)($row['omset'] ?? 0);
     $data_laba_per_bulan[]  = (float)($row['laba'] ?? 0);
 }
