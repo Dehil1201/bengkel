@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 ob_start();
 // Pastikan session_start() sudah ada di awal script ini atau di file 'inc/koneksi.php'
 if (session_status() == PHP_SESSION_NONE) {
@@ -15,6 +12,10 @@ require_once 'inc/functions.php';
 include 'plugins/php_reader/excel_reader2.php';
 $page = $_GET['page'] ?? 'default_page'; // Menggunakan operator null coalescing untuk menghindari error jika 'page' tidak disetel
 $breadcrumb = str_replace("_", " ", $page);
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // Cek apakah pengguna sudah login
 if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
