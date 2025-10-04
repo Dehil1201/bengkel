@@ -18,7 +18,7 @@ $sql = "
   FROM spareparts sp
   JOIN harga_jual_sparepart hjs ON sp.id_sparepart = hjs.sparepart_id
   JOIN satuan st ON hjs.satuan_jual_id = st.id_satuan
-  WHERE sp.bengkel_id = ?
+  WHERE sp.bengkel_id = ? AND hjs.harga_jual > 0
 ";
 
 $params = [$id_bengkel];
@@ -32,7 +32,7 @@ if (!empty($search)) {
   $types .= "ss";
 }
 
-$sql .= " ORDER BY sp.nama_sparepart ASC LIMIT ? OFFSET ?";
+$sql .= " ORDER BY sp.nama_sparepart, harga_jual ASC LIMIT ? OFFSET ?";
 $params[] = $limit;
 $params[] = $offset;
 $types .= "ii";
