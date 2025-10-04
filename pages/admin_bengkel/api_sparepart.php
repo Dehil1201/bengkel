@@ -42,62 +42,109 @@ if (isset($_POST['aksi'])) {
             $kategori_id = sanitize_input($_POST['kategori_id']);
             $merk_id = sanitize_input($_POST['merk_id']);
             $lokasi_rak = sanitize_input($_POST['lokasi_rak']);
-            $harga_beli = (float)sanitize_input($_POST['harga_beli']);
+            $harga_beli = (float)str_replace(',', '', $_POST['harga_beli']);
             $satuan_beli_id = sanitize_input($_POST['satuan_beli_id']);
-            $isi_per_pcs_beli = (int)sanitize_input($_POST['isi_per_pcs_beli']);
-            $stok_pcs = (int)sanitize_input($_POST['stok_pcs']);
-            $stok_minimal = (int)sanitize_input($_POST['stok_minimal']);
-            $bengkel_id = sanitize_input($_POST['bengkel_id']); // Ambil dari input hidden
+            $isi_per_pcs_beli = (int)($_POST['isi_per_pcs_beli'] ?? 1);
+            $stok_pcs = (int)$_POST['stok_pcs'];
+            $stok_minimal = (int)$_POST['stok_minimal'];
+            $bengkel_id = sanitize_input($_POST['bengkel_id']);
 
-            if (!in_array($bengkel_id, $accessible_bengkel_ids)) { throw new Exception("Akses ditolak. Bengkel tidak valid."); }
+            if (!in_array($bengkel_id, $accessible_bengkel_ids)) {
+                throw new Exception("Akses ditolak. Bengkel tidak valid.");
+            }
+
             $hpp_per_pcs = $isi_per_pcs_beli > 0 ? $harga_beli / $isi_per_pcs_beli : 0;
 
             if ($aksi == 'tambah') {
                 $kode_sparepart = sanitize_input($_POST['kode_sparepart']);
-                // Cek jika kode spare part kosong, maka buat otomatis
                 if (empty($kode_sparepart)) {
                     $kode_sparepart = 'SP-' . time();
                 }
 
-                $query = "INSERT INTO spareparts (kode_sparepart, nama_sparepart, kategori_id, merk_id, lokasi_rak, harga_beli, satuan_beli_id, isi_per_pcs_beli, hpp_per_pcs, stok_pcs, stok_minimal, bengkel_id) VALUES ('$kode_sparepart', '$nama_sparepart', '$kategori_id', '$merk_id', '$lokasi_rak', '$harga_beli', '$satuan_beli_id', '$isi_per_pcs_beli', '$hpp_per_pcs', '$stok_pcs', '$stok_minimal', '$bengkel_id')";
-                if (!mysqli_query($conn, $query)) { throw new Exception(mysqli_error($conn)); }
+                $query = "INSERT INTO spareparts 
+                    (kode_sparepart, nama_sparepart, kategori_id, merk_id, lokasi_rak, harga_beli, satuan_beli_id, isi_per_pcs_beli, hpp_per_pcs, stok_pcs, stok_minimal, bengkel_id)
+                    VALUES
+                    ('$kode_sparepart', '$nama_sparepart', '$kategori_id', '$merk_id', '$lokasi_rak', '$harga_beli', '$satuan_beli_id', '$isi_per_pcs_beli', '$hpp_per_pcs', '$stok_pcs', '$stok_minimal', '$bengkel_id')";
+                if (!mysqli_query($conn, $query)) {
+                    throw new Exception(mysqli_error($conn));
+                }
+
                 $last_id = mysqli_insert_id($conn);
                 $response = ['status' => 'success', 'message' => 'Spare part berhasil ditambahkan.'];
-            } else if ($aksi == 'edit') {
+
+            } elseif ($aksi == 'edit') {
                 $id_sparepart = sanitize_input($_POST['id_sparepart']);
                 $kode_sparepart = sanitize_input($_POST['kode_sparepart']);
-                $query = "UPDATE spareparts SET kode_sparepart = '$kode_sparepart', nama_sparepart = '$nama_sparepart', kategori_id = '$kategori_id', merk_id = '$merk_id', lokasi_rak = '$lokasi_rak', harga_beli = '$harga_beli', satuan_beli_id = '$satuan_beli_id', isi_per_pcs_beli = '$isi_per_pcs_beli', hpp_per_pcs = '$hpp_per_pcs', stok_pcs = '$stok_pcs', stok_minimal = '$stok_minimal', bengkel_id = '$bengkel_id' WHERE id_sparepart = '$id_sparepart' AND bengkel_id IN ('" . implode("','", $accessible_bengkel_ids) . "')";
-                if (!mysqli_query($conn, $query)) { throw new Exception(mysqli_error($conn)); }
+
+                $query = "UPDATE spareparts SET 
+                    kode_sparepart = '$kode_sparepart',
+                    nama_sparepart = '$nama_sparepart',
+                    kategori_id = '$kategori_id',
+                    merk_id = '$merk_id',
+                    lokasi_rak = '$lokasi_rak',
+                    harga_beli = '$harga_beli',
+                    satuan_beli_id = '$satuan_beli_id',
+                    isi_per_pcs_beli = '$isi_per_pcs_beli',
+                    hpp_per_pcs = '$hpp_per_pcs',
+                    stok_pcs = '$stok_pcs',
+                    stok_minimal = '$stok_minimal',
+                    bengkel_id = '$bengkel_id'
+                    WHERE id_sparepart = '$id_sparepart' AND bengkel_id IN ('" . implode("','", $accessible_bengkel_ids) . "')";
+
+                if (!mysqli_query($conn, $query)) {
+                    throw new Exception(mysqli_error($conn));
+                }
+
                 $last_id = $id_sparepart;
-                // Hapus harga jual yang lama sebelum menambahkan yang baru
-                if (!mysqli_query($conn, "DELETE FROM harga_jual_sparepart WHERE sparepart_id = '$last_id'")) { throw new Exception(mysqli_error($conn)); }
+
+                // Hapus harga jual lama
+                if (!mysqli_query($conn, "DELETE FROM harga_jual_sparepart WHERE sparepart_id = '$last_id'")) {
+                    throw new Exception(mysqli_error($conn));
+                }
+
                 $response = ['status' => 'success', 'message' => 'Spare part berhasil diubah.'];
             }
 
+            // Tambah/update harga jual
             for ($i = 1; $i <= 4; $i++) {
-                $persentase_jual = (float)($_POST['persentase_jual_' . $i] ?? 0);
-                $harga_jual = (float)($_POST['harga_jual_' . $i] ?? 0);
-                $satuan_jual_id = sanitize_input($_POST['satuan_jual_' . $i]);
-                $isi_per_pcs_jual = (int)($_POST['isi_per_pcs_jual_' . $i] ?? 0);
-                
-                if (!empty($satuan_jual_id)) {
-                    $query_jual = "INSERT INTO harga_jual_sparepart (sparepart_id, tipe_harga, persentase_jual, harga_jual, satuan_jual_id, isi_per_pcs_jual) VALUES ('$last_id', '$i', '$persentase_jual', '$harga_jual', '$satuan_jual_id', '$isi_per_pcs_jual')";
-                    if (!mysqli_query($conn, $query_jual)) { throw new Exception(mysqli_error($conn)); }
+                $persentase_jual = (float)str_replace(',', '', $_POST['persentase_jual_' . $i] ?? 0);
+                $harga_jual_raw = $_POST['harga_jual_' . $i] ?? '0';
+                $harga_jual = (float)str_replace(',', '', $harga_jual_raw);
+                $satuan_jual_id = sanitize_input($_POST['satuan_jual_' . $i] ?? '');
+                $isi_per_pcs_jual = (int)($_POST['isi_per_pcs_jual_' . $i] ?? 1); // default ke 1
+
+                if ($harga_jual > 0 && empty($satuan_jual_id)) {
+                    throw new Exception("Satuan jual ke-$i harus dipilih jika harga jual diisi.");
+                }
+
+                if (!empty($satuan_jual_id) && $harga_jual > 0) {
+                    $query_jual = "INSERT INTO harga_jual_sparepart 
+                        (sparepart_id, tipe_harga, persentase_jual, harga_jual, satuan_jual_id, isi_per_pcs_jual)
+                        VALUES 
+                        ('$last_id', '$i', '$persentase_jual', '$harga_jual', '$satuan_jual_id', '$isi_per_pcs_jual')";
+                    if (!mysqli_query($conn, $query_jual)) {
+                        throw new Exception("Gagal simpan harga jual ke-$i: " . mysqli_error($conn));
+                    }
                 }
             }
+            
 
             mysqli_commit($conn);
+
         } catch (Exception $e) {
             mysqli_rollback($conn);
             $response['message'] = "Terjadi kesalahan: " . $e->getMessage();
         }
-    } else if ($aksi == 'hapus') {
+
+    } elseif ($aksi == 'hapus') {
         $id_sparepart = sanitize_input($_POST['id']);
         mysqli_begin_transaction($conn);
         try {
             mysqli_query($conn, "DELETE FROM harga_jual_sparepart WHERE sparepart_id = '$id_sparepart'");
             $query = "DELETE FROM spareparts WHERE id_sparepart = '$id_sparepart' AND bengkel_id IN ('" . implode("','", $accessible_bengkel_ids) . "')";
-            if (!mysqli_query($conn, $query)) { throw new Exception(mysqli_error($conn)); }
+            if (!mysqli_query($conn, $query)) {
+                throw new Exception(mysqli_error($conn));
+            }
             mysqli_commit($conn);
             $response = ['status' => 'success', 'message' => 'Spare part berhasil dihapus.'];
         } catch (Exception $e) {
@@ -110,4 +157,3 @@ if (isset($_POST['aksi'])) {
 header('Content-Type: application/json');
 echo json_encode($response);
 exit();
-?>

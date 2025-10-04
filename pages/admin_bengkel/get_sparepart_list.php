@@ -1,41 +1,46 @@
 <?php
 session_start();
 include "../../inc/koneksi.php";
-
 header('Content-Type: application/json; charset=utf-8');
 
-// Validasi login
-$id_user = $_SESSION['id_user'] ?? null;
-if (!$id_user) {
+// ===== Helper Error Function =====
+function respondWithError($message) {
     echo json_encode([
+        "success" => false,
+        "error" => $message,
+        "data" => [],
         "draw" => intval($_GET['draw'] ?? 0),
         "recordsTotal" => 0,
-        "recordsFiltered" => 0,
-        "data" => []
+        "recordsFiltered" => 0
     ]);
     exit;
 }
 
-// Ambil bengkel user
+// ===== Validasi Login =====
+$id_user = $_SESSION['id_user'] ?? null;
+if (!$id_user) {
+    respondWithError("Session expired. Silakan login ulang.");
+}
+
+// ===== Ambil Bengkel User =====
 $q2 = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
+if (!$q2) respondWithError("Gagal ambil data user: " . mysqli_error($conn));
+
 $d2 = mysqli_fetch_assoc($q2);
 $id_bengkel = $d2['bengkel_id'] ?? null;
 
-// Parameter DataTables
+// ===== Parameter DataTables =====
 $draw   = intval($_GET['draw'] ?? 0);
 $start  = intval($_GET['start'] ?? 0);
 $length = intval($_GET['length'] ?? 10);
 $searchValue = $_GET['search']['value'] ?? "";
 
-// Hitung total data
-$totalQuery = mysqli_query($conn, "
-    SELECT COUNT(*) as total
-    FROM spareparts sp
-    WHERE sp.bengkel_id = '$id_bengkel'
-");
+// ===== Hitung Total Data =====
+$totalQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM spareparts WHERE bengkel_id = '$id_bengkel'");
+if (!$totalQuery) respondWithError("Gagal hitung total data: " . mysqli_error($conn));
 $totalData = mysqli_fetch_assoc($totalQuery)['total'];
 
-// Query dasar
+// ===== Query Dasar =====
 $sql = "
     SELECT sp.*, 
            b.nama_bengkel, 
@@ -56,7 +61,7 @@ $sql = "
     WHERE sp.bengkel_id = '$id_bengkel'
 ";
 
-// Search
+// ===== Pencarian (Search) =====
 if (!empty($searchValue)) {
     $searchValue = mysqli_real_escape_string($conn, $searchValue);
     $keywords = explode(' ', $searchValue);
@@ -81,11 +86,12 @@ if (!empty($searchValue)) {
     }
 }
 
-// Hitung total setelah filter
+// ===== Hitung Total Setelah Filter =====
 $totalFilteredQuery = mysqli_query($conn, $sql);
+if (!$totalFilteredQuery) respondWithError("Gagal hitung total filter: " . mysqli_error($conn));
 $totalFiltered = mysqli_num_rows($totalFilteredQuery);
 
-// Order
+// ===== Sorting =====
 $orderColumnIndex = $_GET['order'][0]['column'] ?? 1;
 $orderColumnDir   = $_GET['order'][0]['dir'] ?? 'asc';
 
@@ -99,68 +105,71 @@ $columns = [
     7 => 'sp.id_sparepart',
     8 => 'b.nama_bengkel'
 ];
+
 $orderBy = $columns[$orderColumnIndex] ?? 'sp.nama_sparepart';
-
 $sql .= " ORDER BY $orderBy $orderColumnDir LIMIT $start, $length";
-$query = mysqli_query($conn, $sql);
 
-// Siapkan data
+// ===== Eksekusi Query =====
+$query = mysqli_query($conn, $sql);
+if (!$query) respondWithError("Gagal ambil data sparepart: " . mysqli_error($conn));
+
+// ===== Siapkan Data Tabel =====
 $data = [];
 $no = $start + 1;
+
 while ($row = mysqli_fetch_assoc($query)) {
-    // ambil harga jual per satuan
+    // Harga jual per satuan
     $hargaRows = mysqli_query($conn, "
         SELECT hj.tipe_harga, hj.persentase_jual, hj.harga_jual,
-            hj.satuan_jual_id, st.nama_satuan, hj.isi_per_pcs_jual
+               hj.satuan_jual_id, st.nama_satuan, hj.isi_per_pcs_jual
         FROM harga_jual_sparepart hj
         JOIN satuan st ON hj.satuan_jual_id = st.id_satuan
         WHERE hj.sparepart_id = '{$row['id_sparepart']}'
         ORDER BY hj.tipe_harga ASC
     ");
-    $hargaList = [];
-    while ($hj = mysqli_fetch_assoc($hargaRows)) {
-        $hargaListHtml[] = "<p><strong>{$hj['nama_satuan']}:</strong> Rp " .
-                        number_format($hj['harga_jual'],0,',','.') . "</p>";
+    if (!$hargaRows) respondWithError("Gagal ambil data harga jual: " . mysqli_error($conn));
 
-        // untuk JS (edit modal)
+    $hargaListHtml = [];
+    $hargaListRaw = [];
+
+    while ($hj = mysqli_fetch_assoc($hargaRows)) {
+        $hargaListHtml[] = "<p><strong>{$hj['nama_satuan']}:</strong> Rp " . number_format($hj['harga_jual'], 0, ',', '.') . "</p>";
+
         $hargaListRaw[] = [
-            'tipe_harga'     => (int)$hj['tipe_harga'],
-            'persentase_jual'=> (float)$hj['persentase_jual'],
-            'harga_jual'     => (float)$hj['harga_jual'],
-            'satuan_jual_id' => (int)$hj['satuan_jual_id'],
+            'tipe_harga'        => (int)$hj['tipe_harga'],
+            'persentase_jual'  => (float)$hj['persentase_jual'],
+            'harga_jual'       => (float)$hj['harga_jual'],
+            'satuan_jual_id'   => (int)$hj['satuan_jual_id'],
             'isi_per_pcs_jual' => (int)$hj['isi_per_pcs_jual']
         ];
     }
-    $lokasi_rak = '';
-    if ($row['lokasi_rak'] == 'null') {
-        $lokasi_rak = $lokasi_rak;
-    }else {
-        $lokasi_rak = $row['lokasi_rak'];
-    }
+
+    $lokasi_rak = $row['lokasi_rak'] === 'null' ? '' : $row['lokasi_rak'];
 
     $data[] = [
-        "no"                 => $no++,
-        "id_sparepart"      => $row['id_sparepart'],
-        "kode_sparepart"    => htmlspecialchars($row['kode_sparepart']),
-        "nama_sparepart"    => htmlspecialchars($row['nama_sparepart']),
-        "nama_merk"      => htmlspecialchars($row['nama_merk']),
-        "nama_kategori"  => htmlspecialchars($row['nama_kategori']),
-        "stok_pcs"       => htmlspecialchars($row['stok_pcs']),
-        "harga_beli"     => $row['harga_beli'],
-        "harga_jual"     => implode("", $hargaListHtml),   // untuk display tabel
-        "harga_jual_raw" => $hargaListRaw, 
-        "nama_bengkel"   => htmlspecialchars($row['nama_bengkel']),
-        "id_kategori"       => $row['id_kategori'],
-        "id_merk"       => $row['id_merk'],
-        "lokasi_rak"    => $lokasi_rak,
-        "satuan_beli_id"     => $row['satuan_beli_id'],
-        "isi_per_pcs_beli"     => $row['isi_per_pcs_beli'],
+        "no"               => $no++,
+        "id_sparepart"     => $row['id_sparepart'],
+        "kode_sparepart"   => htmlspecialchars($row['kode_sparepart']),
+        "nama_sparepart"   => htmlspecialchars($row['nama_sparepart']),
+        "nama_merk"        => htmlspecialchars($row['nama_merk']),
+        "nama_kategori"    => htmlspecialchars($row['nama_kategori']),
+        "stok_pcs"         => htmlspecialchars($row['stok_pcs']),
+        "harga_beli"       => $row['harga_beli'],
+        "harga_jual"       => implode("", $hargaListHtml),
+        "harga_jual_raw"   => $hargaListRaw,
+        "nama_bengkel"     => htmlspecialchars($row['nama_bengkel']),
+        "id_kategori"      => $row['id_kategori'],
+        "id_merk"          => $row['id_merk'],
+        "lokasi_rak"       => $lokasi_rak,
+        "satuan_beli_id"   => $row['satuan_beli_id'],
+        "isi_per_pcs_beli" => $row['isi_per_pcs_beli'],
         "stok_minimal"     => $row['stok_minimal'],
     ];
 }
 
-// Response ke DataTables
+// ===== Kirim Response JSON =====
 echo json_encode([
+    "success" => true,
     "draw" => $draw,
     "recordsTotal" => $totalData,
     "recordsFiltered" => $totalFiltered,
