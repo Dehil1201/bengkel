@@ -1,7 +1,7 @@
 <?php
 // Filter
-$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-d');
-$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
+$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-01'); // Awal bulan ini
+$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-t'); // Akhir bulan ini
 $id_pelanggan = $_GET['id_pelanggan'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 
@@ -218,7 +218,7 @@ $(document).ready(function () {
                 { data: 'subtotal', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') }
             ],
             paging: false,     // ⛔ nonaktifkan pagination
-            searching: false,   // boleh tetap pakai fitur pencarian
+            searching: true,   // boleh tetap pakai fitur pencarian
             info: false,       // sembunyikan "Showing 1 to n of n entries"
             order: [[1, 'desc']],
         });
