@@ -195,7 +195,7 @@ $(document).ready(function () {
         scrollY: true,
     });
 
-    $('.btn-detail').on('click', function () {
+    $('#tableLaporan').on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
         $('#modalDetail').modal('show');
 
@@ -216,7 +216,11 @@ $(document).ready(function () {
                 { data: 'qty' },
                 { data: 'satuan' },
                 { data: 'subtotal', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') }
-            ]
+            ],
+            paging: false,     // ⛔ nonaktifkan pagination
+            searching: false,   // boleh tetap pakai fitur pencarian
+            info: false,       // sembunyikan "Showing 1 to n of n entries"
+            order: [[1, 'desc']],
         });
     });
 });
