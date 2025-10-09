@@ -195,7 +195,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   <label><input type="radio" name="metode_bayar" value="Tunai" checked> Tunai</label>
                 </div>
                 <div class="radio">
-                  <label><input type="radio" name="metode_bayar" value="Non Tunai"> Non Tunai / Kredit</label>
+                  <label><input type="radio" name="metode_bayar" value="Non Tunai"> Kredit</label>
+                </div>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Qris"> Qris</label>
+                </div>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Debit"> Debit</label>
                 </div>
               </div>
 

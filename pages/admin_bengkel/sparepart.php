@@ -389,6 +389,7 @@ $(document).ready(function() {
         $('#harga_beli').val(formatNumber(data.harga_beli));
         $('#satuan_beli_id').val(data.satuan_beli_id);
         $('#isi_per_pcs_beli').val(data.isi_per_pcs_beli);
+        $('#hpp_per_pcs').val(data.hpp_per_pcs);
         $('#stok_pcs').val(data.stok_pcs);
         $('#stok_minimal').val(data.stok_minimal);
         $('#form_bengkel_id').val(data.bengkel_id);
@@ -622,5 +623,15 @@ $(document).ready(function() {
             Swal.fire('Perhatian', 'Pilih bengkel terlebih dahulu untuk membuat kode otomatis.', 'info');
         }
     });
+    // Hitung dan tampilkan HPP Per Pcs secara otomatis
+    function hitungHPP() {
+        const hargaBeli = parseNumber($('#harga_beli').val());
+        const isiPerPcs = parseFloat($('#isi_per_pcs_beli').val()) || 1;
+        const hpp = hargaBeli / isiPerPcs;
+        $('#hpp_per_pcs').val(formatNumber(hpp));
+    }
+
+    // Jalankan saat harga beli atau isi per pcs berubah
+    $(document).on('input', '#harga_beli, #isi_per_pcs_beli', hitungHPP);
 });
 </script>

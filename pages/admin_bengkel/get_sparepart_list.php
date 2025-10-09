@@ -52,6 +52,7 @@ $sql = "
            sp.lokasi_rak,
            sp.satuan_beli_id,
            sp.isi_per_pcs_beli,
+           sp.hpp_per_pcs,
            sp.stok_minimal
     FROM spareparts sp
     JOIN bengkels b ON sp.bengkel_id = b.id_bengkel
@@ -155,6 +156,7 @@ while ($row = mysqli_fetch_assoc($query)) {
         "nama_kategori"    => htmlspecialchars($row['nama_kategori']),
         "stok_pcs"         => htmlspecialchars($row['stok_pcs']),
         "harga_beli"       => $row['harga_beli'],
+        "hpp_per_pcs"       => $row['hpp_per_pcs'],
         "harga_jual"       => implode("", $hargaListHtml),
         "harga_jual_raw"   => $hargaListRaw,
         "nama_bengkel"     => htmlspecialchars($row['nama_bengkel']),

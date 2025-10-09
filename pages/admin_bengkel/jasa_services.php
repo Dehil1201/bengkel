@@ -281,13 +281,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
               <div class="form-group">
                 <label>Metode Bayar</label><br>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="metode_bayar" value="Tunai" id="bayarTunai">
-                  <label class="form-check-label" for="bayarTunai">Tunai</label>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Tunai" checked> Tunai</label>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="metode_bayar" value="Non Tunai" id="bayarNonTunai">
-                  <label class="form-check-label" for="bayarNonTunai">Non Tunai / Kredit</label>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Non Tunai"> Kredit</label>
+                </div>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Qris"> Qris</label>
+                </div>
+                <div class="radio">
+                  <label><input type="radio" name="metode_bayar" value="Debit"> Debit</label>
                 </div>
               </div>
 
