@@ -402,10 +402,21 @@ $(document).ready(function() {
 
         for (let i = 1; i <= 4; i++) {
             const hj = hargaJualData.find(item => item.tipe_harga == i);
-            $(`[name="persentase_jual_${i}"]`).val(hj ? hj.persentase_jual : '');
-            $(`[name="harga_jual_${i}"]`).val(formatNumber(hj ? hj.harga_jual : ''));
-            $(`[name="satuan_jual_${i}"]`).val(hj ? hj.satuan_jual_id : '');
-            $(`[name="isi_per_pcs_jual_${i}"]`).val(hj ? hj.isi_per_pcs_jual : '');
+            if (hj) {
+                const hargaJual = parseFloat(hj.harga_jual);
+                const hargaBeli = parseFloat(data.harga_beli);
+                const persen = hargaBeli > 0 ? ((hargaJual - hargaBeli) / hargaBeli) * 100 : 0;
+
+                $(`[name="persentase_jual_${i}"]`).val(persen.toFixed(2));
+                $(`[name="harga_jual_${i}"]`).val(formatNumber(hargaJual));
+                $(`[name="satuan_jual_${i}"]`).val(hj.satuan_jual_id);
+                $(`[name="isi_per_pcs_jual_${i}"]`).val(hj.isi_per_pcs_jual);
+            } else {
+                $(`[name="persentase_jual_${i}"]`).val('');
+                $(`[name="harga_jual_${i}"]`).val('');
+                $(`[name="satuan_jual_${i}"]`).val('');
+                $(`[name="isi_per_pcs_jual_${i}"]`).val('');
+            }
         }
 
         $('#modalTambahSparepart').modal('show');

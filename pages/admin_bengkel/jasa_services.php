@@ -121,6 +121,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </select>
                     </div>
                     <div class="form-group">
+                        <input type="text" class="form-control" id="kode-barang-input" placeholder="Kode Barang..." required readonly>
+                        <input type="text" class="form-control" id="nama-barang-input" placeholder="Nama Barang..." required readonly>
+                    </div>
+                    <div class="form-group">
+                    <label>Harga Jual Satuan</label>
+                        <select class="form-control" id="harga-jual-satuan" style="width:100%;">
+                        <!-- opsi akan di-load otomatis lewat ajax -->
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Jumlah</label>
                         <input type="number" class="form-control" id="jumlah-barang-input" value="1" min="1">
                     </div>
@@ -180,6 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <th>Harga</th>
                             <th>Qty</th>
                             <th>Satuan</th>
+                            <th>Diskon</th>
                             <th>Subtotal</th>
                             <th>Action</th>
                         </tr>
@@ -542,6 +553,24 @@ $(document).ready(function() {
 
     });
 
+    $("#table-sparepart").on("change", ".input-diskon", function() {
+        let id_detail = $(this).data("id");
+        let diskon = $(this).val();
+
+        $.ajax({
+            url: "pages/admin_bengkel/api_update_diskon_sparepart.php",
+            type: "POST",
+            data: { id_detail: id_detail, diskon: diskon },
+            success: function(res) {
+                reloadSparepartTable();
+                sumTotal();
+            },
+            error: function(err) {
+                alert("Gagal update diskon");
+            }
+        });
+    });
+
     $("#table-sparepart").on("click", ".btn-delete-sparepart", function() {
         let id_detail = $(this).data("id");
 
@@ -645,19 +674,63 @@ $(document).ready(function() {
       },
       templateResult: function(item) {
         if (item.loading) return item.text;
-        return `${item.nama_sparepart} - Rp${item.harga_jual}/ ${item.satuan}`;
+        return `${item.nama_sparepart}`;
       },
       templateSelection: function(item) {
         return item.nama_sparepart || item.text;
       }
     });
+
+    
+    $('#sparepart-select').on('select2:select', function(e) {
+        const data = e.params.data;
+
+        // Isi kode dan nama sparepart
+        $("#kode-barang-input").val(data.id);
+        $("#nama-barang-input").val(data.nama_sparepart);
+
+        // Kosongkan dropdown harga satuan dulu
+        $("#harga-jual-satuan").empty().trigger("change");
+
+        // Ambil harga jual per satuan dari API
+        $.ajax({
+            url: "pages/admin_bengkel/api_get_harga_jual.php",
+            type: "POST",
+            dataType: "json",
+            data: { kode_sparepart: data.id },
+            success: function(res) {
+              if (res.status_code === 200 && res.data.harga_satuan && res.data.harga_satuan.length > 0) {
+                  const hargaOptions = res.data.harga_satuan.map(item => ({
+                      id: item.harga_jual,
+                      text: `${item.nama_satuan} - Rp ${new Intl.NumberFormat('id-ID').format(item.harga_jual)}`,
+                      satuan: item.nama_satuan
+                  }));
+
+                  // Hancurkan instance lama sebelum buat baru
+                  if ($("#harga-jual-satuan").hasClass("select2-hidden-accessible")) {
+                      $("#harga-jual-satuan").select2('destroy');
+                  }
+
+                  $("#harga-jual-satuan")
+                      .empty()
+                      .select2({
+                          placeholder: "-- Pilih Harga Satuan --",
+                          data: hargaOptions,
+                          width: "100%"
+                      });
+              } else {
+                  Swal.fire("Harga Tidak Ditemukan", "Sparepart ini belum memiliki harga jual.", "warning");
+              }
+          },
+        });
+    });
     
     $("#btn-add-sparepart").on("click", function() {
         let noFaktur = $("#noFakturText").val();
-        let kode = $("#sparepart-select").val();
-        let nama = $('#sparepart-select').select2('data')[0].nama_sparepart;
-        let harga = parseInt($('#sparepart-select').select2('data')[0].harga_jual);
-        let satuan = $('#sparepart-select').select2('data')[0].satuan;
+        let kode = $("#kode-barang-input").val();
+        let nama = $('#nama-barang-input').val();
+        let harga = parseInt($('#harga-jual-satuan').val());
+        let satuan = $('#harga-jual-satuan').select2('data')[0].satuan;
         let qty = parseInt($("#jumlah-barang-input").val());
 
         if(kode == "") {
@@ -751,6 +824,18 @@ $(document).ready(function() {
                   }
                 },
                 { data: "satuan", title: "Satuan" },
+                { 
+                  data: "discount", title: "Diskon",
+                  render: function(data, type, row) {
+                      return `
+                        <input type="number" 
+                              class="form-control form-control-sm input-diskon" 
+                              data-id="${row.id_detail}" 
+                              value="${data}" 
+                              min="1" style="width:80px">
+                      `;
+                  }
+                },
                 { 
                     data: "subtotal", 
                     title: "Subtotal",

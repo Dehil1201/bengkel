@@ -14,11 +14,9 @@ $id_bengkel = $d2['bengkel_id'];
 
 $sql = "
   SELECT sp.id_sparepart, sp.kode_sparepart, sp.nama_sparepart,
-         sp.hpp_per_pcs, st.nama_satuan as satuan, hjs.harga_jual
+         sp.hpp_per_pcs
   FROM spareparts sp
-  JOIN harga_jual_sparepart hjs ON sp.id_sparepart = hjs.sparepart_id
-  JOIN satuan st ON hjs.satuan_jual_id = st.id_satuan
-  WHERE sp.bengkel_id = ? AND hjs.harga_jual > 0
+  WHERE sp.bengkel_id = ?
 ";
 
 $params = [$id_bengkel];
@@ -32,7 +30,7 @@ if (!empty($search)) {
   $types .= "ss";
 }
 
-$sql .= " ORDER BY sp.nama_sparepart, harga_jual ASC LIMIT ? OFFSET ?";
+$sql .= " ORDER BY sp.nama_sparepart LIMIT ? OFFSET ?";
 $params[] = $limit;
 $params[] = $offset;
 $types .= "ii";
@@ -47,8 +45,6 @@ while ($row = $res->fetch_assoc()) {
   $items[] = [
     "id" => $row['kode_sparepart'],
     "nama_sparepart" => $row['nama_sparepart'],
-    "harga_jual" => $row['harga_jual'],
-    "satuan" => $row['satuan']
   ];
 }
 
