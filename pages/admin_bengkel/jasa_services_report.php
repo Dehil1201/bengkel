@@ -1,7 +1,7 @@
 <?php
 // Filter
-$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-d');
-$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
+$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-01'); // Awal bulan ini
+$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-t'); // Akhir bulan ini
 $id_pelanggan = $_GET['id_pelanggan'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 $id_teknisi = $_GET['id_teknisi'] ?? '';
@@ -25,6 +25,8 @@ $query_laporan = mysqli_query($conn, "
     SELECT 
     t.no_faktur, 
     t.tanggal, 
+    t.no_polisi,
+    t.kendaraan,
     p.nama_pelanggan, 
     u.nama_lengkap, 
     t.total_bayar, 
@@ -153,6 +155,8 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                     <th>No Faktur</th>
                     <th>Tanggal</th>
                     <th>Pelanggan</th>
+                    <th>Kendaraan</th>
+                    <th>No Polisi</th>
                     <th>User Input</th>
                     <th>Status</th>
                     <th>Total</th>
@@ -168,6 +172,8 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                         <td><?= htmlspecialchars($row['no_faktur']); ?></td>
                         <td><?= date('d-m-Y', strtotime($row['tanggal'])); ?></td>
                         <td><?= htmlspecialchars($row['nama_pelanggan'] ?? '-'); ?></td>
+                        <td><?= htmlspecialchars($row['kendaraan'] ?? '-'); ?></td>
+                        <td><?= htmlspecialchars($row['no_polisi'] ?? '-'); ?></td>
                         <td><?= htmlspecialchars($row['nama_lengkap'] ?? '-'); ?></td>
                         <td>
                             <?php if ($row['status'] == 'selesai') : ?>
@@ -201,6 +207,30 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
+                <table width="100%" class="table table-responsive">
+                    <tr>
+                        <td>No Faktur</td>
+                        <td id="headNoFaktur"></td>
+                        <td>Tanggal</td>
+                        <td id="headTanggal"></td>
+                    </tr>
+                    <tr>
+                        <td>Kasir</td>
+                        <td id="headKasir"></td>
+                        <td>Teknisi</td>
+                        <td id="headTeknisi"></td>
+                    </tr>
+                    <tr>
+                        <td>Pelanggan</td>
+                        <td id="headPelanggan" colspan="3"></td>
+                    </tr>
+                    <tr>
+                        <td>Kendaraan</td>
+                        <td id="headKendaraan"></td>
+                        <td>No Polisi</td>
+                        <td id="headNoPolisi"></td>
+                    </tr>
+                </table>
                 <h3>Detail Sparepart</h3>
                 <table id="table-sparepart" class="table table-bordered table-striped">
                     <thead>
@@ -241,8 +271,19 @@ $(document).ready(function () {
         scrollY: true
     });
 
-    $('.btn-detail').on('click', function () {
+    $('#tableLaporan').on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
+        const table = $('#tableLaporan').DataTable();
+        const data = table.row($(this).closest('tr')).data();
+        console.log(data)
+
+        $("#headTanggal").html(data[1])
+        $("#headNoFaktur").html(data[0])
+        $("#headKasir").html(data[5])
+        $("#headTeknisi").html(data[9])
+        $("#headPelanggan").html(data[2])
+        $("#headKendaraan").html(data[3])
+        $("#headNoPolisi").html(data[4])
         $('#modalDetail').modal('show');
 
         $('#table-servis').DataTable({
@@ -251,9 +292,7 @@ $(document).ready(function () {
                 url: 'pages/admin_bengkel/api_get_transaksi.php',
                 type: 'GET',
                 data: { no_faktur: faktur },
-                dataSrc: function (json) {
-                    return json.data.detail_servis || [];
-                }
+                dataSrc: json => json.data.detail_servis || []
             },
             columns: [
                 { data: 'nama_servis' },
@@ -267,9 +306,7 @@ $(document).ready(function () {
                 url: 'pages/admin_bengkel/api_get_transaksi.php',
                 type: 'GET',
                 data: { no_faktur: faktur },
-                dataSrc: function (json) {
-                    return json.data.detail_sparepart || [];
-                }
+                dataSrc: json => json.data.detail_sparepart || []
             },
             columns: [
                 { data: 'kode_sparepart' },
@@ -281,5 +318,6 @@ $(document).ready(function () {
             ]
         });
     });
+
 });
 </script>

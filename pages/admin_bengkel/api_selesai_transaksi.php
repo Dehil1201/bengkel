@@ -19,6 +19,7 @@ $discount  = $_POST['diskon'] ?? 0; // default 0
 $total_bayar  = $_POST['total_bayar'] ?? 0; // default 0
 $tanggal    = date('Y-m-d H:i:s');
 $tanggal_pelunasan    = $_POST['tanggal_pelunasan'] ?? null;
+$deskripsi    = $_POST['deskripsi'] ?? null;
 
 
 if (!$no_faktur || !$id_user) {
@@ -78,13 +79,14 @@ try {
                 total_bayar = '$totalBayarNum',
                 kembalian = '$kembalian',
                 jenis = '$jenis',
-                tanggal = '$tanggal'
+                tanggal = '$tanggal',
+                deskripsi = '$deskripsi'
             WHERE no_faktur='$no_faktur'");
         if(!$update) throw new Exception("Gagal update header: ".mysqli_error($conn),500);
     } else {
         // Insert
         $insert = mysqli_query($conn, "INSERT INTO transaksi 
-            (no_faktur, id_user, kendaraan, no_polisi, id_pelanggan, id_teknisi, id_bengkel, status, status_pembayaran, total, uang_bayar, kembalian, tanggal, jenis, metode_bayar, total_bayar, discount, id_supplier) 
+            (no_faktur, id_user, kendaraan, no_polisi, id_pelanggan, id_teknisi, id_bengkel, status, status_pembayaran, total, uang_bayar, kembalian, tanggal, jenis, metode_bayar, total_bayar, discount, id_supplier, deskripsi) 
             VALUES (
                 '$no_faktur',
                 '$id_user',
@@ -103,6 +105,7 @@ try {
                 '$metode_bayar',
                 '$totalBayarNum',
                 '$discount',
+                '$deskripsi',
                 ".($id_supplier ? "'$id_supplier'" : "NULL")."
             )");
         if(!$insert) throw new Exception("Gagal insert header: ".mysqli_error($conn),500);

@@ -277,6 +277,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   ?>
                 </select>
               </div>
+              <div class="form-group">
+                <label for="deskripsiText">Deskripsi</label>
+                <textarea name="deskripsi" id="deskripsiText" cols="30" rows="10" placeholder="Deskripsi" class="form-control"></textarea>
+              </div>
             </div>
 
             <!-- Kolom Kanan -->
