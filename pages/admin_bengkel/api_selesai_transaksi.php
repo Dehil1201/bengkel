@@ -105,8 +105,8 @@ try {
                 '$metode_bayar',
                 '$totalBayarNum',
                 '$discount',
-                '$deskripsi',
-                ".($id_supplier ? "'$id_supplier'" : "NULL")."
+                ".($id_supplier ? "'$id_supplier'" : "NULL").",
+                '$deskripsi'
             )");
         if(!$insert) throw new Exception("Gagal insert header: ".mysqli_error($conn),500);
     }
