@@ -1,5 +1,4 @@
 <?php
-include '../koneksi.php';
 
 // Tangkap filter dari URL (GET)
 $filter_jenis = $_GET['filter_jenis'] ?? '';
