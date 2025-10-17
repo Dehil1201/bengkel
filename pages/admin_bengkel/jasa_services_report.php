@@ -230,6 +230,14 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                         <td>No Polisi</td>
                         <td id="headNoPolisi"></td>
                     </tr>
+                    <tr>
+                        <td colspan="4">Deskripsi</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4">
+                            <textarea name="textDeskripsi" id="textDeskripsi" cols="30" rows="10" readonly class="form-control"></textarea>
+                        </td>
+                    </tr>
                 </table>
                 <h3>Detail Sparepart</h3>
                 <table id="table-sparepart" class="table table-bordered table-striped">
@@ -270,20 +278,26 @@ $(document).ready(function () {
         order: [[1, 'desc']],
         scrollY: true
     });
-
+    
     $('#tableLaporan').on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
         const table = $('#tableLaporan').DataTable();
         const data = table.row($(this).closest('tr')).data();
-        console.log(data)
 
-        $("#headTanggal").html(data[1])
-        $("#headNoFaktur").html(data[0])
-        $("#headKasir").html(data[5])
-        $("#headTeknisi").html(data[9])
-        $("#headPelanggan").html(data[2])
-        $("#headKendaraan").html(data[3])
-        $("#headNoPolisi").html(data[4])
+        $("#headTanggal").html(data[1]);
+        $("#headNoFaktur").html(data[0]);
+        $("#headKasir").html(data[5]);
+        $("#headTeknisi").html(data[10]);
+        $("#headPelanggan").html(data[2]);
+        $("#headKendaraan").html(data[3]);
+        $("#headNoPolisi").html(data[4]);
+
+        // Ambil deskripsi via API (lebih aman)
+        $.getJSON('pages/admin_bengkel/api_get_transaksi.php', { no_faktur: faktur }, function (res) {
+            const trx = res.data.transaksi || {};
+            $("#textDeskripsi").val(trx.deskripsi || '');
+        });
+
         $('#modalDetail').modal('show');
 
         $('#table-servis').DataTable({
@@ -296,7 +310,7 @@ $(document).ready(function () {
             },
             columns: [
                 { data: 'nama_servis' },
-                { data: 'biaya' }
+                { data: 'biaya', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') }
             ]
         });
 
@@ -318,6 +332,7 @@ $(document).ready(function () {
             ]
         });
     });
+
 
 });
 </script>

@@ -289,6 +289,16 @@ foreach ($master_data_config as $type => $config): ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
+    
+    function formatNumber(num) {
+        return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    // Helper: Hapus semua koma dan parse ke float
+    function parseNumber(str) {
+        return parseFloat(str.replace(/,/g, '')) || 0;
+    }
+
     $('#dataTable').DataTable({
         processing: true,
         serverSide: true,
@@ -323,7 +333,17 @@ $(document).ready(function() {
             },
             { 
                 title: "Harga Beli",
-                data: "harga_beli"
+                data: "harga_beli",
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return new Intl.NumberFormat('id-ID', { 
+                            style: 'currency', 
+                            currency: 'IDR', 
+                            minimumFractionDigits: 0 
+                        }).format(data);
+                    }
+                    return data; // untuk sort & export
+                }
             },
             { 
                 title: "Harga Jual",
@@ -386,10 +406,10 @@ $(document).ready(function() {
         $('#kategori_id').val(data.id_kategori);
         $('#merk_id').val(data.id_merk);
         $('#lokasi_rak').val(data.lokasi_rak);
-        $('#harga_beli').val(formatNumber(data.harga_beli));
+        $('#harga_beli').val(formatNumber(parseInt(data.harga_beli)));
         $('#satuan_beli_id').val(data.satuan_beli_id);
         $('#isi_per_pcs_beli').val(data.isi_per_pcs_beli);
-        $('#hpp_per_pcs').val(data.hpp_per_pcs);
+        $('#hpp_per_pcs').val(formatNumber(parseInt(data.hpp_per_pcs)));
         $('#stok_pcs').val(data.stok_pcs);
         $('#stok_minimal').val(data.stok_minimal);
         $('#form_bengkel_id').val(data.bengkel_id);
@@ -422,14 +442,6 @@ $(document).ready(function() {
         $('#modalTambahSparepart').modal('show');
     });
     // Helper: Format angka dengan koma (e.g., 10,000.00)
-    function formatNumber(num) {
-        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    // Helper: Hapus semua koma dan parse ke float
-    function parseNumber(str) {
-        return parseFloat(str.replace(/,/g, '')) || 0;
-    }
 
     // Saat input persentase jual → hitung dan format harga jual
     $(document).on('input', '.persentase-jual', function () {

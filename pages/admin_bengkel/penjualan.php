@@ -1,3 +1,55 @@
+<style>
+    @media print {
+    .dataTables_filter,
+    .dataTables_length,
+    .dataTables_info,
+    .dataTables_paginate {
+        display: none !important;
+    }
+    body * {
+        visibility: hidden;
+    }
+
+    #printArea, #printArea * {
+        visibility: visible;
+    }
+
+    #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        font-family: 'Arial', sans-serif;
+        color: #000;
+    }
+
+    table {
+        border-collapse: collapse !important;
+        width: 100%;
+    }
+
+    table th, table td {
+        border: 1px solid #000 !important;
+        padding: 4px;
+        font-size: 12px;
+    }
+
+    .invoice-header h3 {
+        margin: 0;
+    }
+
+    .invoice-footer {
+        margin-top: 30px;
+        font-size: 12px;
+    }
+
+    .modal-footer, .close, .btn {
+        display: none !important;
+    }
+}
+
+</style>
 <?php
 // Filter
 $tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-01'); // Awal bulan ini
@@ -141,11 +193,11 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                             <?php endif; ?>
                         </td>
                         <td>Rp <?= number_format($row['total'], 0, ',', '.'); ?></td>
-                        <td><?= number_format($row['discount'], 0, ',', '.'); ?></td>
-                        <td><?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
-                        <td><?= number_format($row['uang_bayar'], 0, ',', '.'); ?></td>
-                        <td><?= number_format($row['kembalian'], 0, ',', '.'); ?></td>
-                        <td><?= $row['daftar_barang']; ?></td>
+                        <td>Rp <?= number_format($row['discount'], 0, ',', '.'); ?></td>
+                        <td>Rp <?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
+                        <td>Rp <?= number_format($row['uang_bayar'], 0, ',', '.'); ?></td>
+                        <td>Rp <?= number_format($row['kembalian'], 0, ',', '.'); ?></td>
+                        <td>Rp <?= $row['daftar_barang']; ?></td>
                         <td>
                             <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
                                 <i class="fa fa-eye"></i> Detail
@@ -158,7 +210,6 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
     </div>
 </div>
 
-<!-- Modal -->
 <div class="modal fade" id="modalDetail" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -166,8 +217,30 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                 <h4 class="modal-title">Detail Transaksi</h4>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
-            <div class="modal-body">
-                <table id="table-sparepart" class="table table-bordered table-striped">
+            <div class="modal-body" id="printArea">
+                <div class="invoice-header text-center mb-3">
+                    <h3><strong><?= $nama_bengkel; ?></strong></h3>
+                    <p><?= $alamat_bengkel; ?><br>
+                    Telp: <?= $telepon_bengkel; ?></p>
+                    <hr>
+                </div>
+
+                <table width="100%" class="table table-sm">
+                    <tr>
+                        <td><strong>No Faktur</strong></td>
+                        <td id="headNoFaktur"></td>
+                        <td><strong>Tanggal</strong></td>
+                        <td id="headTanggal"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kasir</strong></td>
+                        <td id="headKasir"></td>
+                        <td><strong>Pelanggan</strong></td>
+                        <td id="headPelanggan"></td>
+                    </tr>
+                </table>
+
+                <table id="table-sparepart" class="table table-bordered table-striped mt-3">
                     <thead>
                         <tr>
                             <th>Kode</th>
@@ -179,14 +252,27 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                         </tr>
                     </thead>
                     <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="5" style="text-align:right">Total:</th>
+                            <th id="totalSparepart">Rp 0</th>
+                        </tr>
+                    </tfoot>
                 </table>
+
+                <div class="invoice-footer text-center mt-4">
+                    <p><em>Terima kasih atas kunjungannya</em></p>
+                </div>
             </div>
             <div class="modal-footer">
+                <button class="btn btn-primary" id="btnPrint"><i class="fa fa-print"></i> Print</button>
                 <button class="btn btn-default" data-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
 </div>
+
+
 
 <script>
 $(document).ready(function () {
@@ -197,17 +283,27 @@ $(document).ready(function () {
 
     $('#tableLaporan').on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
+        const table = $('#tableLaporan').DataTable();
+        const data = table.row($(this).closest('tr')).data();
+
+        $("#headTanggal").html(data[1]);
+        $("#headNoFaktur").html(data[0]);
+        $("#headKasir").html(data[3]);
+        $("#headPelanggan").html(data[2]);
+
+
         $('#modalDetail').modal('show');
+
 
         $('#table-sparepart').DataTable({
             destroy: true,
+            info: false,
+            ordering: false,
             ajax: {
                 url: 'pages/admin_bengkel/api_get_transaksi.php',
                 type: 'GET',
                 data: { no_faktur: faktur },
-                dataSrc: function (json) {
-                    return json.data.detail_sparepart || [];
-                }
+                dataSrc: json => json.data.detail_sparepart || []
             },
             columns: [
                 { data: 'kode_sparepart' },
@@ -217,11 +313,47 @@ $(document).ready(function () {
                 { data: 'satuan' },
                 { data: 'subtotal', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') }
             ],
-            paging: false,     // ⛔ nonaktifkan pagination
-            searching: true,   // boleh tetap pakai fitur pencarian
-            info: false,       // sembunyikan "Showing 1 to n of n entries"
-            order: [[1, 'desc']],
+            paging: false,
+            footerCallback: function (row, data) {
+                let total = 0;
+                data.forEach(item => {
+                    total += parseFloat(item.subtotal || 0);
+                });
+
+                // Format ke rupiah dengan titik
+                const totalFormatted = 'Rp ' + total.toLocaleString('id-ID');
+
+                // Tampilkan ke footer
+                $(this.api().column(5).footer()).html(totalFormatted);
+            }
         });
     });
+    $('#btnPrint').on('click', function () {
+        const printArea = document.getElementById('printArea').innerHTML;
+        const printWindow = window.open('', '', 'height=700,width=900');
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Invoice</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h3 { margin-bottom: 5px; }
+                        p { margin: 2px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #000; padding: 5px; font-size: 12px; }
+                        th { background: #f2f2f2; }
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                    </style>
+                </head>
+                <body>${printArea}</body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.print();
+    });
+
 });
 </script>

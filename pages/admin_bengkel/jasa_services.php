@@ -310,9 +310,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
               </div>
 
+              
               <div class="form-group">
                 <label for="totalAwal">Total Awal</label>
                 <input type="text" id="totalAwal" name="totalAwal" class="form-control" readonly value="0">
+                <input type="hidden" id="totalAwalHidden" name="totalAwalHidden" class="form-control" readonly value="0">
               </div>
 
               <div class="form-group">
@@ -323,16 +325,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               <div class="form-group">
                 <label for="totalBayar">Total Bayar (Setelah Diskon)</label>
                 <input type="text" id="totalBayar" name="total_bayar" class="form-control" readonly>
+                <input type="hidden" id="totalBayarHidden" name="total_bayar_hidden" class="form-control" readonly>
               </div>
 
               <div class="form-group">
                 <label for="uangBayar">Uang Dibayar</label>
-                <input type="number" id="uangBayar" name="uangBayar" class="form-control">
+                <input type="text" id="uangBayar" name="uangBayar" class="form-control">
+                <input type="hidden" id="uangBayarHidden" name="uangBayarHidden" class="form-control">
               </div>
 
               <div class="form-group">
                 <label for="kembalian">Kembalian</label>
                 <input type="text" id="kembalian" name="kembalian" class="form-control" readonly>
+                <input type="hidden" id="kembalianHidden" name="kembalianHidden" class="form-control" readonly>
               </div>
             </div>
           </div>
@@ -403,6 +408,9 @@ $(document).ready(function() {
     $('#modalSelesaiTransaksi').on('show.bs.modal', function () {
         let noFaktur = $("#noFakturText").val();
         $("#textNoFakturModal").val(noFaktur);
+        $("#uangBayar").val(0)
+        $("#uangBayarHidden").val(0)
+        $("#diskon").val(0)
         $.ajax({
             url: "pages/admin_bengkel/api_get_transaksi.php",
             type: "GET",
@@ -519,6 +527,7 @@ $(document).ready(function() {
       let totalAwal = parseAngka($("#totalAwal").val());
       let diskon = parseFloat($("#diskon").val()) || 0;
       let uangBayar = parseAngka($("#uangBayar").val());
+      let uangBayarHidden = parseAngka($("#uangBayar").val());
 
       // Hitung total setelah diskon
       let totalSetelahDiskon = totalAwal - (totalAwal * diskon / 100);
@@ -529,12 +538,29 @@ $(document).ready(function() {
       if (kembalian < 0) kembalian = 0;
 
       // Tampilkan hasil
-      $("#totalBayar").val(totalPembayaran);
-      $("#kembalian").val(kembalian);
+      $("#totalBayar").val("Rp " + formatAngka(totalPembayaran));
+      $("#kembalian").val("Rp " +formatAngka(kembalian));
+      $("#totalBayarHidden").val(totalPembayaran);
+      $("#uangBayarHidden").val(uangBayarHidden);
+      $("#kembalianHidden").val(kembalian);
     }
 
     // Trigger saat input berubah
-    $("#diskon, #uangBayar").on("input", hitungTransaksi);
+    $("#diskon").on("input", hitungTransaksi);
+
+    $('#uangBayar').on('keyup', function () {
+        let nilai = $(this).val();
+
+        // Hapus semua karakter selain angka
+        nilai = nilai.replace(/[^0-9]/g, '');
+
+        // Format angka dengan titik setiap 3 digit dari belakang
+        if (nilai) {
+            nilai = nilai.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        $(this).val(nilai);
+    }).on('input', hitungTransaksi);
 
     
     $("#table-sparepart").on("change", ".input-qty", function() {
@@ -1102,22 +1128,26 @@ $(document).ready(function() {
                 if(res.status_code === 200 && res.data.total !== undefined) {
                     total = res.data.total;
                 }
-
-                // Format ke IDR tanpa desimal
                 let totalIDR = new Intl.NumberFormat('id-ID', { 
                     style: 'currency', 
                     currency: 'IDR',
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                 }).format(total);
-
                 $("#total-display").html(totalIDR);
+                $("#totalAwal").val(totalIDR);
+                $("#totalAwalHidden").val(parseAngka(totalIDR));
+                $("#totalBayar").val(totalIDR);
+                $("#totalBayarHidden").val(parseAngka(totalIDR));
             },
             error: function() {
                 $("#total-display").html("Rp 0");
+                $("#totalAwal").val("Rp 0");
+                $("#totalBayar").val("Rp 0");
             }
         });
     }
+
 
 
 
