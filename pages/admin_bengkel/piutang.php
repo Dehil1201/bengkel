@@ -81,7 +81,8 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
           </div>
           <div class="form-group">
             <label>Jumlah Bayar</label>
-            <input type="number" name="jumlah_bayar" class="form-control" required>
+            <input type="text" name="jumlah_bayar_raw" class="form-control" required>
+            <input type="hidden" name="jumlah_bayar" class="form-control" required>
           </div>
           <div class="form-group">
             <label>Metode Bayar</label>
@@ -108,6 +109,38 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
 <!-- Script -->
 <script>
   $(document).ready(function () {
+    // Fungsi format ribuan
+    function formatRibuan(angka) {
+        return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Fungsi hapus format → jadi integer
+    function toInt(str) {
+        return parseInt(str.replace(/\./g, "")) || 0;
+    }
+    $('input[name="jumlah_bayar_raw"]').on('input', function () {
+        let value = $(this).val();
+
+        // Konversi ke integer
+        let intValue = parseInt(value || 0);
+
+        // Update hidden
+        $('input[name="jumlah_bayar"]').val(intValue);
+
+        // Tampilkan format pada placeholder
+        $(this).attr('placeholder', intValue.toLocaleString('id-ID'));
+    });
+
+    $('input[name="jumlah_bayar_raw"]').on('input', function () {
+        let raw = $(this).val();
+
+        let intValue = toInt(raw);
+        $('input[name="jumlah_bayar"]').val(intValue);
+
+        // Set kembali ke format ribuan
+        $(this).val(formatRibuan(intValue));
+    });
+
 
     let table = $('#tabel-piutang').DataTable({
       scrollY: true,
@@ -134,13 +167,13 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
         { data: 'no_faktur' },
         { data: 'nama_pelanggan' },
         { data: 'tanggal_piutang' },
-        { data: 'jumlah', render: $.fn.dataTable.render.number(',', '.', 2, 'Rp ') },
-        { data: 'dibayar', render: $.fn.dataTable.render.number(',', '.', 2, 'Rp ') },
+        { data: 'jumlah', render: $.fn.dataTable.render.number('.', '.', 0, 'Rp ') },
+        { data: 'dibayar', render: $.fn.dataTable.render.number('.', '.', 0, 'Rp ') },
         {
           data: null,
           render: function (data) {
             const sisa = parseFloat(data.jumlah) - parseFloat(data.dibayar);
-            return $.fn.dataTable.render.number(',', '.', 2, 'Rp ').display(sisa);
+            return $.fn.dataTable.render.number('.', '.', 0, 'Rp ').display(sisa);
           }
         },
         { data: null, 
@@ -183,7 +216,9 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
     // Buka modal bayar
     $('#tabel-piutang').on('click', '.btn-bayar', function () {
       $('#id_piutang').val($(this).data('id'));
-      $('input[name="jumlah_bayar"]').val($(this).data('sisa'));
+      let sisa = $(this).data('sisa') || 0;
+      $('input[name="jumlah_bayar_raw"]').val(formatRibuan(sisa));
+      $('input[name="jumlah_bayar"]').val(sisa);
       $('#modalCicilan').modal('show');
     });
 

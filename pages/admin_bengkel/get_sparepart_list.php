@@ -33,7 +33,6 @@ $id_bengkel = $d2['bengkel_id'] ?? null;
 $draw   = intval($_GET['draw'] ?? 0);
 $start  = intval($_GET['start'] ?? 0);
 $length = intval($_GET['length'] ?? 10);
-$searchValue = $_GET['search']['value'] ?? "";
 
 // ===== Hitung Total Data =====
 $totalQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM spareparts WHERE bengkel_id = '$id_bengkel'");
@@ -41,7 +40,7 @@ if (!$totalQuery) respondWithError("Gagal hitung total data: " . mysqli_error($c
 $totalData = mysqli_fetch_assoc($totalQuery)['total'];
 
 // ===== Query Dasar =====
-$sql = "
+$baseSql = "
     SELECT sp.*, 
            b.nama_bengkel, 
            k.nama_kategori, 
@@ -56,36 +55,58 @@ $sql = "
            sp.stok_minimal
     FROM spareparts sp
     JOIN bengkels b ON sp.bengkel_id = b.id_bengkel
-    JOIN kategori_sparepart k ON sp.kategori_id = k.id_kategori
-    JOIN merk_sparepart m ON sp.merk_id = m.id_merk
-    JOIN satuan s ON sp.satuan_beli_id = s.id_satuan
+    LEFT JOIN kategori_sparepart k ON sp.kategori_id = k.id_kategori
+    LEFT JOIN merk_sparepart m ON sp.merk_id = m.id_merk
+    LEFT JOIN satuan s ON sp.satuan_beli_id = s.id_satuan
     WHERE sp.bengkel_id = '$id_bengkel'
 ";
 
-// ===== Pencarian (Search) =====
-if (!empty($searchValue)) {
-    $searchValue = mysqli_real_escape_string($conn, $searchValue);
-    $keywords = explode(' ', $searchValue);
+$sql = $baseSql;
 
-    $searchConditions = [];
-    foreach ($keywords as $word) {
-        $word = trim($word);
-        if ($word !== '') {
-            $searchConditions[] = "
-                (
-                    sp.nama_sparepart LIKE '%$word%' OR
-                    sp.kode_sparepart LIKE '%$word%' OR
-                    m.nama_merk LIKE '%$word%' OR
-                    k.nama_kategori LIKE '%$word%'
-                )
-            ";
+$search = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
+
+if ($search != '') {
+
+    $safe = mysqli_real_escape_string($conn, strtolower($search));
+
+    // daftar prioritas
+    $priority = [
+        "LOWER(sp.nama_sparepart)",
+        "LOWER(sp.kode_sparepart)",
+        "LOWER(m.nama_merk)",
+        "LOWER(k.nama_kategori)"
+    ];
+
+    $found = false;
+
+    foreach ($priority as $col) {
+
+        $sqlCheck = $baseSql . " AND $col LIKE '%$safe%' LIMIT 1";
+        $check = mysqli_query($conn, $sqlCheck);
+        
+        error_log("CHECK QUERY: " . $sqlCheck);
+
+        if (mysqli_num_rows($check) > 0) {
+            // tempelkan kondisi ini ke query utama
+            $sql .= " AND $col LIKE '%$safe%'";
+            $found = true;
+            break;
         }
     }
 
-    if (!empty($searchConditions)) {
-        $sql .= ' AND ' . implode(' AND ', $searchConditions);
+    if (!$found) {
+        echo json_encode([
+            "success" => true,
+            "draw" => $draw,
+            "recordsTotal" => $totalData,
+            "recordsFiltered" => 0,
+            "data" => []
+        ]);
+        exit;
     }
 }
+
+
 
 // ===== Hitung Total Setelah Filter =====
 $totalFilteredQuery = mysqli_query($conn, $sql);
@@ -119,22 +140,22 @@ $data = [];
 $no = $start + 1;
 
 while ($row = mysqli_fetch_assoc($query)) {
-    // Harga jual per satuan
+
+    // ===== Ambil Harga Jual =====
     $hargaRows = mysqli_query($conn, "
         SELECT hj.tipe_harga, hj.persentase_jual, hj.harga_jual,
                hj.satuan_jual_id, st.nama_satuan, hj.isi_per_pcs_jual
         FROM harga_jual_sparepart hj
-        JOIN satuan st ON hj.satuan_jual_id = st.id_satuan
+        LEFT JOIN satuan st ON hj.satuan_jual_id = st.id_satuan
         WHERE hj.sparepart_id = '{$row['id_sparepart']}'
         ORDER BY hj.tipe_harga ASC
     ");
-    if (!$hargaRows) respondWithError("Gagal ambil data harga jual: " . mysqli_error($conn));
 
     $hargaListHtml = [];
     $hargaListRaw = [];
 
     while ($hj = mysqli_fetch_assoc($hargaRows)) {
-        $hargaListHtml[] = "<p><strong>{$hj['nama_satuan']}:</strong> Rp " . number_format($hj['harga_jual'], 0, ',', '.') . "</p>";
+        $hargaListHtml[] = "<p>Rp " . number_format($hj['harga_jual'], 0, ',', '.') . "</p>";
 
         $hargaListRaw[] = [
             'tipe_harga'        => (int)$hj['tipe_harga'],
@@ -145,7 +166,8 @@ while ($row = mysqli_fetch_assoc($query)) {
         ];
     }
 
-    $lokasi_rak = $row['lokasi_rak'] === 'null' ? '' : $row['lokasi_rak'];
+    // ===== Fix lokasi rak ====
+    $lokasi_rak = ($row['lokasi_rak'] === "null") ? "" : $row['lokasi_rak'];
 
     $data[] = [
         "no"               => $no++,
@@ -156,7 +178,7 @@ while ($row = mysqli_fetch_assoc($query)) {
         "nama_kategori"    => htmlspecialchars($row['nama_kategori']),
         "stok_pcs"         => htmlspecialchars($row['stok_pcs']),
         "harga_beli"       => $row['harga_beli'],
-        "hpp_per_pcs"       => $row['hpp_per_pcs'],
+        "hpp_per_pcs"      => $row['hpp_per_pcs'],
         "harga_jual"       => implode("", $hargaListHtml),
         "harga_jual_raw"   => $hargaListRaw,
         "nama_bengkel"     => htmlspecialchars($row['nama_bengkel']),
@@ -169,6 +191,8 @@ while ($row = mysqli_fetch_assoc($query)) {
     ];
 }
 
+
+
 // ===== Kirim Response JSON =====
 echo json_encode([
     "success" => true,
@@ -177,3 +201,5 @@ echo json_encode([
     "recordsFiltered" => $totalFiltered,
     "data" => $data
 ]);
+
+error_log("MAIN QUERY: " . $sql);

@@ -45,6 +45,7 @@ while ($row = $res->fetch_assoc()) {
   $items[] = [
     "id" => $row['kode_sparepart'],
     "nama_sparepart" => $row['nama_sparepart'],
+    "harga_beli" => $row['hpp_per_pcs'],
   ];
 }
 

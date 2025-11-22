@@ -261,26 +261,15 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                     
                     <div class="form-group">
                         <label for="statusTransaksi">Status Transaksi</label>
-                        <select id="statusTransaksi" name="status" class="form-control" required>
-                        <option value="">-- Pilih Status --</option>
+                        <select id="statusTransaksi" name="status" class="form-control" required readonly>
                         <option value="selesai">Selesai</option>
-                        <option value="pending">Pending</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label>Jatuh Tempo</label>
-                        <input type="date" name="tanggal_pelunasan" class="form-control" id="jatuhTempo">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="totalBayar">Total Bayar</label>
-                        <input type="text" id="totalBayar" name="total_bayar" class="form-control" readonly>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="uangBayar">Uang Dibayar</label>
-                        <input type="number" id="uangBayar" name="uangBayar" class="form-control">
+                        <input type="date" name="tanggal_pelunasan" class="form-control" id="jatuhTempo" readonly>
+                        <input type="hidden" name="uangBayarHidden" class="form-control" id="uangBayar">
                     </div>
                 </div>
               </div>
@@ -289,45 +278,29 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
             </div>
             <!-- RIGHT SIDE -->
             <div class="col-md-12">
-              <div class="form-group">
-                <label>Pilih Sparepart</label>
-                <select class="form-control" id="sparepart-select" style="width:100%;">
-                <option value="">-- Pilih Sparepart --</option>
-                <?php
-                $id_user_sess = $_SESSION['id_user'];
-                $q2 = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user_sess' LIMIT 1");
-                $d2 = mysqli_fetch_assoc($q2);
-                $id_bengkel2 = $d2['bengkel_id'];
-
-                $qsp = mysqli_query($conn, "SELECT 
-                    sp.kode_sparepart, 
-                    sp.nama_sparepart, 
-                    sp.harga_beli,
-                    sp.hpp_per_pcs, 
-                    st.nama_satuan as satuan,
-                    hjs.harga_jual
-                    FROM spareparts sp
-                    JOIN harga_jual_sparepart hjs ON sp.id_sparepart = hjs.sparepart_id
-                    JOIN satuan st ON hjs.satuan_jual_id = st.id_satuan
-                    WHERE sp.bengkel_id = '$id_bengkel2'
-                    ORDER BY sp.nama_sparepart ASC
-                ");
-                while($row = mysqli_fetch_assoc($qsp)) {
-                    echo '<option 
-                        value="'.htmlspecialchars($row['kode_sparepart']).'" 
-                        data-harga="'.htmlspecialchars($row['hpp_per_pcs']).'" 
-                        data-nama_sparepart="'.htmlspecialchars($row['nama_sparepart']).'" 
-                        data-satuan="'.htmlspecialchars($row['satuan']).'">'
-                        .htmlspecialchars($row['nama_sparepart']).' - '.number_format($row['hpp_per_pcs']).'/'.htmlspecialchars($row['satuan']).'</option>';
-                }
-                ?>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Jumlah</label>
-                <input type="number" id="jumlahBarang" class="form-control" value="1" min="1">
-              </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Pilih Sparepart [F1]</label>
+                            <select class="form-control" id="sparepart-select" style="width:100%;">
+                                <!-- opsi akan diload otomatis via ajax -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Harga</label>
+                            <input type="text" id="hargaBeli" class="form-control">
+                            <input type="hidden" id="hargaBeliRaw" name="harga_beli">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Jumlah</label>
+                            <input type="number" id="jumlahBarang" class="form-control" value="1" min="1">
+                        </div>
+                    </div>
+                </div>
               
               <div class="form-group">
                 <label>Diskon (%)</label>
@@ -343,6 +316,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                 <div style="font-size: 24px; font-weight: bold; background: #ffffcc; padding: 10px; border-radius: 5px;" id="totalPembelian">
                   Rp 0
                 </div>
+                <input type="hidden" id="totalBayar" name="total_bayar_hidden">
               </div>
             </div>
           </div>
@@ -381,11 +355,130 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
 <script>
 $(document).ready(function () {
+
+    // Reset form saat modal ditutup
+    $('#modalTransaksiPembelian').on('hidden.bs.modal', function () {
+        const form = $('#formTransaksiPembelian')[0];
+
+        // Reset semua input di form
+        form.reset();
+
+        // Reset Select2 sparepart
+        if ($('#sparepart-select').hasClass('select2-hidden-accessible')) {
+            $('#sparepart-select').val(null).trigger('change');
+        }
+
+        // Reset Select2 akun/supplier jika pakai select2
+        if ($('#selectSupplierInput').hasClass('select2-hidden-accessible')) {
+            $('#selectSupplierInput').val(null).trigger('change');
+        }
+        if ($('#akunSelected').hasClass('select2-hidden-accessible')) {
+            $('#akunSelected').val(null).trigger('change');
+        }
+
+        // Reset hidden input
+        $('#hargaBeliRaw').val('');
+        $('#inputTotalHidden').val('0');
+        $('#inputDaftarBarang').val('');
+        $('#uangBayar').val('');
+        $('#jatuhTempo').val('').prop('readonly', false);
+
+        // Reset DataTable detail barang
+        if ($.fn.DataTable.isDataTable('#tableBarangPembelianDetail')) {
+            $('#tableBarangPembelianDetail').DataTable().clear().draw();
+        }
+
+        // Reset total di tampilan
+        $('#totalPembelian').text('Rp 0');
+    });
+
     $('#tableLaporan').DataTable({
         order: [[1, 'desc']]
     });
     $('#selectSupplierInput').select2();
-    $('#sparepart-select').select2();
+
+    
+    // Format angka ribuan
+    const formatID = (num) => new Intl.NumberFormat('id-ID').format(num);
+
+    // Hilangkan format (jadi integer string)
+    const unformatID = (str) => str.replace(/\./g, "").replace(/,/g, "");
+
+
+    // === KETIKA SPAREPART DIPILIH DARI SELECT2 ===
+    $('#sparepart-select').on('select2:select', function(e) {
+        const data = e.params.data;
+
+        // set input tampilannya (format ribuan)
+        $("#hargaBeli").val(formatID(data.harga_beli));
+
+        // set nilai raw tanpa format untuk backend
+        $("#hargaBeliRaw").val(data.harga_beli);
+    });
+
+
+    // === AUTO FORMAT SAAT USER MENGETIK ===
+    $("#hargaBeli").on("input", function () {
+
+        // ambil nilai tanpa titik
+        let raw = unformatID($(this).val());
+
+        // kalau kosong → set hidden juga kosong
+        if (raw === "") {
+            $("#hargaBeliRaw").val("");
+            return;
+        }
+
+        // simpan raw ke hidden
+        $("#hargaBeliRaw").val(raw);
+
+        // format ulang tampilan
+        $(this).val(formatID(raw));
+    });
+
+
+    $('#sparepart-select').select2({
+        placeholder: '-- Pilih Sparepart --',
+        allowClear: true,
+        width: "100%",
+        ajax: {
+            url: 'pages/admin_bengkel/api_get_spareparts.php',
+            type: 'POST',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term || "",
+                    page: params.page || 1
+                };
+            },
+            processResults: function(data, params) {
+                params.page = params.page || 1;
+                return {
+                    results: data.items,
+                    pagination: { more: data.more }
+                };
+            },
+            cache: true
+        },
+        templateResult: function(item) {
+            if (item.loading) return item.text;
+            return `${item.nama_sparepart} (${item.id})`;
+        },
+        templateSelection: function(item) {
+            return item.nama_sparepart || item.text;
+        }
+    });
+
+
+    // Shortcut keyboard F1 → Buka sparepart
+    $(document).on('keydown', function(e) {
+        if (e.key === "F1") {
+            e.preventDefault();
+            $('#sparepart-select').select2('open');
+        }
+    });
+
 
     $('.btn-detail').on('click', function () {
         const faktur = $(this).data('faktur');
@@ -415,10 +508,16 @@ $(document).ready(function () {
     });
 
     $("#btnTambahBarang").on("click", function() {
+
         let kode = $("#sparepart-select").val();
-        let nama = $("#sparepart-select option:selected").data("nama_sparepart");
-        let harga = parseInt($("#sparepart-select option:selected").data("harga"));
-        let satuan = $("#sparepart-select option:selected").data("satuan");
+
+        // 🔥 ambil data dengan cara Select2
+        let selected = $('#sparepart-select').select2('data')[0] || {};
+
+        let nama = selected.nama_sparepart || "";
+        let satuan = "PCS";
+
+        let harga = parseInt($("#hargaBeliRaw").val());
         let qty = parseInt($("#jumlahBarang").val());
         let diskon = parseInt($("#diskonBarang").val());
 
@@ -431,7 +530,6 @@ $(document).ready(function () {
             return;
         }
 
-        // Tambah ke database detail
         $.post("pages/admin_bengkel/api_transaksi_sparepart.php", {
             action: "create",
             no_faktur: $("#noFakturText").val(),
@@ -450,6 +548,7 @@ $(document).ready(function () {
             sumTotal();
         }, "json");
     });
+
 
     function sumTotal() {
         let noFaktur = $("#noFakturText").val(); 
@@ -472,6 +571,7 @@ $(document).ready(function () {
                 $("#totalPembelian").html(totalIDR);
                 $("#totalBayar").val(total)
                 $("#inputTotalHidden").val(total);
+                $("#uangBayar").val(total);
             },
             error: function() {
                 $("#totalPembelian").html("Rp 0");
@@ -486,14 +586,8 @@ $(document).ready(function () {
     
     function reloadSparepartTable() {
         let noFaktur = $("#noFakturText").val();
-        // Memastikan modal sudah ter-load dan noFaktur tersedia
-        // if (!noFaktur) {
-        //     return;  // Jika noFaktur belum ada, jangan lanjutkan
-        // }
-
-        // Inisialisasi DataTable tanpa destroy: true
         const table = $('#tableBarangPembelianDetail').DataTable({
-            destroy: true, // ✅ penting
+            destroy: true, 
             ajax: {
                 url: "pages/admin_bengkel/api_get_transaksi.php",
                 type: "GET",
@@ -505,39 +599,176 @@ $(document).ready(function () {
             columns: [
                 { data: "kode_sparepart" },
                 { data: "nama_sparepart" },
+
+                // 🔥 Kolom Harga — editable
                 {
-                data: "harga",
-                render: data => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(data)
+                    data: "harga",
+                    render: function(data, type, row) {
+                        let formatted = new Intl.NumberFormat("id-ID").format(data);
+                        return `
+                            <input type="text" class="form-control form-control-sm input-harga" 
+                                data-id="${row.id_detail}"
+                                value="${formatted}"
+                                style="width:100px; text-align:right;">
+                        `;
+                    }
                 },
-                { data: "qty" },
+
+                {
+                    data: "qty",
+                    render: function(data, type, row) {
+                        return `
+                            <input type="number" class="form-control form-control-sm input-qty"
+                                data-id="${row.id_detail}"
+                                value="${data}"
+                                min="1"
+                                style="width:60px; text-align:center;">
+                        `;
+                    }
+                },
+
                 { data: "satuan" },
                 {
-                data: "discount"
+                    data: "discount",
+                    render: function(data, type, row) {
+                        let formatted = new Intl.NumberFormat("id-ID").format(data);
+                        return `
+                            <input type="text" class="form-control form-control-sm input-diskon"
+                                data-id="${row.id_detail}"
+                                value="${formatted}"
+                                style="width:80px; text-align:right;">
+                        `;
+                    }
                 },
+
                 {
-                data: "subtotal",
-                render: data => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(data)
+                    data: "subtotal",
+                    render: data => new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0
+                    }).format(data)
                 },
+
                 {
-                data: null,
-                orderable: false,
-                render: (data, type, row) => `
-                    <button class="btn btn-xs btn-danger btn-delete-sparepart" data-id="${row.id_detail}">
-                    <i class="fa fa-trash"></i> Hapus
-                    </button>`
+                    data: null,
+                    orderable: false,
+                    render: (data, type, row) => `
+                        <button class="btn btn-xs btn-danger btn-delete-sparepart" data-id="${row.id_detail}">
+                        <i class="fa fa-trash"></i> Hapus
+                        </button>`
                 }
             ]
         });
 
     }
 
+    $(document).on("input", ".input-harga", function () {
+        let val = $(this).val().replace(/\./g, "");
+        if (isNaN(val) || val === "") val = 0;
+
+        $(this).val(new Intl.NumberFormat("id-ID").format(val));
+    });
+
+    let timer = null;
+
+    $(document).on("change", ".input-harga, .input-qty, .input-diskon", function () {
+        clearTimeout(timer);
+        let input = $(this);
+
+        timer = setTimeout(() => {
+            updateDetail(input);
+        }, 400);
+    });
+
+
+    $(document).on("input", ".input-diskon", function () {
+        let val = $(this).val().replace(/\./g, "");
+        if (isNaN(val) || val === "") val = 0;
+
+        $(this).val(new Intl.NumberFormat("id-ID").format(val));
+    });
+
+    function updateDetail(input) {
+        let id = input.data("id");
+
+        let row = input.closest("tr");
+
+        let harga = row.find(".input-harga").val().replace(/\./g, "") * 1;
+        let qty = row.find(".input-qty").val() * 1;
+        let diskon = row.find(".input-diskon").val().replace(/\./g, "") * 1;
+
+        $.post("pages/admin_bengkel/api_update_detail_sparepart.php", {
+            id_detail: id,
+            harga: harga,
+            qty: qty,
+            discount: diskon
+        }, function(res) {
+
+            if (res.status_code !== 200) {
+                Swal.fire("Gagal", res.message, "warning");
+                return;
+            }
+            reloadSparepartTable()
+            sumTotal();
+        }, "json");
+    }
+
+
+    $("input[name='metode_bayar']").on("change", function () {
+        const metode = $(this).val();
+
+        if (metode === "Tunai") {
+            // Uang bayar = total
+            sumTotal();
+
+            // Jatuh tempo readonly
+            $("#jatuhTempo").prop("readonly", true);
+            $("#jatuhTempo").val("-"); // tanda atau kosong
+        } else {
+            // Non Tunai → uang bayar 0
+            $("#uangBayar").val(0);
+
+            // Jatuh tempo editable
+            $("#jatuhTempo").prop("readonly", false);
+            $("#jatuhTempo").val(""); // kosongkan agar bisa diisi
+        }
+    });
+
+
+
+
     $("#formTransaksiPembelian").on("submit", function(e){
         e.preventDefault();
+
         let metode = $('input[name="metode_bayar"]:checked').val();
         if (!metode) {
             Swal.fire('Mohon pilih metode bayar!');
             return false;
-        }e.preventDefault();
+        }
+
+        // Ambil semua data dari DataTable
+        const table = $('#tableBarangPembelianDetail').DataTable();
+        const allData = table.rows().data().toArray(); // ambil array objek
+        if(allData.length === 0){
+            Swal.fire('Belum ada barang di tabel!');
+            return false;
+        }
+
+        // Simpan ke hidden input sebagai JSON string
+        $('#inputDaftarBarang').val(JSON.stringify(allData));
+
+        // Atur uang bayar & jatuh tempo sesuai metode
+        const total = parseFloat($('#inputTotalHidden').val()) || 0;
+        if(metode === 'Tunai'){
+            $('#uangBayar').val(total);
+            $('#jatuhTempo').prop('readonly', true);
+        } else {
+            $('#uangBayar').val(0);
+            $('#jatuhTempo').prop('readonly', false);
+        }
+
+        // Serialize form & kirim AJAX
         let dataForm = $(this).serialize();
         $.ajax({
             url: "pages/admin_bengkel/api_selesai_transaksi.php",
@@ -551,12 +782,7 @@ $(document).ready(function () {
                         title: "Berhasil",
                         text: res.message
                     }).then(() => {
-                        // redirect ke halaman cetak dan auto print
                         window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
-                        // window.open("pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur, "_blank");
-
-                        // reload halaman
-                        // location.reload();
                     });
                 } else {
                     Swal.fire("Error", res.message, "error");
@@ -567,6 +793,7 @@ $(document).ready(function () {
             }
         });
     });
+
 
 
 });

@@ -316,7 +316,14 @@ $(document).ready(function() {
       },
       templateResult: function(item) {
         if (item.loading) return item.text;
-        return `${item.nama_sparepart}`;
+        return `${item.nama_sparepart}
+            
+              1. 10.000
+              2. 20.000
+              3. 30.000
+              4. 40.000
+            
+        `;
       },
       templateSelection: function(item) {
         return item.nama_sparepart || item.text;

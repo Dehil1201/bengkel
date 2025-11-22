@@ -68,10 +68,12 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         border-collapse: collapse;
         margin-bottom: 8px;
     }
+    tr {
+      text-align: left;
+    }
     table tr td, table tr th {
         padding: 8px;
         font-size: 14px;
-        border-bottom: 1px solid #eee;
     }
     table.items thead th {
         background: #f6f6f6;
@@ -140,10 +142,10 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         </table>
 
         <!-- SPAREPART ALWAYS SHOW -->
-        <h4>Sparepart</h4>
         <table class="items">
             <thead>
                 <tr>
+                    <th>No</th>
                     <th>Kode</th>
                     <th>Nama Barang</th>
                     <th width="60">Qty</th>
@@ -155,12 +157,14 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
             <tbody>
                 <?php
                 $total_spare = 0;
+                $i=1;
                 if ($sparepart_q && mysqli_num_rows($sparepart_q)) {
                     while ($sp = mysqli_fetch_assoc($sparepart_q)) {
                         $sub = (float)$sp['subtotal'];
                         $total_spare += $sub;
                         echo "
                         <tr>
+                            <td>{$i}</td>
                             <td>{$sp['kode_sparepart']}</td>
                             <td>{$sp['nama_sparepart']}</td>
                             <td>{$sp['qty']}</td>
@@ -168,6 +172,8 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                             <td class='text-right'>" . rupiah($sp['harga']) . "</td>
                             <td class='text-right'>" . rupiah($sub) . "</td>
                         </tr>";
+
+                        $i++;
                     }
                 } else {
                     echo "<tr><td colspan='6' class='muted'>Tidak ada sparepart.</td></tr>";
@@ -224,15 +230,30 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
 
         <h4>Total Pembayaran</h4>
         <table>
-            <tr><td class="text-right"><strong>Subtotal</strong></td><td class="text-right"><?= rupiah($subtotal) ?></td></tr>
-            <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right"><?= rupiah($diskon) ?></td></tr>
-            <tr><td class="text-right"><strong>PPN</strong></td><td class="text-right"><?= rupiah($ppn) ?></td></tr>
-            <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right"><strong><?= rupiah($grand) ?></strong></td></tr>
-            <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right"><?= rupiah($dibayar) ?></td></tr>
-            <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right"><?= rupiah($kembali) ?></td></tr>
+            <tr><td class="text-right" width="50%"><strong>Subtotal</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($subtotal) ?></td></tr>
+            <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($diskon) ?></td></tr>
+            <tr><td class="text-right"><strong>PPN</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($ppn) ?></td></tr>
+            <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:80px"><strong><?= rupiah($grand) ?></strong></td></tr>
+            <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($dibayar) ?></td></tr>
+            <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($kembali) ?></td></tr>
         </table>
 
-        <p class="text-center muted">Terima kasih telah berkunjung!</p>
+        <table width="100%">
+          <tr>
+            <td align=center><strong>Penerima</strong>
+          
+            <br><br><br>
+            .............................
+          </td>
+            <td></td>
+            <td align=center><strong>Hormat Kami, </strong><br><br><br>
+
+            .............................
+            </td>
+          </tr>
+        </table>
+
+        <center><p class="text-center muted">Terima kasih telah berkunjung!</p></center>
 
     </div>
 </div>

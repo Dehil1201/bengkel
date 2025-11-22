@@ -100,7 +100,6 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                                 <th>Stok</th>
                                 <th>Harga Beli</th>
                                 <th>Harga Jual</th>
-                                <th>Bengkel</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -216,7 +215,9 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                                 <div class="col-xs-5">
                                     <div class="form-group">
                                         <label for="harga_jual_<?= $i ?>">Harga Jual</label>
-                                        <input type="text" step="0.01" class="form-control harga-jual" data-index="<?= $i ?>" name="harga_jual_<?= $i ?>">
+                                        <input type="text" step="1" min="0" class="form-control harga-jual-raw" data-index="<?= $i ?>" name="harga_jual_raw<?= $i ?>">
+                                        <input type="hidden" step="1" min="0" class="form-control harga-jual" data-index="<?= $i ?>" name="harga_jual_<?= $i ?>">
+
                                     </div>
                                 </div>
                                 <div class="col-xs-4">
@@ -290,13 +291,13 @@ foreach ($master_data_config as $type => $config): ?>
 <script>
 $(document).ready(function() {
     
-    function formatNumber(num) {
-        return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    function formatNumber(n) {
+        if (!n) return "0";
+        return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
-    // Helper: Hapus semua koma dan parse ke float
-    function parseNumber(str) {
-        return parseFloat(str.replace(/,/g, '')) || 0;
+    function unformat(n) {
+        return parseInt(n.toString().replace(/\./g, "")) || 0;
     }
 
     $('#dataTable').DataTable({
@@ -304,7 +305,7 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: 'pages/admin_bengkel/get_sparepart_list.php',
-            type: 'GET'
+            type: 'POST'
         },
         columns: [
             {   
@@ -322,10 +323,6 @@ $(document).ready(function() {
             { 
                 title: "Merk",
                 data: "nama_merk"
-            },
-            { 
-                title: "Kategori",
-                data: "nama_kategori"
             },
             { 
                 title: "Stok PCS",
@@ -350,8 +347,8 @@ $(document).ready(function() {
                 data: "harga_jual"
             },
             { 
-                title: "Nama Bengkel",
-                data: "nama_bengkel"
+                title: "Kategori",
+                data: "nama_kategori"
             },
             { 
                 title: "Aksi",
@@ -398,7 +395,6 @@ $(document).ready(function() {
         e.preventDefault();
         
         const data = table.row($(this).closest('tr')).data();
-        console.log(data);
         $('#myModalLabel').text('Edit Spare Part');
         $('#id_sparepart_edit').val(data.id_sparepart);
         $('#kode_sparepart').val(data.kode_sparepart);
@@ -406,10 +402,10 @@ $(document).ready(function() {
         $('#kategori_id').val(data.id_kategori);
         $('#merk_id').val(data.id_merk);
         $('#lokasi_rak').val(data.lokasi_rak);
-        $('#harga_beli').val(formatNumber(parseInt(data.harga_beli)));
+        $('#harga_beli').val(parseInt(data.harga_beli));
         $('#satuan_beli_id').val(data.satuan_beli_id);
         $('#isi_per_pcs_beli').val(data.isi_per_pcs_beli);
-        $('#hpp_per_pcs').val(formatNumber(parseInt(data.hpp_per_pcs)));
+        $('#hpp_per_pcs').val(parseInt(data.hpp_per_pcs));
         $('#stok_pcs').val(data.stok_pcs);
         $('#stok_minimal').val(data.stok_minimal);
         $('#form_bengkel_id').val(data.bengkel_id);
@@ -423,12 +419,13 @@ $(document).ready(function() {
         for (let i = 1; i <= 4; i++) {
             const hj = hargaJualData.find(item => item.tipe_harga == i);
             if (hj) {
-                const hargaJual = parseFloat(hj.harga_jual);
-                const hargaBeli = parseFloat(data.harga_beli);
+                const hargaJual = parseInt(hj.harga_jual);
+                const hargaBeli = parseInt(data.harga_beli);
                 const persen = hargaBeli > 0 ? ((hargaJual - hargaBeli) / hargaBeli) * 100 : 0;
 
                 $(`[name="persentase_jual_${i}"]`).val(persen.toFixed(2));
-                $(`[name="harga_jual_${i}"]`).val(formatNumber(hargaJual));
+                $(`[name="harga_jual_${i}"]`).val(hargaJual);
+                $(`[name="harga_jual_raw${i}"]`).val(formatNumber(hargaJual));
                 $(`[name="satuan_jual_${i}"]`).val(hj.satuan_jual_id);
                 $(`[name="isi_per_pcs_jual_${i}"]`).val(hj.isi_per_pcs_jual);
             } else {
@@ -437,43 +434,49 @@ $(document).ready(function() {
                 $(`[name="satuan_jual_${i}"]`).val('');
                 $(`[name="isi_per_pcs_jual_${i}"]`).val('');
             }
+
+
         }
 
         $('#modalTambahSparepart').modal('show');
     });
     // Helper: Format angka dengan koma (e.g., 10,000.00)
 
-    // Saat input persentase jual → hitung dan format harga jual
     $(document).on('input', '.persentase-jual', function () {
         var index = $(this).data('index');
-        var persen = parseFloat($(this).val()) || 0;
-        var hargaBeli = parseNumber($('#harga_beli').val());
+        var persen = $(this).val() || 0;
+        var hargaBeli = $('#harga_beli').val();
+        var hargaJual = Math.round(
+            parseInt(hargaBeli) + (parseInt(hargaBeli) * parseFloat(persen) / 100)
+        );
+        $('.harga-jual[data-index="' + index + '"]').val(hargaJual);
+        $('.harga-jual-raw[data-index="' + index + '"]').val(formatNumber(hargaJual));
 
-        var hargaJual = hargaBeli + (hargaBeli * persen / 100);
-        $('.harga-jual[data-index="' + index + '"]').val(formatNumber(hargaJual));
+        console.log(hargaJual)
     });
 
-    // Saat input harga jual → hitung persentase jual
-    $(document).on('input', '.harga-jual', function () {
-        var index = $(this).data('index');
-        var hargaJual = parseNumber($(this).val());
-        var hargaBeli = parseNumber($('#harga_beli').val());
+    $(document).on('input', '.harga-jual-raw', function () {
+        let index = $(this).data('index');
 
-        var persen = hargaBeli > 0 ? ((hargaJual - hargaBeli) / hargaBeli) * 100 : 0;
+        // 1. ambil nilai ketikan & unformat
+        let raw = unformat($(this).val());
+
+        // 2. format kembali untuk tampilan
+        $(this).val(formatNumber(raw));
+
+        // 3. simpan raw untuk backend
+        $('.harga-jual[data-index="' + index + '"]').val(raw);
+
+        // 4. hitung persentase
+        let hargaBeli = unformat($('#harga_beli').val());
+        let persen = hargaBeli > 0 ? ((raw - hargaBeli) / hargaBeli) * 100 : 0;
+
+        // 5. tampilkan persentase (maks 2 desimal)
         $('.persentase-jual[data-index="' + index + '"]').val(persen.toFixed(2));
+
+        console.log(persen)
     });
 
-    // Saat input harga beli → reformat tampilan
-    $(document).on('blur', '#harga_beli', function () {
-        var value = parseNumber($(this).val());
-        $(this).val(formatNumber(value));
-    });
-
-    // Saat input harga jual → reformat tampilan saat blur
-    $(document).on('blur', '.harga-jual', function () {
-        var value = parseNumber($(this).val());
-        $(this).val(formatNumber(value));
-    });
 
 
 
