@@ -65,7 +65,7 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="dist/css/AdminLTE.min.css">
     <link rel="stylesheet" href="dist/css/skins/_all-skins.min.css">
-    <link rel="icon" href="">
+    <link rel="icon" href="dist/icon.jpg">
     <link rel="stylesheet" href="bower_components/morris.js/morris.css">
     <link rel="stylesheet" href="bower_components/jvectormap/jquery-jvectormap.css">
     <link rel="stylesheet" href="bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css">
