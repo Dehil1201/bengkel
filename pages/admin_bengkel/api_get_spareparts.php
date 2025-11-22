@@ -1,17 +1,46 @@
 <?php
 session_start();
 include "../../inc/koneksi.php";
+header('Content-Type: application/json; charset=utf-8');
 
+// ========= Helper Response =========
+function respond($success, $message, $data = [], $status_code = null) {
+    if ($status_code === null) {
+        $status_code = $success ? 200 : 400;
+    }
+    http_response_code($status_code);
+    echo json_encode([
+        "success" => $success,
+        "status_code" => $status_code,
+        "message" => $message,
+        "items" => $data["items"] ?? [],
+        "more" => $data["more"] ?? false
+    ]);
+    exit;
+}
+
+
+// ========= Validasi Login =========
+$id_user = $_SESSION['id_user'] ?? null;
+if (!$id_user) {
+    respond(false, "Session expired. Silakan login ulang.", [], 401);
+}
+
+
+// ========= Ambil bengkel_id user =========
+$q2 = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
+$d2 = mysqli_fetch_assoc($q2);
+$id_bengkel = $d2['bengkel_id'];
+
+
+// ========= Pagination & Search =========
 $search = $_POST['search'] ?? '';
 $page   = $_POST['page'] ?? 1;
 $limit  = 10;
 $offset = ($page - 1) * $limit;
 
-$id_user = $_SESSION['id_user'];
-$q2 = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
-$d2 = mysqli_fetch_assoc($q2);
-$id_bengkel = $d2['bengkel_id'];
 
+// ========= Query Sparepart =========
 $sql = "
   SELECT sp.id_sparepart, sp.kode_sparepart, sp.nama_sparepart,
          sp.hpp_per_pcs
@@ -23,11 +52,11 @@ $params = [$id_bengkel];
 $types  = "i";
 
 if (!empty($search)) {
-  $sql .= " AND (sp.nama_sparepart LIKE ? OR sp.kode_sparepart LIKE ?)";
-  $searchLike = "%$search%";
-  $params[] = $searchLike;
-  $params[] = $searchLike;
-  $types .= "ss";
+    $sql .= " AND (sp.nama_sparepart LIKE ? OR sp.kode_sparepart LIKE ?)";
+    $searchLike = "%$search%";
+    $params[] = $searchLike;
+    $params[] = $searchLike;
+    $types .= "ss";
 }
 
 $sql .= " ORDER BY sp.nama_sparepart LIMIT ? OFFSET ?";
@@ -41,18 +70,57 @@ $stmt->execute();
 $res = $stmt->get_result();
 
 $items = [];
+
+
+// ========= Loop Sparepart + Ambil Harga Jual =========
 while ($row = $res->fetch_assoc()) {
-  $items[] = [
-    "id" => $row['kode_sparepart'],
-    "nama_sparepart" => $row['nama_sparepart'],
-    "harga_beli" => $row['hpp_per_pcs'],
-  ];
+
+    $kode_sparepart = $row['kode_sparepart'];
+    $id_sparepart   = $row['id_sparepart'];
+
+    // --- Ambil Harga Jual terkait sparepart ---
+    $qHarga = mysqli_query($conn, "
+        SELECT 
+            hj.id_harga_jual,
+            hj.tipe_harga,
+            hj.persentase_jual,
+            hj.harga_jual,
+            hj.isi_per_pcs_jual,
+            st.id_satuan,
+            st.nama_satuan
+        FROM harga_jual_sparepart hj
+        JOIN satuan st ON hj.satuan_jual_id = st.id_satuan
+        WHERE hj.sparepart_id = '$id_sparepart' AND hj.harga_jual > 0
+        ORDER BY hj.tipe_harga ASC
+    ");
+
+    $hargaList = [];
+    while ($h = mysqli_fetch_assoc($qHarga)) {
+        $hargaList[] = [
+            "id_harga_jual"    => (int)$h['id_harga_jual'],
+            "tipe_harga"       => (int)$h['tipe_harga'],
+            "nama_satuan"      => $h['nama_satuan'],
+            "id_satuan"        => (int)$h['id_satuan'],
+            "persentase_jual"  => (float)$h['persentase_jual'],
+            "harga_jual"       => (float)$h['harga_jual'],
+            "isi_per_pcs_jual" => (int)$h['isi_per_pcs_jual']
+        ];
+    }
+
+    // --- Masukkan ke items ---
+    $items[] = [
+        "id" => $kode_sparepart,
+        "nama_sparepart" => $row['nama_sparepart'],
+        "harga_beli" => $row['hpp_per_pcs'],
+        "harga_satuan" => $hargaList
+    ];
 }
 
+
+// ========= Response =========
 $response = [
-  "items" => $items,
-  "more" => count($items) == $limit // kalau full berarti masih ada halaman berikutnya
+    "items" => $items,
+    "more" => count($items) == $limit
 ];
 
-header('Content-Type: application/json');
-echo json_encode($response);
+respond(true, "Data sparepart & harga berhasil diambil.", $response, 200);

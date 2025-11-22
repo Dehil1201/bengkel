@@ -680,32 +680,83 @@ $(document).ready(function() {
     $('#sparepart-select').select2({
       placeholder: '-- Pilih Sparepart --',
       allowClear: true,
+
       ajax: {
-        url: 'pages/admin_bengkel/api_get_spareparts.php', // API khusus untuk select2
-        type: 'POST',
-        dataType: 'json',
-        delay: 250,   // biar gak ngegas query tiap ketik
+        url: "pages/admin_bengkel/api_get_spareparts.php",
+        type: "POST",
+        dataType: "json",
+        delay: 250,
         data: function(params) {
           return {
-            search: params.term || "",   // pencarian sparepart
+            search: params.term || "",
             page: params.page || 1
           };
         },
         processResults: function(data, params) {
-          params.page = params.page || 1;
           return {
-            results: data.items, // hasil json
-            pagination: {
-              more: data.more
-            }
+            results: data.items,
+            pagination: { more: data.more }
           };
         },
         cache: true
       },
+
+      // ========================================================
+      // TEMPLATE RESULT (HASIL PENCARIAN)
+      // ========================================================
       templateResult: function(item) {
         if (item.loading) return item.text;
-        return `${item.nama_sparepart}`;
+
+        // harga_satuan langsung dari API gabungan
+        const hargaList = item.harga_satuan || [];
+
+        // Container utama
+        let $container = $(`
+          <div style="padding:6px;">
+            <div style="font-weight:bold; font-size:14px; margin-bottom:4px;">
+              ${item.nama_sparepart}
+            </div>
+            <div class="harga-wrapper" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+          </div>
+        `);
+
+        let $wrap = $container.find('.harga-wrapper');
+
+        // ========== RENDER BADGE HARGA ==========
+        hargaList.forEach(h => {
+          let badge = $(`
+            <span style="
+              display:inline-block;
+              padding:3px 6px;
+              background:#e1f0ff;
+              border:1px solid #b6d8ff;
+              color:#004a99;
+              border-radius:6px;
+              font-size:11px;
+              white-space:nowrap;
+            ">
+              Rp ${Number(h.harga_jual).toLocaleString('id-ID')}
+            </span>
+          `);
+
+          $wrap.append(badge);
+        });
+
+        // Jika tidak ada harga
+        if (hargaList.length === 0) {
+          $wrap.append(`
+            <span style="font-size:11px; color:#999;">
+              <em>Tidak ada harga</em>
+            </span>
+          `);
+        }
+
+        return $container;
       },
+
+      // ========================================================
+      // TEMPLATE SELECTION (SETELAH DIPILIH)
+      // ========================================================
       templateSelection: function(item) {
         return item.nama_sparepart || item.text;
       }
@@ -732,7 +783,7 @@ $(document).ready(function() {
               if (res.status_code === 200 && res.data.harga_satuan && res.data.harga_satuan.length > 0) {
                   const hargaOptions = res.data.harga_satuan.map(item => ({
                       id: item.harga_jual,
-                      text: `${item.nama_satuan} - Rp ${new Intl.NumberFormat('id-ID').format(item.harga_jual)}`,
+                      text: `Rp ${new Intl.NumberFormat('id-ID').format(item.harga_jual)}`,
                       satuan: item.nama_satuan
                   }));
 

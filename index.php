@@ -330,6 +330,34 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         </li>
                     </ul>
                 </li>
+                <li class="treeview <?php echo (in_array($page, ['transactions', 'kas_report', 'laba_rugi_penjualan', 'laba_rugi', 'grafik', 'neraca'])) ? 'active menu-open' : ''; ?>">
+                    <a href="#">
+                        <i class="fa fa-files-o"></i><span>Laporan</span>
+                        <span class="pull-right-container">
+                            <i class="fa fa-angle-left pull-right"></i>
+                        </span>
+                    </a>
+                    <ul class="treeview-menu">
+                        <li class="<?php echo ($page === 'transactions') ? 'active' : ''; ?>">
+                            <a href="?page=transactions"><i class="fa fa-files-o"></i> Semua Transaksi</a>
+                        </li>
+                        <li class="<?php echo ($page === 'kas_report') ? 'active' : ''; ?>">
+                            <a href="?page=kas_report"><i class="fa fa-files-o"></i> Kas</a>
+                        </li>
+                        <li class="<?php echo ($page === 'laba_rugi_penjualan') ? 'active' : ''; ?>">
+                            <a href="?page=laba_rugi_penjualan"><i class="fa fa-line-chart"></i> Laba Rugi Penjualan</a>
+                        </li>
+                        <li class="<?php echo ($page === 'laba_rugi') ? 'active' : ''; ?>">
+                            <a href="?page=laba_rugi"><i class="fa fa-line-chart"></i> Laba Rugi</a>
+                        </li>
+                        <li class="<?php echo ($page === 'grafik') ? 'active' : ''; ?>">
+                            <a href="?page=grafik"><i class="fa fa-bar-chart"></i> Grafik</a>
+                        </li>
+                        <li class="<?php echo ($page === 'neraca') ? 'active' : ''; ?>">
+                            <a href="?page=neraca"><i class="fa fa-balance-scale"></i> Neraca</a>
+                        </li>
+                    </ul>
+                </li>
                 <?php endif; ?>
 
                 <?php if (get_user_role() === 'owner_bengkel'): ?>
