@@ -197,7 +197,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                         <td>Rp <?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['uang_bayar'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['kembalian'], 0, ',', '.'); ?></td>
-                        <td>Rp <?= $row['daftar_barang']; ?></td>
+                        <td><?= $row['daftar_barang']; ?></td>
                         <td>
                             <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
                                 <i class="fa fa-eye"></i> Detail
@@ -218,52 +218,172 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body" id="printArea">
-                <div class="invoice-header text-center mb-3">
-                    <h3><strong><?= $nama_bengkel; ?></strong></h3>
-                    <p><?= $alamat_bengkel; ?><br>
-                    Telp: <?= $telepon_bengkel; ?></p>
-                    <hr>
+
+                <style>
+                    .invoice-box {
+                        margin: 0 auto;
+                        background: #fff;
+                        border-radius: 12px;
+                        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+                        padding: 30px 40px;
+                        font-family: "Poppins", Arial, sans-serif;
+                        color: #333;
+                    }
+
+                    .invoice-header {
+                        display: flex;
+                        justify-content: space-between;
+                        border-bottom: 2px solid #ccc;
+                        padding-bottom: 10px;
+                        margin-bottom: 20px;
+                    }
+
+                    .invoice-header h2 {
+                        color: #000;
+                        margin: 0;
+                    }
+
+                    .company-info {
+                        text-align: right;
+                        font-size: 14px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+
+                    .invoice-details td {
+                        padding: 2px 0;
+                        font-size: 14px;
+                    }
+
+                    table th {
+                        background: #ccc;
+                        padding: 10px;
+                        font-size: 14px;
+                    }
+
+                    table td {
+                        border-bottom: 1px solid #ddd;
+                        padding: 6px;
+                        font-size: 14px;
+                    }
+
+                    .text-right { text-align: right; }
+
+                    .invoice-total td {
+                        padding: 8px;
+                        font-size: 15px;
+                    }
+
+                    .invoice-footer {
+                        margin-top: 40px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #555;
+                    }
+
+                    @media print {
+                        body { background: #fff; }
+                        .modal-footer, .close { display: none !important; }
+                        .invoice-box { box-shadow: none; padding: 0; }
+                    }
+                </style>
+
+                <div class="invoice-box">
+
+                    <div class="invoice-header">
+                        <div>
+                            <h2>FAKTUR PENJUALAN</h2>
+                            <p>No: <strong id="noFaktur"></strong></p>
+                        </div>
+
+                        <div class="company-info">
+                            <strong><?= $nama_bengkel; ?></strong><br>
+                            <?= $alamat_bengkel; ?><br>
+                            Telp: <?= $telepon_bengkel; ?><br>
+                        </div>
+                    </div>
+
+                    <div class="invoice-details">
+                        <table>
+                            <tr>
+                                <td><strong>Tanggal</strong></td>
+                                <td>: <span id="headTanggal"></span></td>
+                                <td><strong>Kasir</strong></td>
+                                <td>: <span id="headKasir"></span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pelanggan</strong></td>
+                                <td>: <span id="headPelanggan"></span></td>
+                                <td><strong>Tanggal JTT</strong></td>
+                                <td>: <span id="tanggalJtt"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kode</th>
+                                <th>Nama Barang</th>
+                                <th>Qty</th>
+                                <th>Satuan</th>
+                                <th>Harga</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyBarang"></tbody>
+                    </table>
+
+                    <table class="invoice-total">
+                        <tr>
+                            <td class="text-right"><strong>Subtotal:</strong></td>
+                            <td class="text-right" width="150" id="totalSparepart">Rp 0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>Diskon:</strong></td>
+                            <td class="text-right" id="diskonFaktur">Rp 0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>PPN:</strong></td>
+                            <td class="text-right" id="ppnFaktur">Rp 0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>Grand Total:</strong></td>
+                            <td class="text-right"><strong id="grandTotalFaktur">Rp 0</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>Dibayar:</strong></td>
+                            <td class="text-right"><strong id="dibayarFaktur">Rp 0</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-right"><strong>Kembali:</strong></td>
+                            <td class="text-right"><strong id="kembaliFaktur">Rp 0</strong></td>
+                        </tr>
+                    </table>
+
+                    <div class="invoice-footer">
+                        <table width="100%">
+                            <tr>
+                                <td>Penerima</td>
+                                <td width="50%"></td>
+                                <td>Hormat Kami</td>
+                            </tr>
+                            <tr><td><br><br><br></td></tr>
+                            <tr>
+                                <td style="border-bottom:1px dotted;"></td>
+                                <td></td>
+                                <td style="border-bottom:1px dotted;"></td>
+                            </tr>
+                        </table>
+
+                        <p>Terima kasih atas kepercayaan Anda!</p>
+                    </div>
+
                 </div>
 
-                <table width="100%" class="table table-sm">
-                    <tr>
-                        <td><strong>No Faktur</strong></td>
-                        <td id="headNoFaktur"></td>
-                        <td><strong>Tanggal</strong></td>
-                        <td id="headTanggal"></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Kasir</strong></td>
-                        <td id="headKasir"></td>
-                        <td><strong>Pelanggan</strong></td>
-                        <td id="headPelanggan"></td>
-                    </tr>
-                </table>
-
-                <table id="table-sparepart" class="table table-bordered table-striped mt-3">
-                    <thead>
-                        <tr>
-                            <th>Kode</th>
-                            <th>Nama</th>
-                            <th>Harga</th>
-                            <th>Qty</th>
-                            <th>Satuan</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                    <tfoot>
-                        <tr>
-                            <th colspan="5" style="text-align:right">Total:</th>
-                            <th id="totalSparepart">Rp 0</th>
-                        </tr>
-                    </tfoot>
-                </table>
-
-                <div class="invoice-footer text-center mt-4">
-                    <p><em>Terima kasih atas kunjungannya</em></p>
-                </div>
-            </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" id="btnPrint"><i class="fa fa-print"></i> Print</button>
                 <button class="btn btn-default" data-dismiss="modal">Tutup</button>
@@ -276,84 +396,123 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
 <script>
 $(document).ready(function () {
+
+    // Init table laporan
     $('#tableLaporan').DataTable({
         order: [[1, 'desc']],
-        scrollY: true,
+        scrollY: true
     });
 
+    // Klik tombol detail di table laporan
     $('#tableLaporan').on('click', '.btn-detail', function () {
-        const faktur = $(this).data('faktur');
+
         const table = $('#tableLaporan').DataTable();
         const data = table.row($(this).closest('tr')).data();
 
-        $("#headTanggal").html(data[1]);
-        $("#headNoFaktur").html(data[0]);
-        $("#headKasir").html(data[3]);
-        $("#headPelanggan").html(data[2]);
+        const faktur = $(this).data('faktur'); // <-- pakai data dari tombol
 
+        // Isi header faktur
+        $("#noFaktur").text(faktur);
+        $("#headNoFaktur").text(faktur);
+        $("#headTanggal").text(data[1]);
+        $("#headKasir").text(data[3]);
+        $("#headPelanggan").text(data[2]);
 
-        $('#modalDetail').modal('show');
+        // Tampilkan modal
+        $("#modalDetail").modal("show");
 
-
-        $('#table-sparepart').DataTable({
-            destroy: true,
-            info: false,
-            ordering: false,
-            ajax: {
-                url: 'pages/admin_bengkel/api_get_transaksi.php',
-                type: 'GET',
-                data: { no_faktur: faktur },
-                dataSrc: json => json.data.detail_sparepart || []
-            },
-            columns: [
-                { data: 'kode_sparepart' },
-                { data: 'nama_sparepart' },
-                { data: 'harga', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') },
-                { data: 'qty' },
-                { data: 'satuan' },
-                { data: 'subtotal', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') }
-            ],
-            paging: false,
-            footerCallback: function (row, data) {
-                let total = 0;
-                data.forEach(item => {
-                    total += parseFloat(item.subtotal || 0);
-                });
-
-                // Format ke rupiah dengan titik
-                const totalFormatted = 'Rp ' + total.toLocaleString('id-ID');
-
-                // Tampilkan ke footer
-                $(this.api().column(5).footer()).html(totalFormatted);
-            }
-        });
+        // Panggil API untuk barang detail
+        loadDetailTransaksi(faktur);
     });
-    $('#btnPrint').on('click', function () {
-        const printArea = document.getElementById('printArea').innerHTML;
-        const printWindow = window.open('', '', 'height=700,width=900');
 
-        printWindow.document.write(`
+    // Tombol Print
+    $('#btnPrint').on('click', function () {
+
+        const printContent = document.getElementById('printArea').innerHTML;
+        const win = window.open('', '', 'height=700,width=900');
+
+        win.document.write(`
             <html>
                 <head>
-                    <title>Invoice</title>
+                    <title>Cetak Faktur</title>
                     <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h3 { margin-bottom: 5px; }
-                        p { margin: 2px 0; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #000; padding: 5px; font-size: 12px; }
-                        th { background: #f2f2f2; }
+                        body { font-family: Poppins, Arial, sans-serif; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 6px; font-size: 12px; }
+                        th { background: #ddd; }
                         .text-right { text-align: right; }
-                        .text-center { text-align: center; }
                     </style>
                 </head>
-                <body>${printArea}</body>
+                <body>${printContent}</body>
             </html>
         `);
 
-        printWindow.document.close();
-        printWindow.print();
+        win.document.close();
+        win.print();
     });
 
 });
+
+
+// --------------------------
+//  LOAD DETAIL TRANSAKSI
+// --------------------------
+function loadDetailTransaksi(faktur) {
+
+    $.ajax({
+        url: 'pages/admin_bengkel/api_get_transaksi.php',
+        type: 'GET',
+        data: { no_faktur: faktur },
+        success: function (json) {
+
+            const data = json.data || {};
+            const list = data.detail_sparepart || [];
+            let tbody = "";
+            let total = 0;
+
+            // Tampil detail sparepart
+            list.forEach(item => {
+
+                let harga = parseInt(item.harga) || 0;
+                let subtotal = parseInt(item.subtotal) || 0;
+
+                total += subtotal;
+
+                tbody += `
+                    <tr>
+                        <td>${item.kode_sparepart}</td>
+                        <td>${item.nama_sparepart}</td>
+                        <td>${item.qty}</td>
+                        <td>${item.satuan}</td>
+                        <td>Rp ${harga.toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${subtotal.toLocaleString('id-ID')}</td>
+                    </tr>
+                `;
+            });
+
+            $("#tbodyBarang").html(tbody);
+
+            // Hitung total dan komponen lain
+            $("#totalSparepart").text("Rp " + total.toLocaleString('id-ID'));
+
+            const diskon = parseInt(data.diskon || 0);
+            const ppn = parseInt(data.ppn || 0);
+
+            const grandTotal = total - diskon + ppn;
+            const dibayar = parseInt(data.dibayar || grandTotal);
+            const kembali = dibayar - grandTotal;
+
+            $("#diskonFaktur").text("Rp " + diskon.toLocaleString('id-ID'));
+            $("#ppnFaktur").text("Rp " + ppn.toLocaleString('id-ID'));
+            $("#grandTotalFaktur").text("Rp " + grandTotal.toLocaleString('id-ID'));
+            $("#dibayarFaktur").text("Rp " + dibayar.toLocaleString('id-ID'));
+            $("#kembaliFaktur").text("Rp " + kembali.toLocaleString('id-ID'));
+
+            // Header tambahan dari API
+            $("#tanggalJtt").text(data.tanggal_jtt || "-");
+        }
+    });
+
+}
 </script>
+

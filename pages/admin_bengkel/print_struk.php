@@ -3,131 +3,239 @@ include "../../inc/koneksi.php";
 
 $no_faktur = $_GET['no_faktur'] ?? '';
 
-// Ambil header transaksi
-$sql = mysqli_query($conn, "SELECT t.*, p.nama_pelanggan, te.nama_teknisi, b.nama_bengkel, b.alamat, b.telepon
-                            FROM transaksi t
-                            LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
-                            LEFT JOIN teknisis te ON t.id_teknisi = te.id_teknisi
-                            LEFT JOIN bengkels b ON t.id_bengkel = b.id_bengkel
-                            WHERE no_faktur='$no_faktur' LIMIT 1");
-$transaksi = mysqli_fetch_assoc($sql);
+// Cek jenis faktur (pj = penjualan sparepart, ps = servis)
+$jenis = strtolower(substr($no_faktur, 0, 2)); // pj / ps
 
-// Ambil detail servis
-$servis = mysqli_query($conn, "SELECT * FROM transaksi_detail_servis WHERE no_faktur='$no_faktur'");
+// Format rupiah
+function rupiah($n) {
+    return 'Rp ' . number_format((float)$n, 0, ',', '.');
+}
 
-// Ambil detail sparepart
-$sparepart = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHERE no_faktur='$no_faktur'");
+// Ambil header
+$sql = mysqli_query($conn, "
+    SELECT t.*, 
+           p.nama_pelanggan, 
+           te.nama_teknisi, 
+           b.nama_bengkel, 
+           b.alamat, 
+           b.telepon, 
+           u.nama_lengkap,
+           pi.tanggal_pelunasan
+    FROM transaksi t
+    LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
+    LEFT JOIN teknisis te ON t.id_teknisi = te.id_teknisi
+    LEFT JOIN bengkels b ON t.id_bengkel = b.id_bengkel
+    LEFT JOIN users u ON t.id_user = u.id_user
+    LEFT JOIN piutang pi ON t.no_faktur = pi.no_faktur
+    WHERE t.no_faktur='" . mysqli_real_escape_string($conn, $no_faktur) . "'
+    LIMIT 1
+");
+$transaksi = mysqli_fetch_assoc($sql) ?: [];
+
+// Detail
+$servis_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_servis WHERE no_faktur='" . mysqli_real_escape_string($conn, $no_faktur) . "'");
+$sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHERE no_faktur='" . mysqli_real_escape_string($conn, $no_faktur) . "'");
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>Struk <?= $no_faktur ?></title>
-  <style>
+<meta charset="utf-8">
+<title>Faktur <?= htmlspecialchars($no_faktur) ?></title>
+<style>
     body {
-      font-family: monospace;
-      font-size: 12px;
-      width: 250px; /* ±58mm */
-      margin: 0 auto;
+        font-family: Arial, sans-serif;
+        background: #f3f3f3;
+        margin: 10px;
+        color: #333;
     }
-    .center {
-      text-align: center;
+    .invoice-wrapper {
+        max-width: 98%;
+        margin: auto;
     }
-    .line {
-      border-top: 1px dashed #000;
-      margin: 5px 0;
+    .invoice-box {
+        background: #fff;
+        padding: 25px 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    h4 {
+        margin: 18px 0 10px;
+        padding: 6px 0;
+        border-bottom: 2px solid #e5e5e5;
     }
     table {
-      width: 100%;
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8px;
     }
-    table td {
-      vertical-align: top;
+    table tr td, table tr th {
+        padding: 8px;
+        font-size: 14px;
+        border-bottom: 1px solid #eee;
     }
-    .right {
-      text-align: right;
+    table.items thead th {
+        background: #f6f6f6;
     }
-  </style>
+    .text-right { text-align: right; }
+    .muted { color: #777; }
+    .actions { margin-bottom: 15px; text-align: center; }
+    .btn {
+        padding: 8px 14px;
+        border-radius: 6px;
+        background: #0d6efd;
+        color: #fff;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .btn.secondary { background: #6c757d; }
+
+    @media print {
+        .actions { display: none; }
+        body { background: #fff; margin: 0; }
+        .invoice-box { box-shadow: none; }
+    }
+</style>
 </head>
-<body onload="printAndBack()">
+<body>
 
-  <div class="center">
-    <strong><?= $transaksi['nama_bengkel'] ?></strong><br>
-    <?= $transaksi['alamat'] ?><br>
-    Telp: <?= $transaksi['telepon'] ?>
-  </div>
+<div class="invoice-wrapper">
 
-  <div class="line"></div>
-  <table>
-    <tr>
-      <td>No Faktur</td><td>:</td><td><?= $transaksi['no_faktur'] ?></td>
-    </tr>
-    <tr>
-      <td>Tanggal</td><td>:</td><td><?= $transaksi['tanggal'] ?></td>
-    </tr>
-    <tr>
-      <td>Pelanggan</td><td>:</td><td><?= $transaksi['nama_pelanggan'] ?: '-' ?></td>
-    </tr>
-    <tr>
-      <td>Teknisi</td><td>:</td><td><?= $transaksi['nama_teknisi'] ?: '-' ?></td>
-    </tr>
-  </table>
-  <div class="line"></div>
+    <div class="actions no-print">
+        <button class="btn" onclick="window.print()">Print</button>
+        <a class="btn secondary" href="javascript:history.back()">Kembali</a>
+    </div>
 
-  <strong>Servis:</strong><br>
-  <table>
-    <?php 
-    $total_servis = 0;
-    while($s = mysqli_fetch_assoc($servis)){ 
-      $total_servis += $s['biaya']; ?>
-      <tr>
-        <td colspan="2"><?= $s['nama_servis'] ?></td>
-        <td class="right"><?= number_format($s['biaya'],0,',','.') ?></td>
-      </tr>
-    <?php } ?>
-  </table>
+    <div class="invoice-box">
+        
+        <!-- HEADER -->
+        <table>
+            <tr>
+                <td>
+                    <h2 style="margin:0;">FAKTUR</h2>
+                    <small>No: <strong><?= htmlspecialchars($no_faktur) ?></strong></small>
+                </td>
+                <td class="text-right">
+                    <strong><?= htmlspecialchars($transaksi['nama_bengkel'] ?? 'Bengkel') ?></strong><br>
+                    <?= htmlspecialchars($transaksi['alamat'] ?? '-') ?><br>
+                    Telp: <?= htmlspecialchars($transaksi['telepon'] ?? '-') ?>
+                </td>
+            </tr>
+        </table>
 
-  <strong>Sparepart:</strong><br>
-  <table>
-    <?php 
-    $total_sparepart = 0;
-    while($sp = mysqli_fetch_assoc($sparepart)){ 
-      $total_sparepart += $sp['subtotal']; ?>
-      <tr>
-        <td><?= $sp['nama_sparepart'] ?></td>
-        <td><?= $sp['qty'] ?>x</td>
-        <td class="right"><?= number_format($sp['subtotal'],0,',','.') ?></td>
-      </tr>
-    <?php } ?>
-  </table>
-  <div class="line"></div>
+        <!-- DETAIL TRANSAKSI -->
+        <table>
+            <tr>
+                <td><strong>Tanggal</strong></td>
+                <td>: <?= htmlspecialchars($transaksi['tanggal'] ?? date('Y-m-d H:i')) ?></td>
+                <td><strong>Kasir</strong></td>
+                <td>: <?= htmlspecialchars($transaksi['nama_lengkap'] ?? '-') ?></td>
+            </tr>
+            <tr>
+                <td><strong>Pelanggan</strong></td>
+                <td>: <?= htmlspecialchars($transaksi['nama_pelanggan'] ?? '-') ?></td>
+                <td><strong>Jatuh Tempo</strong></td>
+                <td>: <?= htmlspecialchars($transaksi['tanggal_pelunasan'] ?? '-') ?></td>
+            </tr>
+        </table>
 
-  <table>
-    <tr>
-      <td>Total Servis</td>
-      <td class="right"><?= number_format($total_servis,0,',','.') ?></td>
-    </tr>
-    <tr>
-      <td>Total Sparepart</td>
-      <td class="right"><?= number_format($total_sparepart,0,',','.') ?></td>
-    </tr>
-    <tr>
-      <td><strong>Grand Total</strong></td>
-      <td class="right"><strong><?= number_format($transaksi['total'],0,',','.') ?></strong></td>
-    </tr>
-  </table>
-  <div class="line"></div>
+        <!-- SPAREPART ALWAYS SHOW -->
+        <h4>Sparepart</h4>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Kode</th>
+                    <th>Nama Barang</th>
+                    <th width="60">Qty</th>
+                    <th width="80">Satuan</th>
+                    <th class="text-right">Harga</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $total_spare = 0;
+                if ($sparepart_q && mysqli_num_rows($sparepart_q)) {
+                    while ($sp = mysqli_fetch_assoc($sparepart_q)) {
+                        $sub = (float)$sp['subtotal'];
+                        $total_spare += $sub;
+                        echo "
+                        <tr>
+                            <td>{$sp['kode_sparepart']}</td>
+                            <td>{$sp['nama_sparepart']}</td>
+                            <td>{$sp['qty']}</td>
+                            <td>{$sp['satuan']}</td>
+                            <td class='text-right'>" . rupiah($sp['harga']) . "</td>
+                            <td class='text-right'>" . rupiah($sub) . "</td>
+                        </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='6' class='muted'>Tidak ada sparepart.</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
 
-  <div class="center">
-    Terima Kasih<br>
-    --- Semoga puas dengan layanan kami ---
-  </div>
+        <!-- SERVICE ONLY IF ps -->
+        <?php if ($jenis == 'ps') : ?>
+            <h4>Servis</h4>
+            <table class="items">
+                <thead>
+                    <tr>
+                        <th>Nama Servis</th>
+                        <th width="80">Qty</th>
+                        <th class="text-right">Harga</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $total_servis = 0;
+                    if ($servis_q && mysqli_num_rows($servis_q)) {
+                        while ($sv = mysqli_fetch_assoc($servis_q)) {
+                            $qty = $sv['qty'] ?? 1;
+                            $sub = $sv['biaya'] * $qty;
+                            $total_servis += $sub;
+                            echo "
+                            <tr>
+                                <td>{$sv['nama_servis']}</td>
+                                <td>{$qty}</td>
+                                <td class='text-right'>" . rupiah($sub) . "</td>
+                            </tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='3' class='muted'>Tidak ada servis.</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <?php $total_servis = 0; ?>
+        <?php endif; ?>
 
-  <script>
-    function printAndBack(){
-      window.print();
-      window.onafterprint = function(){
-        window.history.back();
-      };
-    }
-  </script>
+        <!-- TOTAL -->
+        <?php
+        $subtotal = $total_spare + $total_servis;
+        $diskon = $transaksi['diskon'] ?? 0;
+        $ppn = $transaksi['ppn'] ?? 0;
+        $grand = $subtotal - $diskon + $ppn;
+        $dibayar = $transaksi['dibayar'] ?? $grand;
+        $kembali = $dibayar - $grand;
+        ?>
+
+        <h4>Total Pembayaran</h4>
+        <table>
+            <tr><td class="text-right"><strong>Subtotal</strong></td><td class="text-right"><?= rupiah($subtotal) ?></td></tr>
+            <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right"><?= rupiah($diskon) ?></td></tr>
+            <tr><td class="text-right"><strong>PPN</strong></td><td class="text-right"><?= rupiah($ppn) ?></td></tr>
+            <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right"><strong><?= rupiah($grand) ?></strong></td></tr>
+            <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right"><?= rupiah($dibayar) ?></td></tr>
+            <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right"><?= rupiah($kembali) ?></td></tr>
+        </table>
+
+        <p class="text-center muted">Terima kasih telah berkunjung!</p>
+
+    </div>
+</div>
+
 </body>
 </html>
