@@ -194,11 +194,11 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             </div>
                             <div class="form-group">
                                 <label>Stok Sekarang (dalam Pcs)</label>
-                                <input type="number" class="form-control" id="stok_pcs" name="stok_pcs" required>
+                                <input type="number" class="form-control" id="stok_pcs" name="stok_pcs">
                             </div>
                             <div class="form-group">
                                 <label>Stok Minimal (dalam Pcs)</label>
-                                <input type="number" class="form-control" id="stok_minimal" name="stok_minimal" required>
+                                <input type="number" class="form-control" id="stok_minimal" name="stok_minimal">
                             </div>
                         </div>
                         <div class="col-md-6">

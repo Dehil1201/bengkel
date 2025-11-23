@@ -47,6 +47,13 @@
     .modal-footer, .close, .btn {
         display: none !important;
     }
+
+    .cell-daftar-barang {
+        max-height: 100px;    /* batas tinggi */
+        overflow-y: auto;     /* aktifkan scroll */
+        display: block;       /* supaya scroll berfungsi */
+        white-space: normal;  /* biar teks dapat turun baris */
+    }
 }
 
 </style>
@@ -197,7 +204,16 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                         <td>Rp <?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['uang_bayar'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['kembalian'], 0, ',', '.'); ?></td>
-                        <td><?= $row['daftar_barang']; ?></td>
+                        <td class="cell-daftar-barang">
+                            <ul style="padding-left: 15px; margin: 0;">
+                                <?php 
+                                    $items = explode(',', $row['daftar_barang']);
+                                    foreach ($items as $item) {
+                                        echo "<li>" . htmlspecialchars(trim($item)) . "</li>";
+                                    }
+                                ?>
+                            </ul>
+                        </td>
                         <td>
                             <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
                                 <i class="fa fa-eye"></i> Detail
@@ -245,7 +261,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
                     .company-info {
                         text-align: right;
-                        font-size: 14px;
+                        font-size: 12px;
                     }
 
                     table {
@@ -255,19 +271,19 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
                     .invoice-details td {
                         padding: 2px 0;
-                        font-size: 14px;
+                        font-size: 12px;
                     }
 
                     table th {
                         background: #ccc;
                         padding: 10px;
-                        font-size: 14px;
+                        font-size: 12px;
                     }
 
                     table td {
                         border-bottom: 1px solid #ddd;
                         padding: 6px;
-                        font-size: 14px;
+                        font-size: 12px;
                     }
 
                     .text-right { text-align: right; }
@@ -295,7 +311,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
                     <div class="invoice-header">
                         <div>
-                            <h2>FAKTUR PENJUALAN</h2>
+                            <h2>FAKTUR</h2>
                             <p>No: <strong id="noFaktur"></strong></p>
                         </div>
 
@@ -400,7 +416,8 @@ $(document).ready(function () {
     // Init table laporan
     $('#tableLaporan').DataTable({
         order: [[1, 'desc']],
-        scrollY: true
+        scrollY: true,
+
     });
 
     // Klik tombol detail di table laporan
@@ -428,27 +445,6 @@ $(document).ready(function () {
     // Tombol Print
     $('#btnPrint').on('click', function () {
 
-        const printContent = document.getElementById('printArea').innerHTML;
-        const win = window.open('', '', 'height=700,width=900');
-
-        win.document.write(`
-            <html>
-                <head>
-                    <title>Cetak Faktur</title>
-                    <style>
-                        body { font-family: Poppins, Arial, sans-serif; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { padding: 6px; font-size: 12px; }
-                        th { background: #ddd; }
-                        .text-right { text-align: right; }
-                    </style>
-                </head>
-                <body>${printContent}</body>
-            </html>
-        `);
-
-        win.document.close();
-        win.print();
     });
 
 });

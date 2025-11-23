@@ -21,7 +21,7 @@
 
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Jenis Transaksi</label>
-                    <select id="jenis_transaksi" class="form-select form-control">
+                    <select id="jenis" class="form-select form-control">
                         <option value="">Semua</option>
                         <option value="penjualan">Penjualan</option>
                         <option value="pembelian">Pembelian</option>
@@ -104,7 +104,7 @@
                 data: function(d) {
                     d.tgl_mulai = $('#tgl_mulai').val();
                     d.tgl_selesai = $('#tgl_selesai').val();
-                    d.jenis_transaksi = $('#jenis_transaksi').val();
+                    d.jenis = $('#jenis').val();
                 }
             },
             columnDefs: [

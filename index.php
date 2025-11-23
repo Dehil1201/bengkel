@@ -347,9 +347,9 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         <li class="<?php echo ($page === 'laba_rugi_penjualan') ? 'active' : ''; ?>">
                             <a href="?page=laba_rugi_penjualan"><i class="fa fa-line-chart"></i> Laba Rugi Penjualan</a>
                         </li>
-                        <li class="<?php echo ($page === 'laba_rugi') ? 'active' : ''; ?>">
+                        <!-- <li class="<?php echo ($page === 'laba_rugi') ? 'active' : ''; ?>">
                             <a href="?page=laba_rugi"><i class="fa fa-line-chart"></i> Laba Rugi</a>
-                        </li>
+                        </li> -->
                         <li class="<?php echo ($page === 'grafik') ? 'active' : ''; ?>">
                             <a href="?page=grafik"><i class="fa fa-bar-chart"></i> Grafik</a>
                         </li>

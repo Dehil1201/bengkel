@@ -38,14 +38,16 @@ $baseQuery = "
 
 $filter = "";
 
+// Filter jenis
+if ($jenis != "") {
+    $jenis = mysqli_real_escape_string($conn, $jenis);
+    $filter .= " AND LOWER(t.jenis) = LOWER('$jenis') ";
+}
+
+
 // Filter tanggal
 if ($tgl_mulai != "" && $tgl_selesai != "") {
     $filter .= " AND DATE(t.tanggal) BETWEEN '$tgl_mulai' AND '$tgl_selesai' ";
-}
-
-// Filter jenis
-if ($jenis != "") {
-    $filter .= " AND t.jenis = '$jenis' ";
 }
 
 // Search global
@@ -101,7 +103,7 @@ $no = $start + 1;
 while ($row = mysqli_fetch_assoc($qData)) {
 
     // Tentukan nama
-    if ($row['jenis'] == 'penjualan' || $row['jenis'] == 'service') {
+    if ($row['jenis'] == 'penjualan') {
         $nama = $row['nama_pelanggan'] ?: "-";
     } else {
         $nama = $row['nama_supplier'] ?: "-";

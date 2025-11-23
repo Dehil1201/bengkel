@@ -56,15 +56,34 @@ $total_pembelian = (float)($dBeli['total'] ?? 0);
 $sisa_saldo = $total_penjualan - $total_pembelian;
 
 // ====================
+// HITUNG TOTAL HPP
+// ====================
+// Ambil total HPP dari transaksi penjualan
+$qHpp = mysqli_query($conn, "
+    SELECT SUM(d.qty * s.harga_beli) AS total_hpp
+    FROM transaksi t
+    JOIN transaksi_detail_sparepart d ON d.no_faktur = t.no_faktur
+    JOIN spareparts s ON d.kode_sparepart = s.kode_sparepart
+    WHERE t.jenis = 'penjualan'
+    AND t.id_bengkel = '$id_bengkel'
+    $filterTanggal
+");
+$dHpp = mysqli_fetch_assoc($qHpp);
+$total_hpp = (float)($dHpp['total_hpp'] ?? 0);
+
+
+// ====================
 // RESPONSE
 // ====================
 echo json_encode([
     "total_penjualan" => $total_penjualan,
     "total_pembelian" => $total_pembelian,
     "sisa_saldo" => $sisa_saldo,
+    "total_hpp" => $total_hpp,
 
     // Format Rupiah
     "total_penjualan_formatted" => "Rp " . number_format($total_penjualan, 0, ',', '.'),
     "total_pembelian_formatted" => "Rp " . number_format($total_pembelian, 0, ',', '.'),
-    "sisa_saldo_formatted" => "Rp " . number_format($sisa_saldo, 0, ',', '.')
+    "sisa_saldo_formatted" => "Rp " . number_format($sisa_saldo, 0, ',', '.'),
+    "total_hpp_formatted" => "Rp " . number_format($total_hpp, 0, ',', '.')
 ]);

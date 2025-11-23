@@ -24,7 +24,7 @@ if (isset($_SESSION['email']) && $_SESSION['email'] != "") {
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="bower_components/Ionicons/css/ionicons.min.css">
     <link rel="stylesheet" href="dist/css/AdminLTE.min.css">
-    <link rel="icon" href="dist/img/logo_sekolah.png">
+    <link rel="icon" href="dist/logo.jpg">
     <link rel="stylesheet" href="plugins/iCheck/square/blue.css">
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">

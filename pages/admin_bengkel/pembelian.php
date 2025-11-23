@@ -794,7 +794,36 @@ $(document).ready(function () {
         });
     });
 
+    $(document).on("click", ".btn-delete-sparepart", function() {
+        let id_detail = $(this).data("id");
+        let noFaktur = $("#noFakturText").val();
 
+        Swal.fire({
+            title: 'Yakin ingin menghapus sparepart ini?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if(result.isConfirmed){
+                $.post("pages/admin_bengkel/api_transaksi_sparepart.php", {
+                    action: "delete",        // <-- action delete
+                    id_detail: id_detail,    // <-- id detail yang mau dihapus
+                    no_faktur: noFaktur,
+                    jenis_transaksi: 'pembelian'
+                }, function(res){
+                    if(res.status_code == 200){
+                        Swal.fire('Terhapus!', res.message, 'success');
+                        reloadSparepartTable();
+                        sumTotal();
+                    } else {
+                        Swal.fire('Gagal!', res.message, 'error');
+                    }
+                }, "json");
+            }
+        });
+    });
 
 });
+
 </script>
