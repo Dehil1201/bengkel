@@ -278,10 +278,10 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         <li class="<?php echo ($page === 'asset') ? 'active' : ''; ?>">
                             <a href="?page=asset"><i class="fa fa-list"></i> Aset</a>
                         </li>
-                        <li class="<?php echo ($page === 'modal') ? 'active' : ''; ?>">
+                        <li class="hide <?php echo ($page === 'modal') ? 'active' : ''; ?>">
                             <a href="?page=modal"><i class="fa fa-list"></i> Modal</a>
                         </li>
-                        <li class="<?php echo ($page === 'biaya') ? 'active' : ''; ?>">
+                        <li class=" hide <?php echo ($page === 'biaya') ? 'active' : ''; ?>">
                             <a href="?page=biaya"><i class="fa fa-list"></i> Biaya</a>
                         </li>
                     </ul>
