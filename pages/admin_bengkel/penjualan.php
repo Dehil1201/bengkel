@@ -427,6 +427,7 @@ $(document).ready(function () {
         const data = table.row($(this).closest('tr')).data();
 
         const faktur = $(this).data('faktur'); // <-- pakai data dari tombol
+        $('#btnPrint').data('faktur', faktur);
 
         // Isi header faktur
         $("#noFaktur").text(faktur);
@@ -440,15 +441,17 @@ $(document).ready(function () {
 
         // Panggil API untuk barang detail
         loadDetailTransaksi(faktur);
-    });
+        
+        $('#btnPrint').data('faktur', faktur);
 
-    // Tombol Print
+        
+        
+    });
     $('#btnPrint').on('click', function () {
-
+        const faktur = $(this).data('faktur');
+        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + faktur + "&auto_print=1";
     });
-
 });
-
 
 // --------------------------
 //  LOAD DETAIL TRANSAKSI
