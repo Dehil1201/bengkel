@@ -50,6 +50,7 @@ if (isset($_SESSION['email']) && $_SESSION['email'] != "") {
             if ($data_user && password_verify($password_plain, $data_user['password'])) {
                 // Login berhasil
                 $_SESSION['id_user'] = $data_user['id_user'];
+                $_SESSION['bengkel_id'] = $data_user['bengkel_id'];
                 $_SESSION['email'] = $data_user['email'];
                 $_SESSION['role'] = $data_user['role'];
                 $_SESSION['nama_lengkap'] = $data_user['nama_lengkap'];

@@ -151,7 +151,13 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                 <td><strong>Pelanggan</strong></td>
                 <td>: <?= htmlspecialchars($transaksi['nama_pelanggan'] ?? '-') ?></td>
                 <td><strong>Jatuh Tempo</strong></td>
-                <td>: <?= htmlspecialchars($transaksi['tanggal_pelunasan'] ?? '-') ?></td>
+                <td>: <?php
+                    if ($transaksi['tanggal_pelunasan'] == '0000-00-00') {
+                        echo "-";
+                    }else {
+                        echo htmlspecialchars($transaksi['tanggal_pelunasan'] ?? '-');
+                    }
+                 ?></td>
             </tr>
         </table>
 
@@ -235,17 +241,17 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         <!-- TOTAL -->
         <?php
         $subtotal = $total_spare + $total_servis;
-        $diskon = $transaksi['diskon'] ?? 0;
+        $diskon = $transaksi['discount'] ?? 0;
         $ppn = $transaksi['ppn'] ?? 0;
-        $grand = $subtotal - $diskon + $ppn;
-        $dibayar = $transaksi['dibayar'] ?? $grand;
-        $kembali = $dibayar - $grand;
+        $grand = $transaksi['total_bayar'];
+        $dibayar = $transaksi['uang_bayar'] ?? $grand;
+        $kembali = $transaksi['kembalian'];
         ?>
 
         <h4>Total Pembayaran</h4>
         <table>
             <tr><td class="text-right" width="50%"><strong>Subtotal</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($subtotal) ?></td></tr>
-            <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($diskon) ?></td></tr>
+            <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right" style="padding-right:80px"><?= $diskon."%" ?></td></tr>
             <tr><td class="text-right"><strong>PPN</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($ppn) ?></td></tr>
             <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:80px"><strong><?= rupiah($grand) ?></strong></td></tr>
             <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:80px"><?= rupiah($dibayar) ?></td></tr>

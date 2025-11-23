@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                     <div class="form-group">
                         <label>Biaya Servis</label>
-                        <input type="number" class="form-control" id="biaya-servis-input" value="0">
+                        <input type="text" class="form-control format-rupiah" id="biaya-servis-input" name="biaya" value="0" required>
                     </div>
                     <button type="button" class="btn btn-info btn-block" id="btn-add-servis"><i class="fa fa-plus"></i> Tambah Servis</button>
                     <button type="button" class="btn btn-default btn-block" id="btn-list-servis"><i class="fa fa-list"></i> List Pending Servis</button>
@@ -319,12 +319,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
               <div class="form-group">
                 <label for="diskon">Diskon (%)</label>
-                <input type="number" id="diskon" name="diskon" class="form-control" min="0" max="100" value="0">
+                <input type="number" id="diskon" name="diskon" class="form-control" value="0" step="0.01">
               </div>
 
               <div class="form-group">
                 <label for="totalBayar">Total Bayar (Setelah Diskon)</label>
-                <input type="text" id="totalBayar" name="total_bayar" class="form-control" readonly>
+                <input type="text" id="totalBayar" name="total_bayar" class="form-control">
                 <input type="hidden" id="totalBayarHidden" name="total_bayar_hidden" class="form-control" readonly>
               </div>
 
@@ -446,9 +446,9 @@ $(document).ready(function() {
                         pelanggan = res.data.transaksi.pelanggan;
                         teknisi = res.data.transaksi.teknisi;
                     }
-                    $("#totalAwal").val(total.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
-                    $("#uangBayar").val(uang_bayar.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
-                    $("#kembalian").val(kembalian.toLocaleString('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0}));
+                    $("#totalAwal").val(formatAngka(total));
+                    $("#uangBayar").val(formatAngka(uang_bayar));
+                    $("#kembalian").val(formatAngka(kembalian));
                     $("#textKendaraan").val();
                     $("#textNoPolisi").val(no_polisi);
                     $("#statusTransaksi").val(status);
@@ -538,8 +538,8 @@ $(document).ready(function() {
       if (kembalian < 0) kembalian = 0;
 
       // Tampilkan hasil
-      $("#totalBayar").val("Rp " + formatAngka(totalPembayaran));
-      $("#kembalian").val("Rp " +formatAngka(kembalian));
+      $("#totalBayar").val(formatAngka(totalPembayaran));
+      $("#kembalian").val(formatAngka(kembalian));
       $("#totalBayarHidden").val(totalPembayaran);
       $("#uangBayarHidden").val(uangBayarHidden);
       $("#kembalianHidden").val(kembalian);
@@ -838,14 +838,14 @@ $(document).ready(function() {
 
     $("#servis-select").on('change', function() {
         let biayaServis = $(this).find("option:selected").data("biaya");
-        $("#biaya-servis-input").val(biayaServis);
+        $("#biaya-servis-input").val(formatAngka(biayaServis));
     });
     // Tambah Servis
     $("#btn-add-servis").on("click", function() {
         let noFaktur = $("#noFakturText").val();
         let idServis = $("#servis-select").val();
         let namaServis = $("#servis-select option:selected").text();
-        let biaya = $("#biaya-servis-input").val();
+        let biaya = parseAngka($("#biaya-servis-input").val());
 
         if(idServis == "") {
             alert("Pilih jenis servis terlebih dahulu!");
@@ -1188,16 +1188,45 @@ $(document).ready(function() {
                 $("#total-display").html(totalIDR);
                 $("#totalAwal").val(totalIDR);
                 $("#totalAwalHidden").val(parseAngka(totalIDR));
-                $("#totalBayar").val(totalIDR);
+                $("#totalBayar").val(formatAngka(total));
                 $("#totalBayarHidden").val(parseAngka(totalIDR));
             },
             error: function() {
-                $("#total-display").html("Rp 0");
-                $("#totalAwal").val("Rp 0");
-                $("#totalBayar").val("Rp 0");
+                $("#total-display").html("0");
+                $("#totalAwal").val("0");
+                $("#totalBayar").val("0");
             }
         });
     }
+
+    function formatRupiah(angka) {
+        return angka
+            .replace(/[^0-9]/g, "")          // hanya angka
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ".");  // tambah titik
+    }
+
+    $(document).on("keyup", ".format-rupiah", function () {
+        this.value = formatRupiah(this.value);
+    });
+    
+    $(document).on("keyup", "#totalBayar", function () {
+        this.value = formatRupiah(this.value);
+        $("#totalBayarHidden").val(parseAngka(this.value));
+
+        let totalAwal = parseInt($("#totalAwalHidden").val());
+        let totalBayar = parseInt($("#totalBayarHidden").val());
+
+        let potongan = totalAwal - totalBayar;                 // nilai potongan
+        let persen = (potongan / totalAwal) * 100;             // hitung %
+
+        if (persen < 0) persen = 0;                            // antisipasi input lebih besar
+        if (persen > 100) persen = 100;
+
+        $("#diskon").val(persen.toFixed(2));                   // tampil 2 desimal
+    });
+
+
+    
 
 
 

@@ -353,10 +353,21 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         <li class="<?php echo ($page === 'grafik') ? 'active' : ''; ?>">
                             <a href="?page=grafik"><i class="fa fa-bar-chart"></i> Grafik</a>
                         </li>
-                        <li class="<?php echo ($page === 'neraca') ? 'active' : ''; ?>">
+                        <!-- <li class="<?php echo ($page === 'neraca') ? 'active' : ''; ?>">
                             <a href="?page=neraca"><i class="fa fa-balance-scale"></i> Neraca</a>
-                        </li>
+                        </li> -->
                     </ul>
+                </li>
+                
+                <li class="<?php echo ($page === 'management_users_by_owner') ? 'active' : ''; ?>">
+                    <a href="?page=management_users_by_owner">
+                        <i class="fa fa-users"></i><span>Manajemen Pengguna</span>
+                    </a>
+                </li>
+                <li class="<?php echo ($page === 'pengaturan') ? 'active' : ''; ?>">
+                    <a href="?page=pengaturan">
+                        <i class="fa fa-cogs"></i><span>Pengaturan</span>
+                    </a>
                 </li>
                 <?php endif; ?>
 

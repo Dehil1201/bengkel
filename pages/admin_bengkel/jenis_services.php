@@ -10,6 +10,11 @@ function sanitize_input($data) {
     return mysqli_real_escape_string($conn, trim($data));
 }
 
+// Fungsi untuk membersihkan angka (menghilangkan titik/karakter non-digit)
+function sanitize_number($number) {
+    return intval(preg_replace('/[^0-9]/', '', $number));
+}
+
 // ==========================================================
 // Pengecekan Akses Berdasarkan Role dan Bengkel ID
 // ==========================================================
@@ -36,10 +41,12 @@ if ($user_role === 'owner_bengkel') {
         $accessible_bengkel_ids[] = $row['bengkel_id'];
     }
 }
+
 if (empty($accessible_bengkel_ids)) {
     echo "<div class='alert alert-danger'>Anda tidak terdaftar di bengkel manapun.</div>";
     exit();
 }
+
 $bengkel_ids_string = "'" . implode("','", $accessible_bengkel_ids) . "'";
 
 // ==========================================================
@@ -48,19 +55,19 @@ $bengkel_ids_string = "'" . implode("','", $accessible_bengkel_ids) . "'";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'] ?? '';
     $current_page = '?page=jenis_services';
-    
+
     if ($action == 'tambah') {
         $nama_servis = sanitize_input($_POST['nama_servis']);
-        $biaya = sanitize_input($_POST['biaya']);
+        $biaya = sanitize_number($_POST['biaya']); // FORMAT BARU
         $bengkel_id = sanitize_input($_POST['bengkel_id']);
-        
-        // Pastikan bengkel ID yang dikirim valid dan sesuai dengan yang diakses user
+
         if (!in_array($bengkel_id, $accessible_bengkel_ids)) {
             header("Location: $current_page&status=error&message=Akses ditolak. Bengkel tidak valid.");
             exit();
         }
 
-        $query_tambah = "INSERT INTO jenis_servis (nama_servis, biaya, bengkel_id) VALUES ('$nama_servis', '$biaya', '$bengkel_id')";
+        $query_tambah = "INSERT INTO jenis_servis (nama_servis, biaya, bengkel_id) 
+                         VALUES ('$nama_servis', '$biaya', '$bengkel_id')";
         if (mysqli_query($conn, $query_tambah)) {
             header("Location: $current_page&status=success&message=Jenis Service berhasil ditambahkan.");
         } else {
@@ -71,9 +78,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif ($action == 'ubah') {
         $id_servis = sanitize_input($_POST['id_servis']);
         $nama_servis = sanitize_input($_POST['nama_servis']);
-        $biaya = sanitize_input($_POST['biaya']);
-        
-        // Pastikan jenis service milik bengkel yang bisa diakses user
+        $biaya = sanitize_number($_POST['biaya']); // FORMAT BARU
+
+        // Pastikan jenis service valid
         $check_query = mysqli_query($conn, "SELECT bengkel_id FROM jenis_servis WHERE id_servis = '$id_servis'");
         if ($check_row = mysqli_fetch_assoc($check_query)) {
             if (!in_array($check_row['bengkel_id'], $accessible_bengkel_ids)) {
@@ -85,7 +92,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
-        $query_ubah = "UPDATE jenis_servis SET nama_servis='$nama_servis', biaya='$biaya' WHERE id_servis='$id_servis'";
+        $query_ubah = "UPDATE jenis_servis 
+                       SET nama_servis='$nama_servis', biaya='$biaya' 
+                       WHERE id_servis='$id_servis'";
         if (mysqli_query($conn, $query_ubah)) {
             header("Location: $current_page&status=success&message=Jenis Service berhasil diubah.");
         } else {
@@ -96,7 +105,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif ($action == 'hapus') {
         $id_servis = sanitize_input($_POST['id_servis']);
 
-        // Pastikan jenis service milik bengkel yang bisa diakses user
         $check_query = mysqli_query($conn, "SELECT bengkel_id FROM jenis_servis WHERE id_servis = '$id_servis'");
         if ($check_row = mysqli_fetch_assoc($check_query)) {
             if (!in_array($check_row['bengkel_id'], $accessible_bengkel_ids)) {
@@ -145,7 +153,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <tbody>
                             <?php
                             $no = 1;
-                            $query_jenis_servis = mysqli_query($conn, "SELECT js.*, b.nama_bengkel FROM jenis_servis js JOIN bengkels b ON js.bengkel_id = b.id_bengkel WHERE js.bengkel_id IN ($bengkel_ids_string) ORDER BY js.nama_servis ASC");
+                            $query_jenis_servis = mysqli_query($conn, 
+                                "SELECT js.*, b.nama_bengkel 
+                                 FROM jenis_servis js 
+                                 JOIN bengkels b ON js.bengkel_id = b.id_bengkel 
+                                 WHERE js.bengkel_id IN ($bengkel_ids_string) 
+                                 ORDER BY js.nama_servis ASC");
+
                             if (mysqli_num_rows($query_jenis_servis) > 0) {
                                 while ($data_jenis = mysqli_fetch_assoc($query_jenis_servis)) {
                             ?>
@@ -158,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <button class="btn btn-info btn-xs btn-ubah-jenis"
                                                 data-id="<?= $data_jenis['id_servis']; ?>"
                                                 data-nama="<?= htmlspecialchars($data_jenis['nama_servis']); ?>"
-                                                data-biaya="<?= htmlspecialchars($data_jenis['biaya']); ?>">
+                                                data-biaya="<?= $data_jenis['biaya']; ?>">
                                                 <i class="fa fa-edit"></i> Ubah
                                             </button>
                                             <button class="btn btn-danger btn-xs btn-hapus-jenis"
@@ -182,38 +196,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </div>
 
-<div class="modal fade" id="modalTambahJenisService" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<!-- MODAL TAMBAH -->
+<div class="modal fade" id="modalTambahJenisService" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Tambah Jenis Service</h4>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">Tambah Jenis Service</h4>
             </div>
-            <form id="formTambahJenisService" method="POST" action="">
+            <form method="POST">
                 <input type="hidden" name="action" value="tambah">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="nama_servis">Nama Service</label>
-                        <input type="text" class="form-control" id="nama_servis" name="nama_servis" required>
+                        <label>Nama Service</label>
+                        <input type="text" class="form-control" name="nama_servis" required>
                     </div>
+
                     <div class="form-group">
-                        <label for="biaya">Biaya</label>
+                        <label>Biaya</label>
                         <div class="input-group">
                             <span class="input-group-addon">Rp</span>
-                            <input type="number" class="form-control" id="biaya" name="biaya" required>
+                            <input type="text" class="form-control format-rupiah" id="biaya" name="biaya" required>
                         </div>
                     </div>
+
                     <div class="form-group">
-                        <label for="bengkel_id_add">Bengkel</label>
-                        <select class="form-control" id="bengkel_id_add" name="bengkel_id" required>
+                        <label>Bengkel</label>
+                        <select class="form-control" name="bengkel_id" required>
                             <?php 
-                            $query_bengkel_add = mysqli_query($conn, "SELECT id_bengkel, nama_bengkel FROM bengkels WHERE id_bengkel IN ($bengkel_ids_string)");
+                            $query_bengkel_add = mysqli_query($conn, 
+                                "SELECT id_bengkel, nama_bengkel FROM bengkels 
+                                 WHERE id_bengkel IN ($bengkel_ids_string)");
                             while ($row_bengkel = mysqli_fetch_assoc($query_bengkel_add)) {
                                 echo "<option value='{$row_bengkel['id_bengkel']}'>{$row_bengkel['nama_bengkel']}</option>";
                             }
                             ?>
                         </select>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
@@ -224,53 +244,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </div>
 
-<div class="modal fade" id="modalUbahJenisService" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<!-- MODAL UBAH -->
+<div class="modal fade" id="modalUbahJenisService" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 <h4 class="modal-title">Ubah Jenis Service</h4>
             </div>
-            <form id="formUbahJenisService" method="POST" action="">
+            <form method="POST">
                 <input type="hidden" name="action" value="ubah">
                 <input type="hidden" name="id_servis" id="ubah_id_servis">
+
                 <div class="modal-body">
+
                     <div class="form-group">
-                        <label for="ubah_nama_servis">Nama Service</label>
+                        <label>Nama Service</label>
                         <input type="text" class="form-control" id="ubah_nama_servis" name="nama_servis" required>
                     </div>
+
                     <div class="form-group">
-                        <label for="ubah_biaya">Biaya</label>
+                        <label>Biaya</label>
                         <div class="input-group">
                             <span class="input-group-addon">Rp</span>
-                            <input type="number" class="form-control" id="ubah_biaya" name="biaya" required>
+                            <input type="text" class="form-control format-rupiah" id="ubah_biaya" name="biaya" required>
                         </div>
                     </div>
+
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-info">Simpan Perubahan</button>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalHapusJenisService" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<!-- MODAL HAPUS -->
+<div class="modal fade" id="modalHapusJenisService" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="close"><span>&times;</span></button>
                 <h4 class="modal-title">Hapus Jenis Service</h4>
             </div>
             <div class="modal-body">
-                <p>Apakah Anda yakin ingin menghapus jenis service **<span id="hapus_nama_servis"></span>**?</p>
+                <p>Apakah Anda yakin ingin menghapus jenis service <b><span id="hapus_nama_servis"></span></b>?</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                <form id="formHapusJenisService" method="POST" action="" style="display: inline;">
+                <form method="POST">
                     <input type="hidden" name="action" value="hapus">
                     <input type="hidden" name="id_servis" id="hapus_id_servis">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-danger">Ya, Hapus</button>
                 </form>
             </div>
@@ -278,11 +306,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
+
     $('#dataTable').DataTable();
 
+    // SweetAlert Notifikasi
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get('status');
     const message = urlParams.get('message');
@@ -295,13 +326,26 @@ $(document).ready(function() {
             showConfirmButton: false,
             timer: 2000
         });
-        window.history.replaceState({}, document.title, window.location.pathname);
+        const cleanUrl = window.location.origin + window.location.pathname + '?page=jenis_services';
+        window.history.replaceState({}, document.title, cleanUrl);
+
     }
 
+    // Format Rupiah (JS)
+    function formatRupiah(angka) {
+        return angka.replace(/\D/g, "")
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    $(document).on("keyup", ".format-rupiah", function () {
+        this.value = formatRupiah(this.value);
+    });
+
+    // Modal Ubah
     $(document).on('click', '.btn-ubah-jenis', function() {
         const id = $(this).data('id');
         const nama = $(this).data('nama');
-        const biaya = $(this).data('biaya');
+        const biaya = $(this).data('biaya').toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
         $('#ubah_id_servis').val(id);
         $('#ubah_nama_servis').val(nama);
@@ -310,14 +354,15 @@ $(document).ready(function() {
         $('#modalUbahJenisService').modal('show');
     });
 
+    // Modal Hapus
     $(document).on('click', '.btn-hapus-jenis', function() {
         const id = $(this).data('id');
         const nama = $(this).data('nama');
-        
+
         $('#hapus_id_servis').val(id);
         $('#hapus_nama_servis').text(nama);
-
         $('#modalHapusJenisService').modal('show');
     });
+
 });
 </script>

@@ -67,13 +67,13 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
     <div class="col-xs-12">
         <div class="box box-primary">
             <div class="box-header with-border">
-                <h3 class="box-title">Manajemen Spare Part untuk Bengkel: **<?= htmlspecialchars($selected_bengkel_name); ?>**</h3>
+                <h3 class="box-title">Manajemen Sparepart</h3>
                 <div class="box-tools pull-right">
                     <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalTambahSparepart" id="btn-tambah-sparepart"><i class="fa fa-plus"></i> Tambah Spare Part</a>
                 </div>
             </div>
             <div class="box-body">
-                <div class="form-group col-md-12 pull-left">
+                <div class="form-group col-md-12 pull-left hide">
                     <label for="filter_bengkel">Pilih Bengkel:</label>
                     <select id="filter_bengkel" class="form-control">
                         <?php foreach ($bengkels as $bengkel): ?>
