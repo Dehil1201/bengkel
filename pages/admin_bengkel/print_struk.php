@@ -42,62 +42,76 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
 <meta charset="utf-8">
 <title>Faktur <?= htmlspecialchars($no_faktur) ?></title>
 <style>
+    /* GENERAL */
     body {
         font-family: Arial, sans-serif;
         background: #f3f3f3;
-        margin: 10px;
+        margin: 0;
         color: #333;
     }
     .invoice-wrapper {
-        max-width: 98%;
         margin: auto;
+        padding: 10px;
     }
     .invoice-box {
         background: #fff;
-        padding: 25px 30px;
-        border-radius: 12px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        padding: ;
+        border-radius: 8px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        font-size: 12px; /* lebih kecil agar muat */
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-bottom: 5px;
     }
     h4 {
-        margin: 18px 0 10px;
-        padding: 6px 0;
-        border-bottom: 2px solid #e5e5e5;
+        margin: 12px 0 6px;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e5e5;
+        font-size: 14px;
     }
+
     table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
     tr {
-      text-align: left;
+        text-align: left;
     }
     table tr td, table tr th {
-        padding: 8px;
-        font-size: 14px;
+        padding: 4px 6px;
+        font-size: 12px;
     }
     table.items thead th {
         background: #f6f6f6;
+        font-size: 12px;
     }
+
     .text-right { text-align: right; }
     .muted { color: #777; }
-    .actions { margin-bottom: 15px; text-align: center; }
+    .actions { margin-bottom: 10px; text-align: center; }
     .btn {
-        padding: 8px 14px;
-        border-radius: 6px;
+        padding: 6px 12px;
+        border-radius: 4px;
         background: #0d6efd;
         color: #fff;
         text-decoration: none;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 12px;
     }
     .btn.secondary { background: #6c757d; }
 
+    /* PRINT */
     @media print {
         .actions { display: none; }
         body { background: #fff; margin: 0; }
-        .invoice-box { box-shadow: none; }
+        .invoice-box { box-shadow: none;}
+        @page { size: A5 landscape;}
     }
 </style>
+
 </head>
 <body>
 
