@@ -55,7 +55,7 @@ try {
         $conn->query("
             UPDATE spareparts s
             JOIN transaksi_detail_sparepart d ON s.kode_sparepart = d.kode_sparepart
-            SET s.stok = s.stok + d.qty
+            SET s.stok_pcs = s.stok_pcs + d.qty
             WHERE d.no_faktur='$no_faktur'
         ");
 
