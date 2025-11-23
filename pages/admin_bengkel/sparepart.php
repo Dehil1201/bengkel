@@ -171,7 +171,8 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             <h4 class="text-bold">Data Pembelian</h4>
                             <div class="form-group">
                                 <label for="harga_beli">Harga Beli</label>
-                                <input type="text" step="0.01" class="form-control" id="harga_beli" name="harga_beli" required>
+                                <input type="text" class="form-control" id="harga_beli_raw" required>
+                                <input type="hidden" id="harga_beli" name="harga_beli">
                             </div>
                             <div class="form-group">
                                 <label for="satuan_beli_id">Satuan Beli</label>
@@ -477,6 +478,15 @@ $(document).ready(function() {
         console.log(persen)
     });
 
+    document.getElementById('harga_beli_raw').addEventListener('input', function (e) {
+        let value = this.value.replace(/[^0-9]/g, ''); // ambil angka saja
+
+        // simpan ke input hidden sebagai integer
+        document.getElementById('harga_beli').value = value;
+
+        // tampilkan dengan format ribuan
+        this.value = new Intl.NumberFormat('id-ID').format(value);
+    });
 
 
 
