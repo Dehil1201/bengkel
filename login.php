@@ -42,7 +42,7 @@ if (isset($_SESSION['email']) && $_SESSION['email'] != "") {
             $password_plain = $_POST['password']; // Ambil kata sandi dalam bentuk teks biasa
 
             // --- Ubah query untuk hanya mencari berdasarkan email ---
-            $sql = mysqli_query($conn, "SELECT id_user, email, password, role, nama_lengkap FROM users WHERE email = '$email'");
+            $sql = mysqli_query($conn, "SELECT id_user, email, password, role, nama_lengkap, bengkel_id FROM users WHERE email = '$email'");
             $data_user = mysqli_fetch_assoc($sql);
 
             // --- Gunakan password_verify() untuk membandingkan kata sandi ---

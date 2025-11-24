@@ -53,6 +53,7 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
           <th>Jumlah Dibayar</th>
           <th>Sisa Piutang</th>
           <th>Status</th>
+          <th>Tempo</th>
           <th>Aksi</th>
         </tr>
       </thead>
@@ -61,7 +62,7 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
   </div>
 
   <div class="box-footer">
-    <strong>Total Piutang Belum Lunas: <span id="totalPiutang" class="text-red">Rp 0,00</span></strong>
+    <strong>Total Piutang Belum Lunas: <span id="totalPiutang" class="text-red">Rp 0</span></strong>
   </div>
 </div>
 
@@ -158,7 +159,7 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
               total += (parseFloat(row.jumlah) - parseFloat(row.dibayar));
             }
           });
-          $('#totalPiutang').text(`Rp ${total.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`);
+          $('#totalPiutang').text(`Rp ${total.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`);
           return json;
         }
       },
@@ -181,9 +182,10 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
             if (data.status === 'lunas') {
               return `<span class="label label-success">${data.status}</span>`;
             }else {
-              return `<span class="label label-warning">${data.status}</span>`;
+              return `<span class="label label-danger">${data.status}</span>`;
             }
         } },
+        { data: 'tanggal_pelunasan' },
         {
           data: null,
           render: function (data) {

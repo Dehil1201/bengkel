@@ -56,7 +56,7 @@ $baseSql = "
     FROM spareparts sp
     JOIN bengkels b ON sp.bengkel_id = b.id_bengkel
     LEFT JOIN kategori_sparepart k ON sp.kategori_id = k.id_kategori
-    LEFT JOIN merk_sparepart m ON sp.merk_id = m.id_merk
+    LEFT JOIN merks m ON sp.merk_id = m.id_merk
     LEFT JOIN satuan s ON sp.satuan_beli_id = s.id_satuan
     WHERE sp.bengkel_id = '$id_bengkel'
 ";

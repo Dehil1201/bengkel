@@ -6,7 +6,7 @@ $id_pelanggan = $_GET['id_pelanggan'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 $id_teknisi = $_GET['id_teknisi'] ?? '';
 
-$where = "WHERE t.no_faktur LIKE '%PS%'";
+$where = "WHERE t.no_faktur LIKE '%PS%' OR t.no_faktur LIKE '%JS%'";
 if ($tgl_dari && $tgl_sampai) {
     $where .= " AND DATE(t.tanggal) BETWEEN '$tgl_dari' AND '$tgl_sampai'";
 }
