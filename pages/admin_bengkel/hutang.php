@@ -61,7 +61,7 @@ $list_supplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM sup
   </div>
 
   <div class="box-footer">
-    <strong>Total Hutang Belum Lunas: <span id="totalHutang" class="text-red">Rp 0,00</span></strong>
+    <strong>Total Hutang Belum Lunas: <span id="totalHutang" class="text-red">Rp 0</span></strong>
   </div>
 </div>
 
@@ -125,7 +125,7 @@ $list_supplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM sup
               total += (parseFloat(row.jumlah) - parseFloat(row.dibayar));
             }
           });
-          $('#totalHutang').text(`Rp ${total.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`);
+          $('#totalHutang').text(`Rp ${total.toLocaleString('id-ID', { minimumFractionDigits: 0 })}`);
           return json;
         }
       },
@@ -134,13 +134,13 @@ $list_supplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM sup
         { data: 'no_faktur' },
         { data: 'nama_supplier' },
         { data: 'tanggal_hutang' },
-        { data: 'jumlah', render: $.fn.dataTable.render.number(',', '.', 2, 'Rp ') },
-        { data: 'dibayar', render: $.fn.dataTable.render.number(',', '.', 2, 'Rp ') },
+        { data: 'jumlah', render: $.fn.dataTable.render.number('.', '.', 0, 'Rp ') },
+        { data: 'dibayar', render: $.fn.dataTable.render.number('.', '.', 0, 'Rp ') },
         {
           data: null,
           render: function (data) {
             const sisa = parseFloat(data.jumlah) - parseFloat(data.dibayar);
-            return $.fn.dataTable.render.number(',', '.', 2, 'Rp ').display(sisa);
+            return $.fn.dataTable.render.number('.', '.', 0, 'Rp ').display(sisa);
           }
         },
         { data: null, 
