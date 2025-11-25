@@ -513,6 +513,7 @@ $(document).ready(function () {
             const listS = res.data.detail_servis || [];
             const listP = res.data.detail_sparepart || [];
 
+
             let tbody = "";
             let subtotal = 0;
 
@@ -562,7 +563,7 @@ $(document).ready(function () {
             $("#headTanggal").text(trx.tanggal ? new Date(trx.tanggal).toLocaleDateString('id-ID') : "-");
             $("#headKasir").text(trx.nama_lengkap || '-');
             $("#headPelanggan").text(trx.nama_pelanggan || '-');
-            $("#tanggalJtt").text(trx.tanggal_jtt || "-");
+            $("#tanggalJtt").text(trx.tempo_piutang || "-");
         });
     }
 

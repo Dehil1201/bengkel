@@ -41,7 +41,10 @@ if ($no_faktur == '') {
         $where .= " AND jenis = '$jenis'";
     }
 
-    $q = mysqli_query($conn, "SELECT * FROM transaksi $where ORDER BY tanggal DESC");
+    $q = mysqli_query($conn, "SELECT * FROM t.*, p.nama_pelanggan, u.nama_lengkap FROM transaksi t
+    LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
+    LEFT JOIN users u ON t.id_user = u.id_user
+    $where ORDER BY tanggal DESC");
     $list_transaksi = [];
     while ($row = mysqli_fetch_assoc($q)) {
         $list_transaksi[] = $row;
@@ -56,12 +59,17 @@ if ($no_faktur == '') {
 }
 
 // ===== Kalau no_faktur ada -> ambil detail transaksi =====
-$where_faktur = "WHERE no_faktur='$no_faktur' AND id_bengkel = '$id_bengkel'";
+$where_faktur = "WHERE t.no_faktur='$no_faktur' AND id_bengkel = '$id_bengkel'";
 if ($jenis != '') {
     $where_faktur .= " AND jenis = '$jenis'";
 }
 
-$sql_transaksi = mysqli_query($conn, "SELECT * FROM transaksi $where_faktur LIMIT 1");
+$sql_transaksi = mysqli_query($conn, "SELECT t.*, p.nama_pelanggan, u.nama_lengkap, h.tanggal_pelunasan as tempo_hutang, pi.tanggal_pelunasan as tempo_piutang FROM transaksi t
+LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
+LEFT JOIN users u ON t.id_user = u.id_user
+LEFT JOIN hutang h ON t.no_faktur = h.no_faktur
+LEFT JOIN piutang pi ON t.no_faktur = pi.no_faktur
+$where_faktur LIMIT 1");
 $transaksi = mysqli_fetch_assoc($sql_transaksi);
 
 // if (!$transaksi) {
