@@ -193,7 +193,14 @@ $stmt->close();
 // ======================================
 // 4) TOTAL PENJUALAN
 // ======================================
-$sumSql = "SELECT COALESCE(SUM(total_bayar),0) AS total_penjualan FROM transaksi t $where_sql";
+$sumSql = "
+    SELECT COALESCE(SUM(t.total_bayar),0) AS total_penjualan
+    FROM transaksi t
+    LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
+    LEFT JOIN users u ON t.id_user = u.id_user
+    $where_sql
+";
+
 $stmt = $conn->prepare($sumSql);
 $bind_params_sum = $params;
 bindParams($stmt, $param_types, $bind_params_sum);
