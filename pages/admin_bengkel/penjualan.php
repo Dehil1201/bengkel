@@ -371,187 +371,209 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 <script>
 $(document).ready(function () {
 
-// Server-side DataTable
-var table = $('#tableLaporan').DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: {
-        url: 'pages/admin_bengkel/api_laporan_penjualan.php',
-        data: function(d) {
-            // kirim filter custom juga
-            d.tgl_dari = $('input[name="tgl_dari"]').val();
-            d.tgl_sampai = $('input[name="tgl_sampai"]').val();
-            d.id_pelanggan = $('select[name="id_pelanggan"]').val();
-            d.id_user = $('select[name="id_user"]').val();
-        },
-        dataSrc: function(json) {
-            // update panel total penjualan dari response
-            if (json.total_penjualan !== undefined) {
-                $('.callout.callout-warning p').text('Rp ' + json.total_penjualan.toLocaleString('id-ID'));
-            }
-            return json.data;
+    // ==============================
+    // GLOBAL DATATABLE
+    // ==============================
+    let table = null;
+
+
+    // ==============================
+    // LOAD DATA DATATABLE
+    // ==============================
+    function loadData() {
+
+        let tgl_dari     = $('input[name="tgl_dari"]').val();
+        let tgl_sampai   = $('input[name="tgl_sampai"]').val();
+        let id_pelanggan = $('select[name="id_pelanggan"]').val();
+        let id_user      = $('select[name="id_user"]').val();
+
+        // Jika DataTable sudah dibuat → cukup update URL lalu reload
+        if (table !== null) {
+            table.ajax.url(
+                "pages/admin_bengkel/api_laporan_penjualan.php"
+                + "?tgl_dari=" + tgl_dari
+                + "&tgl_sampai=" + tgl_sampai
+                + "&id_pelanggan=" + id_pelanggan
+                + "&id_user=" + id_user
+            ).load();
+            return;
         }
-    },
-    order: [[1, 'desc']],
-    columns: [
-        { data: 'no_faktur' },
-        { data: 'tanggal' },
-        { data: 'pelanggan' },
-        { data: 'user' },
-        { 
-            data: 'status',
-            render: function(data) {
-                if (data === 'selesai') return '<span class="label label-success">selesai</span>';
-                return '<span class="label label-warning">'+data+'</span>';
-            }
-        },
-        {
-            data: 'metode_bayar',
-            render: function(data) {
-                if (data === 'Tunai') return '<span class="label label-info">Tunai</span>';
-                return '<span class="label label-danger">'+data+'</span>';
-            }
-        },
-        { data: 'total', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
-        { data: 'discount', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
-        { data: 'total_bayar', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
-        { data: 'uang_bayar', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
-        { data: 'kembalian', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
-        { data: 'daftar_barang', render: function(d){ return '<div class="cell-daftar-barang"><ul style="padding-left:15px;margin:0;"><li>'+ (d ? d.replace(/, /g,'</li><li>') : '-') +'</li></ul></div>'; } },
-        {
-            data: 'no_faktur',
-            orderable: false,
-            render: function(data) {
-                return '<button class="btn btn-info btn-sm btn-detail" data-faktur="'+data+'"><i class="fa fa-eye"></i> Detail</button>';
-            }
-        }
-    ],
-    // tambahan tampilan
-    scrollY: true,
-    lengthMenu: [10, 25, 50],
-    pageLength: 10
-});
 
-// Re-filter when user ubah filter form
-$('form.form-inline').on('submit', function(e) {
-    e.preventDefault();
-    table.ajax.reload();
-});
-
-// Klik tombol detail
-$('#tableLaporan').on('click', '.btn-detail', function () {
-    const faktur = $(this).data('faktur');
-    
-    showDetail(faktur)
-});
-
-function showDetail(faktur) {
-
-// Set faktur ke tombol print
-$('#btnPrint').data('faktur', faktur);
-
-// Reset modal isian
-$("#noFaktur").text(faktur);
-$("#tbodyBarang").html('');
-$("#totalSparepart, #diskonFaktur, #ppnFaktur, #grandTotalFaktur, #dibayarFaktur, #kembaliFaktur")
-    .text('Rp 0');
-$("#headTanggal, #headKasir, #headPelanggan, #tanggalJtt").text('-');
-
-// Tampilkan modal
-$("#modalDetail").modal("show");
-
-// Ambil data detail via backend
-$.getJSON('pages/admin_bengkel/api_get_transaksi.php', { no_faktur: faktur }, function(res) {
-
-    if (res.status_code !== 200) {
-        alert(res.message || "Gagal mengambil data");
-        return;
+        // ==============================
+        // BUAT DATATABLE PERTAMA KALI
+        // ==============================
+        table = $('#tableLaporan').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: 'pages/admin_bengkel/api_laporan_penjualan.php',
+                type: "POST",
+                data: function (d) {
+                    d.tgl_dari     = $('input[name="tgl_dari"]').val();
+                    d.tgl_sampai   = $('input[name="tgl_sampai"]').val();
+                    d.id_pelanggan = $('select[name="id_pelanggan"]').val();
+                    d.id_user      = $('select[name="id_user"]').val();
+                },
+                dataSrc: function (json) {
+                    if (json.total_penjualan !== undefined) {
+                        $('.callout.callout-warning p')
+                            .text('Rp ' + json.total_penjualan.toLocaleString('id-ID'));
+                    }
+                    return json.data;
+                }
+            },
+            order: [[1, 'desc']],
+            columns: [
+                { data: 'no_faktur' },
+                { data: 'tanggal' },
+                { data: 'pelanggan' },
+                { data: 'user' },
+                {
+                    data: 'status',
+                    render: d => (d === 'selesai'
+                        ? '<span class="label label-success">selesai</span>'
+                        : '<span class="label label-warning">' + d + '</span>')
+                },
+                {
+                    data: 'metode_bayar',
+                    render: d => (d === 'Tunai'
+                        ? '<span class="label label-info">Tunai</span>'
+                        : '<span class="label label-danger">' + d + '</span>')
+                },
+                { data: 'total', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
+                { data: 'discount', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
+                { data: 'total_bayar', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
+                { data: 'uang_bayar', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
+                { data: 'kembalian', render: $.fn.dataTable.render.number('.', ',', 0, 'Rp ') },
+                {
+                    data: 'daftar_barang',
+                    render: d => '<div class="cell-daftar-barang"><ul style="padding-left:15px;margin:0;"><li>' +
+                        (d ? d.replace(/, /g, '</li><li>') : '-') +
+                        '</li></ul></div>'
+                },
+                {
+                    data: 'no_faktur',
+                    orderable: false,
+                    render: d => '<button class="btn btn-info btn-sm btn-detail" data-faktur="' + d + '"><i class="fa fa-eye"></i> Detail</button>'
+                }
+            ],
+            scrollY: true,
+            lengthMenu: [10, 25, 50],
+            pageLength: 10
+        });
     }
 
-    const trx   = res.data.transaksi || {};
-    const listS = res.data.detail_servis || [];
-    const listP = res.data.detail_sparepart || [];
+    // ==============================
+    // PERTAMA LOAD DATA
+    // ==============================
+    loadData();
 
-    let tbody = "";
-    let subtotal = 0;
 
-    // ================
-    // RENDER DETAIL SERVIS
-    // ================
-    listS.forEach(item => {
-        tbody += `
-            <tr>
-                <td>${item.kode_servis || '-'}</td>
-                <td>${item.nama_servis || 'Jasa Servis'}</td>
-                <td>1</td>
-                <td>Jasa</td>
-                <td>Rp ${parseInt(item.biaya).toLocaleString('id-ID')}</td>
-                <td class="text-right">Rp ${parseInt(item.biaya).toLocaleString('id-ID')}</td>
-            </tr>
-        `;
-        subtotal += parseInt(item.biaya);
+    // ==============================
+    // SUBMIT FORM FILTER
+    // ==============================
+    $('form.form-inline').on('submit', function (e) {
+        e.preventDefault();
+        loadData(); // reload dari awal tanpa reinit
     });
 
-    // ================
-    // RENDER DETAIL SPAREPART
-    // ================
-    listP.forEach(item => {
-        const harga    = parseFloat(item.harga);
-        const sub      = parseFloat(item.subtotal);
 
-        tbody += `
-            <tr>
-                <td>${item.kode_sparepart}</td>
-                <td>${item.nama_sparepart}</td>
-                <td>${item.qty}</td>
-                <td>${item.satuan}</td>
-                <td>Rp ${harga.toLocaleString('id-ID')}</td>
-                <td class="text-right">Rp ${sub.toLocaleString('id-ID')}</td>
-            </tr>
-        `;
-        subtotal += sub;
+    // ==============================
+    // TOMBOL DETAIL
+    // ==============================
+    $('#tableLaporan').on('click', '.btn-detail', function () {
+        const faktur = $(this).data('faktur');
+        showDetail(faktur);
     });
 
-    // Masukkan ke tabel
-    $("#tbodyBarang").html(tbody);
-    $("#totalSparepart").text("Rp " + subtotal.toLocaleString("id-ID"));
 
-    // ==================
-    // HITUNG TOTAL AKHIR
-    // ==================
-    const diskon    = parseFloat(trx.discount || 0);
-    const ppn       = parseFloat(trx.ppn || 0);
-    const dibayar   = parseFloat(trx.uang_bayar || trx.total_bayar || 0);
-    const grandTot  = subtotal - diskon + ppn;
-    const kembali   = dibayar - grandTot;
+    // ==============================
+    // FUNGSI DETAIL TRANSAKSI
+    // ==============================
+    function showDetail(faktur) {
 
-    $("#diskonFaktur").text("Rp " + diskon.toLocaleString("id-ID"));
-    $("#ppnFaktur").text("Rp " + ppn.toLocaleString("id-ID"));
-    $("#grandTotalFaktur").text("Rp " + grandTot.toLocaleString("id-ID"));
-    $("#dibayarFaktur").text("Rp " + dibayar.toLocaleString("id-ID"));
-    $("#kembaliFaktur").text("Rp " + kembali.toLocaleString("id-ID"));
+        $('#btnPrint').data('faktur', faktur);
 
-    // ==================
-    // HEADER FAKTUR
-    // ==================
-    $("#headTanggal").text(
-        trx.tanggal ? new Date(trx.tanggal).toLocaleDateString('id-ID') : "-"
-    );
-    $("#headKasir").text(trx.nama_lengkap || '-');
-    $("#headPelanggan").text(trx.nama_pelanggan || '-');
-    $("#tanggalJtt").text(trx.tanggal_jtt || "-");
+        $("#noFaktur").text(faktur);
+        $("#tbodyBarang").html('');
+        $("#totalSparepart, #diskonFaktur, #ppnFaktur, #grandTotalFaktur, #dibayarFaktur, #kembaliFaktur")
+            .text('Rp 0');
+        $("#headTanggal, #headKasir, #headPelanggan, #tanggalJtt").text('-');
+
+        $("#modalDetail").modal("show");
+
+        $.getJSON('pages/admin_bengkel/api_get_transaksi.php', { no_faktur: faktur }, function (res) {
+
+            if (res.status_code !== 200) {
+                alert(res.message || "Gagal mengambil data");
+                return;
+            }
+
+            const trx   = res.data.transaksi || {};
+            const listS = res.data.detail_servis || [];
+            const listP = res.data.detail_sparepart || [];
+
+            let tbody = "";
+            let subtotal = 0;
+
+            listS.forEach(item => {
+                tbody += `
+                    <tr>
+                        <td>${item.kode_servis || '-'}</td>
+                        <td>${item.nama_servis || 'Jasa Servis'}</td>
+                        <td>1</td>
+                        <td>Jasa</td>
+                        <td>Rp ${parseInt(item.biaya).toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${parseInt(item.biaya).toLocaleString('id-ID')}</td>
+                    </tr>`;
+                subtotal += parseInt(item.biaya);
+            });
+
+            listP.forEach(item => {
+                const harga = parseFloat(item.harga);
+                const sub = parseFloat(item.subtotal);
+                tbody += `
+                    <tr>
+                        <td>${item.kode_sparepart}</td>
+                        <td>${item.nama_sparepart}</td>
+                        <td>${item.qty}</td>
+                        <td>${item.satuan}</td>
+                        <td>Rp ${harga.toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${sub.toLocaleString('id-ID')}</td>
+                    </tr>`;
+                subtotal += sub;
+            });
+
+            $("#tbodyBarang").html(tbody);
+            $("#totalSparepart").text("Rp " + subtotal.toLocaleString("id-ID"));
+
+            const diskon   = parseFloat(trx.discount || 0);
+            const ppn      = parseFloat(trx.ppn || 0);
+            const dibayar  = parseFloat(trx.uang_bayar || trx.total_bayar || 0);
+            const grandTot = subtotal - diskon + ppn;
+            const kembali  = dibayar - grandTot;
+
+            $("#diskonFaktur").text("Rp " + diskon.toLocaleString("id-ID"));
+            $("#ppnFaktur").text("Rp " + ppn.toLocaleString("id-ID"));
+            $("#grandTotalFaktur").text("Rp " + grandTot.toLocaleString("id-ID"));
+            $("#dibayarFaktur").text("Rp " + dibayar.toLocaleString("id-ID"));
+            $("#kembaliFaktur").text("Rp " + kembali.toLocaleString("id-ID"));
+
+            $("#headTanggal").text(trx.tanggal ? new Date(trx.tanggal).toLocaleDateString('id-ID') : "-");
+            $("#headKasir").text(trx.nama_lengkap || '-');
+            $("#headPelanggan").text(trx.nama_pelanggan || '-');
+            $("#tanggalJtt").text(trx.tanggal_jtt || "-");
+        });
+    }
+
+
+    // ==============================
+    // PRINT
+    // ==============================
+    $('#btnPrint').on('click', function () {
+        const faktur = $(this).data('faktur');
+        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + faktur + "&auto_print=1";
+    });
 
 });
-}
-
-
-
-// Print button
-$('#btnPrint').on('click', function () {
-    const faktur = $(this).data('faktur');
-    window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + faktur + "&auto_print=1";
-});
-});
-
-
 </script>
