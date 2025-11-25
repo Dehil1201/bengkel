@@ -38,24 +38,14 @@ $columns = [
 
 $order_by = $columns[$order_col_index] ?? 't.tanggal';
 
-
-// ======================================
-// HELPER FIX: bind_param dinamis
-// ======================================
+// Helper bind
 function bindParams($stmt, $types, array &$params)
 {
     if ($types === '' || empty($params)) return;
-
-    $bind = [];
-    $bind[] = $types;
-
-    foreach ($params as $k => &$v) {
-        $bind[] = &$v;  // HARUS reference
-    }
-
+    $bind = [$types];
+    foreach ($params as &$v) $bind[] = &$v;
     return call_user_func_array([$stmt, "bind_param"], $bind);
 }
-
 
 // ======================================
 // WHERE BASE
@@ -87,14 +77,52 @@ if ($id_user) {
     $param_types .= "s";
 }
 
+// ======================================
+// SEARCH GLOBAL (SUDAH DITAMBAH merks & KATEGORI)
+// ======================================
+// ======================================
+// SEARCH GLOBAL MULTI KEYWORD
+// ======================================
 if ($search_value !== '') {
-    $where_clauses[] = "(t.no_faktur LIKE ? OR p.nama_pelanggan LIKE ? OR u.nama_lengkap LIKE ?)";
-    $sv = "%$search_value%";
-    $params[] = $sv;
-    $params[] = $sv;
-    $params[] = $sv;
-    $param_types .= "sss";
+
+    // pecah menjadi kata per kata → contoh: "gema k59"
+    $keywords = explode(" ", trim($search_value));
+
+    foreach ($keywords as $kw) {
+        if ($kw === '') continue;
+
+        $where_clauses[] = "(
+            t.no_faktur LIKE ?
+            OR p.nama_pelanggan LIKE ?
+            OR u.nama_lengkap LIKE ?
+            OR s.nama_sparepart LIKE ?
+            OR m.nama_merk LIKE ?
+            OR k.nama_kategori LIKE ?
+        )";
+
+        $sv = "%$kw%";
+
+        // 6 kolom per keyword
+        $params[] = $sv;
+        $param_types .= "s";
+
+        $params[] = $sv;
+        $param_types .= "s";
+
+        $params[] = $sv;
+        $param_types .= "s";
+
+        $params[] = $sv;
+        $param_types .= "s";
+
+        $params[] = $sv;
+        $param_types .= "s";
+
+        $params[] = $sv;
+        $param_types .= "s";
+    }
 }
+
 
 $where_sql = "WHERE " . implode(" AND ", $where_clauses);
 
@@ -108,10 +136,7 @@ $countSql = "SELECT COUNT(*) AS cnt
              AND t.id_bengkel = ?";
 
 $stmt = $conn->prepare($countSql);
-$nf1 = $params[0];
-$nf2 = $params[1];
-$bengkel = $params[2];
-$stmt->bind_param("sss", $nf1, $nf2, $bengkel);
+$stmt->bind_param("sss", $params[0], $params[1], $params[2]);
 $stmt->execute();
 $totalRecords = intval($stmt->get_result()->fetch_assoc()['cnt'] ?? 0);
 $stmt->close();
@@ -125,19 +150,23 @@ $cntSql = "
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
+    LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
+    LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
+    LEFT JOIN merks m ON s.merk_id = m.id_merk
+    LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
     $where_sql
 ";
 
 $stmt = $conn->prepare($cntSql);
-$bind_params = $params;
-bindParams($stmt, $param_types, $bind_params);
+$bind = $params;
+bindParams($stmt, $param_types, $bind);
 $stmt->execute();
 $filteredRecords = intval($stmt->get_result()->fetch_assoc()['cnt'] ?? 0);
 $stmt->close();
 
 
 // ======================================
-// 3) DATA QUERY
+// 3) DATA QUERY (sudah include merks & kategori)
 // ======================================
 $sql = "
 SELECT 
@@ -147,24 +176,38 @@ SELECT
     t.total_bayar, t.status, t.total, t.discount,
     t.uang_bayar, t.kembalian, t.metode_bayar,
     LEFT(
-        (SELECT GROUP_CONCAT(s.nama_sparepart SEPARATOR ', ')
-         FROM transaksi_detail_sparepart td
-         LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
-         WHERE td.no_faktur = t.no_faktur),
+        (SELECT GROUP_CONCAT(
+            CONCAT(
+                s2.nama_sparepart, ' (', m2.nama_merk, ' / ', k2.nama_kategori, ')'
+            ) 
+            SEPARATOR ', '
+        )
+         FROM transaksi_detail_sparepart td2
+         LEFT JOIN spareparts s2 ON td2.kode_sparepart = s2.kode_sparepart
+         LEFT JOIN merks m2 ON s2.merk_id = m2.id_merk
+         LEFT JOIN kategori_sparepart k2 ON s2.kategori_id = k2.id_kategori
+         WHERE td2.no_faktur = t.no_faktur),
     200) AS daftar_barang
 FROM transaksi t
 LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
 LEFT JOIN users u ON t.id_user = u.id_user
+LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
+LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
+LEFT JOIN merks m ON s.merk_id = m.id_merk
+LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
 $where_sql
 ORDER BY $order_by $order_dir
 LIMIT ?, ?
 ";
 
 $stmt = $conn->prepare($sql);
-$params_with_limit = $params;
-$params_with_limit[] = $start;
-$params_with_limit[] = $length;
-bindParams($stmt, $param_types . "ii", $params_with_limit);
+
+$params_limit = $params;
+$params_limit[] = $start;
+$params_limit[] = $length;
+
+bindParams($stmt, $param_types . "ii", $params_limit);
+
 $stmt->execute();
 $res = $stmt->get_result();
 
@@ -198,12 +241,16 @@ $sumSql = "
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
+    LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
+    LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
+    LEFT JOIN merks m ON s.merk_id = m.id_merk
+    LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
     $where_sql
 ";
 
 $stmt = $conn->prepare($sumSql);
-$bind_params_sum = $params;
-bindParams($stmt, $param_types, $bind_params_sum);
+$bind_sum = $params;
+bindParams($stmt, $param_types, $bind_sum);
 $stmt->execute();
 $total_penjualan = intval($stmt->get_result()->fetch_assoc()['total_penjualan'] ?? 0);
 $stmt->close();
