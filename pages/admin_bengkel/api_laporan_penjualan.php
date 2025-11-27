@@ -85,7 +85,6 @@ if ($id_user) {
 // ======================================
 if ($search_value !== '') {
 
-    // pecah menjadi kata per kata → contoh: "gema k59"
     $keywords = explode(" ", trim($search_value));
 
     foreach ($keywords as $kw) {
@@ -95,33 +94,31 @@ if ($search_value !== '') {
             t.no_faktur LIKE ?
             OR p.nama_pelanggan LIKE ?
             OR u.nama_lengkap LIKE ?
-            OR s.nama_sparepart LIKE ?
-            OR m.nama_merk LIKE ?
-            OR k.nama_kategori LIKE ?
+            OR EXISTS (
+                SELECT 1
+                FROM transaksi_detail_sparepart td
+                LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
+                LEFT JOIN merks m ON s.merk_id = m.id_merk
+                LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
+                WHERE td.no_faktur = t.no_faktur
+                AND (
+                    s.nama_sparepart LIKE ?
+                    OR m.nama_merk LIKE ?
+                    OR k.nama_kategori LIKE ?
+                )
+            )
         )";
 
         $sv = "%$kw%";
 
-        // 6 kolom per keyword
-        $params[] = $sv;
-        $param_types .= "s";
-
-        $params[] = $sv;
-        $param_types .= "s";
-
-        $params[] = $sv;
-        $param_types .= "s";
-
-        $params[] = $sv;
-        $param_types .= "s";
-
-        $params[] = $sv;
-        $param_types .= "s";
-
-        $params[] = $sv;
-        $param_types .= "s";
+        // 6 parameter
+        for ($i = 0; $i < 6; $i++) {
+            $params[] = $sv;
+            $param_types .= "s";
+        }
     }
 }
+
 
 
 $where_sql = "WHERE " . implode(" AND ", $where_clauses);
@@ -146,16 +143,13 @@ $stmt->close();
 // 2) FILTERED RECORDS
 // ======================================
 $cntSql = "
-    SELECT COUNT(*) AS cnt
+    SELECT COUNT(DISTINCT t.no_faktur) AS cnt
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
-    LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
-    LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
-    LEFT JOIN merks m ON s.merk_id = m.id_merk
-    LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
     $where_sql
 ";
+
 
 $stmt = $conn->prepare($cntSql);
 $bind = $params;
@@ -170,35 +164,44 @@ $stmt->close();
 // ======================================
 $sql = "
 SELECT 
-    t.no_faktur, t.tanggal,
+    t.no_faktur, 
+    t.tanggal,
     COALESCE(p.nama_pelanggan, '-') AS nama_pelanggan,
     COALESCE(u.nama_lengkap, '-') AS nama_lengkap,
-    t.total_bayar, t.status, t.total, t.discount,
-    t.uang_bayar, t.kembalian, t.metode_bayar,
+    t.total_bayar, 
+    t.status, 
+    t.total, 
+    t.discount,
+    t.uang_bayar, 
+    t.kembalian, 
+    t.metode_bayar,
+
     LEFT(
-        (SELECT GROUP_CONCAT(
-            CONCAT(
-                s2.nama_sparepart, ' (', m2.nama_merk, ' / ', k2.nama_kategori, ')'
-            ) 
-            SEPARATOR ', '
-        )
-         FROM transaksi_detail_sparepart td2
-         LEFT JOIN spareparts s2 ON td2.kode_sparepart = s2.kode_sparepart
-         LEFT JOIN merks m2 ON s2.merk_id = m2.id_merk
-         LEFT JOIN kategori_sparepart k2 ON s2.kategori_id = k2.id_kategori
-         WHERE td2.no_faktur = t.no_faktur),
+        (
+            SELECT GROUP_CONCAT(
+                CONCAT(
+                    s2.nama_sparepart, ' (', 
+                    m2.nama_merk, ' / ', 
+                    k2.nama_kategori, ')'
+                ) SEPARATOR ', '
+            )
+            FROM transaksi_detail_sparepart td2
+            LEFT JOIN spareparts s2 ON td2.kode_sparepart = s2.kode_sparepart
+            LEFT JOIN merks m2 ON s2.merk_id = m2.id_merk
+            LEFT JOIN kategori_sparepart k2 ON s2.kategori_id = k2.id_kategori
+            WHERE td2.no_faktur = t.no_faktur
+        ),
     200) AS daftar_barang
+
 FROM transaksi t
 LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
 LEFT JOIN users u ON t.id_user = u.id_user
-LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
-LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
-LEFT JOIN merks m ON s.merk_id = m.id_merk
-LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
+
 $where_sql
 ORDER BY $order_by $order_dir
 LIMIT ?, ?
 ";
+
 
 $stmt = $conn->prepare($sql);
 
@@ -241,12 +244,9 @@ $sumSql = "
     FROM transaksi t
     LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
     LEFT JOIN users u ON t.id_user = u.id_user
-    LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
-    LEFT JOIN spareparts s ON td.kode_sparepart = s.kode_sparepart
-    LEFT JOIN merks m ON s.merk_id = m.id_merk
-    LEFT JOIN kategori_sparepart k ON s.kategori_id = k.id_kategori
     $where_sql
 ";
+
 
 $stmt = $conn->prepare($sumSql);
 $bind_sum = $params;
