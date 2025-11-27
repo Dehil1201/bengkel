@@ -2,6 +2,9 @@
 session_start();
 include "../../inc/koneksi.php";
 header('Content-Type: application/json; charset=utf-8');
+$username = $_SESSION['username'] ?? '';
+$hideHargaBeli = ($username === 'user@gmail.com');
+
 
 // ===== Helper Error Function =====
 function respondWithError($message) {
@@ -177,8 +180,8 @@ while ($row = mysqli_fetch_assoc($query)) {
         "nama_merk"        => htmlspecialchars($row['nama_merk']),
         "nama_kategori"    => htmlspecialchars($row['nama_kategori']),
         "stok_pcs"         => htmlspecialchars($row['stok_pcs']),
-        "harga_beli"       => $row['harga_beli'],
-        "hpp_per_pcs"      => $row['hpp_per_pcs'],
+        "harga_beli"       => $hideHargaBeli ? 0 : $row['harga_beli'],
+        "hpp_per_pcs"      => $hideHargaBeli ? 0 : $row['hpp_per_pcs'],
         "harga_jual"       => implode("", $hargaListHtml),
         "harga_jual_raw"   => $hargaListRaw,
         "nama_bengkel"     => htmlspecialchars($row['nama_bengkel']),
@@ -189,6 +192,7 @@ while ($row = mysqli_fetch_assoc($query)) {
         "isi_per_pcs_beli" => $row['isi_per_pcs_beli'],
         "stok_minimal"     => $row['stok_minimal'],
     ];
+    
 }
 
 

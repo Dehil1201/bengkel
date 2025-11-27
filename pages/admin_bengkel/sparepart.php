@@ -669,5 +669,7 @@ $(document).ready(function() {
 
     // Jalankan saat harga beli atau isi per pcs berubah
     $(document).on('input', '#harga_beli, #isi_per_pcs_beli', hitungHPP);
+
+    
 });
 </script>
