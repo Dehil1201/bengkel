@@ -150,7 +150,7 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             <div class="form-group">
                                 <label for="merk_id">Merek Part</label>
                                 <div class="input-group">
-                                    <select class="form-control" id="merk_id" name="merk_id" required>
+                                    <select class="form-control" id="merk_id" name="merk_id" >
                                         <option value="">-- Pilih --</option>
                                     </select>
                                     <span class="input-group-btn">
@@ -427,6 +427,7 @@ $(document).ready(function() {
         $('#merk_id').val(data.id_merk);
         $('#lokasi_rak').val(data.lokasi_rak);
         $('#harga_beli').val(parseInt(data.harga_beli));
+        $('#harga_beli_raw').val(formatNumber(data.harga_beli));
         $('#satuan_beli_id').val(data.satuan_beli_id);
         $('#isi_per_pcs_beli').val(data.isi_per_pcs_beli);
         $('#hpp_per_pcs').val(parseInt(data.hpp_per_pcs));
