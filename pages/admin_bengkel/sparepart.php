@@ -126,7 +126,7 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             <div class="form-group">
                                 <label for="kode_sparepart">Kode Spare Part (Opsional)</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="kode_sparepart" name="kode_sparepart">
+                                    <input type="text" class="form-control" id="kode_sparepart" name="kode_sparepart" required>
                                     <span class="input-group-btn">
                                         <button class="btn btn-info" type="button" id="btn-auto-kode">Auto</button>
                                     </span>
@@ -139,7 +139,7 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             <div class="form-group">
                                 <label for="kategori_id">Kategori Spare Part</label>
                                 <div class="input-group">
-                                    <select class="form-control" id="kategori_id" name="kategori_id" required>
+                                    <select class="form-control" id="kategori_id" name="kategori_id">
                                         <option value="">-- Pilih --</option>
                                     </select>
                                     <span class="input-group-btn">
@@ -177,7 +177,7 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             <div class="form-group">
                                 <label for="satuan_beli_id">Satuan Beli</label>
                                 <div class="input-group">
-                                    <select class="form-control" id="satuan_beli_id" name="satuan_beli_id" required>
+                                    <select class="form-control" id="satuan_beli_id" name="satuan_beli_id">
                                         <option value="">-- Pilih --</option>
                                     </select>
                                     <span class="input-group-btn">
@@ -187,7 +187,7 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                             </div>
                             <div class="form-group">
                                 <label for="isi_per_pcs_beli">Isi/Pcs</label>
-                                <input type="number" class="form-control" id="isi_per_pcs_beli" name="isi_per_pcs_beli" required>
+                                <input type="number" class="form-control" id="isi_per_pcs_beli" name="isi_per_pcs_beli">
                             </div>
                             <div class="form-group">
                                 <label>HPP Per Pcs</label>
