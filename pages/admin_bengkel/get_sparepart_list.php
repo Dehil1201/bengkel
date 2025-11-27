@@ -13,7 +13,7 @@ function respondWithError($message) {
         "success" => false,
         "error" => $message,
         "data" => [],
-        "username" => $username,
+        "username" => $_SESSION['email'] ?? '',
         "draw" => intval($_GET['draw'] ?? 0),
         "recordsTotal" => 0,
         "recordsFiltered" => 0
@@ -68,55 +68,74 @@ $baseSql = "
 
 $sql = $baseSql;
 
-$search = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
+$search = trim($_POST['search']['value'] ?? '');
 
-if ($search != '') {
+if ($search !== '') {
 
-    $safe = mysqli_real_escape_string($conn, strtolower($search));
+    $safe = mysqli_real_escape_string($conn, $search);
 
-    // daftar prioritas
-    $priority = [
-        "LOWER(sp.nama_sparepart)",
-        "LOWER(sp.kode_sparepart)",
-        "LOWER(m.nama_merk)",
-        "LOWER(k.nama_kategori)"
-    ];
+    // pecah berdasarkan spasi: "dispad tech" → ["dispad","tech"]
+    $keywords = preg_split('/\s+/', $safe);
 
-    $found = false;
+    $whereParts = [];
 
-    foreach ($priority as $col) {
+    foreach ($keywords as $word) {
+        $word = trim($word);
+        if ($word === '') continue;
 
-        $sqlCheck = $baseSql . " AND $col LIKE '%$safe%' LIMIT 1";
-        $check = mysqli_query($conn, $sqlCheck);
-        
-        error_log("CHECK QUERY: " . $sqlCheck);
-
-        if (mysqli_num_rows($check) > 0) {
-            // tempelkan kondisi ini ke query utama
-            $sql .= " AND $col LIKE '%$safe%'";
-            $found = true;
-            break;
-        }
+        $whereParts[] = "(
+            sp.nama_sparepart LIKE '%$word%' OR
+            sp.kode_sparepart LIKE '%$word%' OR
+            m.nama_merk       LIKE '%$word%' OR
+            k.nama_kategori   LIKE '%$word%' OR
+            sp.lokasi_rak     LIKE '%$word%'
+        )";
     }
 
-    if (!$found) {
-        echo json_encode([
-            "success" => true,
-            "draw" => $draw,
-            "recordsTotal" => $totalData,
-            "recordsFiltered" => 0,
-            "data" => []
-        ]);
-        exit;
+    if (!empty($whereParts)) {
+        $sql .= " AND " . implode(" AND ", $whereParts);
     }
 }
 
 
 
-// ===== Hitung Total Setelah Filter =====
-$totalFilteredQuery = mysqli_query($conn, $sql);
-if (!$totalFilteredQuery) respondWithError("Gagal hitung total filter: " . mysqli_error($conn));
-$totalFiltered = mysqli_num_rows($totalFilteredQuery);
+
+$countSql = "
+    SELECT COUNT(*) as total
+    FROM spareparts sp
+    LEFT JOIN kategori_sparepart k ON sp.kategori_id = k.id_kategori
+    LEFT JOIN merks m ON sp.merk_id = m.id_merk
+    WHERE sp.bengkel_id = '$id_bengkel'
+";
+
+if ($search !== '') {
+
+    $safe = mysqli_real_escape_string($conn, $search);
+    $keywords = preg_split('/\s+/', $safe);
+    $whereParts = [];
+
+    foreach ($keywords as $word) {
+        $word = trim($word);
+        if ($word === '') continue;
+
+        $whereParts[] = "(
+            sp.nama_sparepart LIKE '%$word%' OR
+            sp.kode_sparepart LIKE '%$word%' OR
+            m.nama_merk       LIKE '%$word%' OR
+            k.nama_kategori   LIKE '%$word%' OR
+            sp.lokasi_rak     LIKE '%$word%'
+        )";
+    }
+
+    if (!empty($whereParts)) {
+        $countSql .= " AND " . implode(" AND ", $whereParts);
+    }
+}
+
+$cq = mysqli_query($conn, $countSql);
+if (!$cq) respondWithError("Gagal hitung total filter: " . mysqli_error($conn));
+$totalFiltered = mysqli_fetch_assoc($cq)['total'];
+
 
 // ===== Sorting =====
 $orderColumnIndex = $_GET['order'][0]['column'] ?? 1;

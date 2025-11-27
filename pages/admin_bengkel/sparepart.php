@@ -302,72 +302,95 @@ $(document).ready(function() {
     }
 
     $('#dataTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: 'pages/admin_bengkel/get_sparepart_list.php',
-            type: 'POST'
-        },
-        columns: [
-            {   
-                title: "No",
-                data : 'no'
-            },
-            { 
-                title: "Kode",
-                data: 'kode_sparepart'
-            },
-            { 
-                title: "Nama",
-                data: 'nama_sparepart' 
-            },
-            { 
-                title: "Merk",
-                data: "nama_merk"
-            },
-            { 
-                title: "Stok PCS",
-                data: "stok_pcs"
-            },
-            { 
-                title: "Harga Beli",
-                data: "harga_beli",
-                render: function(data, type, row) {
-                    if (type === 'display' || type === 'filter') {
-                        return new Intl.NumberFormat('id-ID', { 
-                            style: 'currency', 
-                            currency: 'IDR', 
-                            minimumFractionDigits: 0 
-                        }).format(data);
-                    }
-                    return data; // untuk sort & export
+    processing: true,
+    serverSide: true,
+    searching: true,
+    ordering: true,
+    deferRender: true,
+    pageLength: 10,
+
+    ajax: {
+        url: 'pages/admin_bengkel/get_sparepart_list.php',
+        type: 'POST',
+        data: function(d) {
+            // ✅ pastikan parameter search terkirim sempurna
+            d.search.value = $('#dataTable_filter input').val();
+        }
+    },
+
+    columns: [
+        { title: "No", data: 'no', orderable: false },
+
+        { title: "Kode", data: 'kode_sparepart' },
+
+        { title: "Nama", data: 'nama_sparepart' },
+
+        { title: "Merk", data: "nama_merk" },
+
+        { title: "Stok PCS", data: "stok_pcs" },
+
+        { 
+            title: "Harga Beli",
+            data: "harga_beli",
+            className: "text-right",
+            render: function(data, type, row) {
+                if (type === 'display' || type === 'filter') {
+                    return new Intl.NumberFormat('id-ID', { 
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0 
+                    }).format(data);
                 }
-            },
-            { 
-                title: "Harga Jual",
-                data: "harga_jual"
-            },
-            { 
-                title: "Kategori",
-                data: "nama_kategori"
-            },
-            { 
-                title: "Aksi",
-                data: null,
-                render: function (data,type,row) {
-                    return `
-                    <a href="#" class="btn btn-warning btn-xs btn-edit">
+                return data; 
+            }
+        },
+
+        { 
+            title: "Harga Jual", 
+            data: "harga_jual", 
+            orderable: false,
+            searchable: false 
+        },
+
+        { title: "Kategori", data: "nama_kategori" },
+
+        { 
+            title: "Aksi",
+            data: null,
+            orderable: false,
+            searchable: false,
+            render: function (data, type, row) {
+                return `
+                    <a href="#" class="btn btn-warning btn-xs btn-edit" data-id="${row.id_sparepart}">
                         <i class="fa fa-pencil"></i> Edit
                     </a>
                     <button type="button" class="btn btn-danger btn-xs btn-hapus" data-id="${row.id_sparepart}">
                         <i class="fa fa-trash"></i> Hapus
                     </button>
-                    `
-                }
+                `;
             }
-            
-        ]
+        }
+    ],
+
+        order: [[1, 'asc']], // default sort kode sparepart
+
+        language: {
+            processing: "Memuat data...",
+            search: "Cari:",
+            lengthMenu: "Tampilkan _MENU_ data",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+            infoFiltered: "(disaring dari _MAX_ data)",
+            zeroRecords: "Data tidak ditemukan",
+            emptyTable: "Belum ada data",
+            paginate: {
+                first: "Awal",
+                last: "Akhir",
+                next: "›",
+                previous: "‹"
+            }
+        }
     });
+
 
     
     // Fungsi untuk memuat ulang tabel spare part

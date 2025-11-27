@@ -19,31 +19,26 @@ function respond($success, $message, $data = [], $status_code = null) {
     exit;
 }
 
-
 // ========= Validasi Login =========
 $id_user = $_SESSION['id_user'] ?? null;
 if (!$id_user) {
     respond(false, "Session expired. Silakan login ulang.", [], 401);
 }
 
-
 // ========= Ambil bengkel_id user =========
 $q2 = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
 $d2 = mysqli_fetch_assoc($q2);
 $id_bengkel = $d2['bengkel_id'];
 
-
 // ========= Pagination & Search =========
-$search = $_POST['search'] ?? '';
-$page   = $_POST['page'] ?? 1;
+$search = trim($_POST['search'] ?? '');
+$page   = max(1, (int)($_POST['page'] ?? 1));
 $limit  = 10;
 $offset = ($page - 1) * $limit;
 
-
-// ========= Query Sparepart =========
+// ========= Base Query =========
 $sql = "
-  SELECT sp.id_sparepart, sp.kode_sparepart, sp.nama_sparepart,
-         sp.hpp_per_pcs
+  SELECT sp.id_sparepart, sp.kode_sparepart, sp.nama_sparepart, sp.hpp_per_pcs
   FROM spareparts sp
   WHERE sp.bengkel_id = ?
 ";
@@ -51,26 +46,45 @@ $sql = "
 $params = [$id_bengkel];
 $types  = "i";
 
-if (!empty($search)) {
-    $sql .= " AND (sp.nama_sparepart LIKE ? OR sp.kode_sparepart LIKE ?)";
-    $searchLike = "%$search%";
-    $params[] = $searchLike;
-    $params[] = $searchLike;
-    $types .= "ss";
+// ========= ✅ OPTIMASI SEARCH MULTI KEYWORD =========
+if ($search !== '') {
+
+    // Pecah berdasarkan spasi → multi keyword
+    $keywords = preg_split('/\s+/', $search);
+
+    $whereParts = [];
+    foreach ($keywords as $word) {
+        if ($word === '') continue;
+
+        $whereParts[] = "(
+            sp.nama_sparepart LIKE ?
+            OR sp.kode_sparepart LIKE ?
+        )";
+
+        $like = "%$word%";
+        $params[] = $like;
+        $params[] = $like;
+        $types .= "ss";
+    }
+
+    if ($whereParts) {
+        $sql .= " AND " . implode(" AND ", $whereParts);
+    }
 }
 
-$sql .= " ORDER BY sp.nama_sparepart LIMIT ? OFFSET ?";
+// ========= Sorting + Limit =========
+$sql .= " ORDER BY sp.nama_sparepart ASC LIMIT ? OFFSET ?";
 $params[] = $limit;
 $params[] = $offset;
 $types .= "ii";
 
+// ========= Execute Main Query =========
 $stmt = $conn->prepare($sql);
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $res = $stmt->get_result();
 
 $items = [];
-
 
 // ========= Loop Sparepart + Ambil Harga Jual =========
 while ($row = $res->fetch_assoc()) {
@@ -90,7 +104,8 @@ while ($row = $res->fetch_assoc()) {
             st.nama_satuan
         FROM harga_jual_sparepart hj
         JOIN satuan st ON hj.satuan_jual_id = st.id_satuan
-        WHERE hj.sparepart_id = '$id_sparepart' AND hj.harga_jual > 0
+        WHERE hj.sparepart_id = '$id_sparepart'
+        AND hj.harga_jual > 0
         ORDER BY hj.tipe_harga ASC
     ");
 
@@ -111,16 +126,15 @@ while ($row = $res->fetch_assoc()) {
     $items[] = [
         "id" => $kode_sparepart,
         "nama_sparepart" => $row['nama_sparepart'],
-        "harga_beli" => $row['hpp_per_pcs'],
+        "harga_beli" => (float)$row['hpp_per_pcs'],
         "harga_satuan" => $hargaList
     ];
 }
 
-
 // ========= Response =========
 $response = [
     "items" => $items,
-    "more" => count($items) == $limit
+    "more"  => count($items) == $limit
 ];
 
 respond(true, "Data sparepart & harga berhasil diambil.", $response, 200);

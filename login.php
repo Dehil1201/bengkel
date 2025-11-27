@@ -1,10 +1,25 @@
 <?php
-// Pastikan session_start() dipanggil di awal setiap skrip yang menggunakan sesi
-if (session_status() == PHP_SESSION_NONE) {
+// ================== KUNCI SESSION 7 HARI PENUH ==================
+ini_set('session.gc_maxlifetime', 60 * 60 * 24 * 7);
+ini_set('session.cookie_lifetime', 60 * 60 * 24 * 7);
+
+$session_lifetime = 60 * 60 * 24 * 7; // 7 hari
+
+session_set_cookie_params([
+    'lifetime' => $session_lifetime,
+    'path'     => '/',
+    'domain'   => '',
+    'secure'   => false, // true jika HTTPS
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Sertakan file koneksi database
+// ================================================================
+
 include 'inc/koneksi.php';
 
 // Periksa apakah pengguna sudah login. Jika ya, arahkan langsung ke dashboard.
@@ -48,20 +63,30 @@ if (isset($_SESSION['email']) && $_SESSION['email'] != "") {
             // --- Gunakan password_verify() untuk membandingkan kata sandi ---
             // Hanya jalankan verifikasi jika ada data pengguna ditemukan
             if ($data_user && password_verify($password_plain, $data_user['password'])) {
-                // Login berhasil
+
+                session_regenerate_id(true); // AMAN dari session hijacking
+            
                 $_SESSION['id_user'] = $data_user['id_user'];
                 $_SESSION['bengkel_id'] = $data_user['bengkel_id'];
                 $_SESSION['id_bengkel'] = $data_user['bengkel_id'];
                 $_SESSION['email'] = $data_user['email'];
                 $_SESSION['role'] = $data_user['role'];
                 $_SESSION['nama_lengkap'] = $data_user['nama_lengkap'];
-
-                ?>
-                <script>
-                    window.location.href="index.php?page=dashboard";
-                </script>
-                <?php
-            } else {
+            
+                // ===== REFRESH COOKIE AGAR 7 HARI DARI WAKTU LOGIN =====
+                setcookie(
+                    session_name(),
+                    session_id(),
+                    time() + (60 * 60 * 24 * 7),
+                    "/",
+                    "",
+                    false,
+                    true
+                );
+            
+                echo "<script>window.location.href='index.php?page=dashboard';</script>";
+            }
+             else {
                 // Login gagal
                 ?>
                 <div class="alert alert-danger">
