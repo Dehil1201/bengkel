@@ -2,7 +2,8 @@
 session_start();
 include "../../inc/koneksi.php";
 header('Content-Type: application/json; charset=utf-8');
-$username = $_SESSION['username'] ?? '';
+$username = $_SESSION['email'] ?? '';
+
 $hideHargaBeli = ($username === 'user@gmail.com');
 
 
@@ -12,6 +13,7 @@ function respondWithError($message) {
         "success" => false,
         "error" => $message,
         "data" => [],
+        "username" => $username,
         "draw" => intval($_GET['draw'] ?? 0),
         "recordsTotal" => 0,
         "recordsFiltered" => 0
@@ -201,6 +203,7 @@ while ($row = mysqli_fetch_assoc($query)) {
 echo json_encode([
     "success" => true,
     "draw" => $draw,
+    "username" => $username,
     "recordsTotal" => $totalData,
     "recordsFiltered" => $totalFiltered,
     "data" => $data
