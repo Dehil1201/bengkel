@@ -167,39 +167,62 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                 <tr>
                     <th>No</th>
                     <th>Kode</th>
-                    <th>Nama Barang</th>
-                    <th width="60">Qty</th>
+                    <th>Nama Barang</th><th width="60">Qty</th>
                     <th width="80">Satuan</th>
                     <th class="text-right">Harga</th>
+                    <th class="text-right">Diskon</th>   <!-- ✅ BARU -->
                     <th class="text-right">Subtotal</th>
+
                 </tr>
             </thead>
             <tbody>
                 <?php
                 $total_spare = 0;
-                $i=1;
+                $i = 1;
+                
                 if ($sparepart_q && mysqli_num_rows($sparepart_q)) {
                     while ($sp = mysqli_fetch_assoc($sparepart_q)) {
-                        $sub = (float)$sp['subtotal'];
+                
+                        $harga  = (float)$sp['harga'];
+                        $qty    = (int)$sp['qty'];
+                        $diskon = (float)($sp['discount'] ?? 0); // ✅ persen dari DB
+                
+                        // ✅ Hitung total normal
+                        $total_normal = $harga * $qty;
+                
+                        // ✅ Hitung nilai diskon dalam rupiah
+                        $discount_harga = ($diskon / 100) * $total_normal;
+                
+                        // ✅ Hitung subtotal setelah diskon
+                        $sub = $total_normal - $discount_harga;
+                        if ($sub < 0) $sub = 0;
+                
                         $total_spare += $sub;
+                
+                        // ✅ Format: Rp 10.000 (10%)
+                        $diskon_text = rupiah($discount_harga) . " ({$diskon}%)";
+                
                         echo "
                         <tr>
                             <td>{$i}</td>
                             <td>{$sp['kode_sparepart']}</td>
                             <td>{$sp['nama_sparepart']}</td>
-                            <td>{$sp['qty']}</td>
+                            <td>{$qty}</td>
                             <td>{$sp['satuan']}</td>
-                            <td class='text-right'>" . rupiah($sp['harga']) . "</td>
+                            <td class='text-right'>" . rupiah($harga) . "</td>
+                            <td class='text-right'>{$diskon_text}</td>
                             <td class='text-right'>" . rupiah($sub) . "</td>
                         </tr>";
-
+                
                         $i++;
                     }
                 } else {
-                    echo "<tr><td colspan='6' class='muted'>Tidak ada sparepart.</td></tr>";
+                    echo "<tr><td colspan='8' class='muted'>Tidak ada sparepart.</td></tr>";
                 }
+                
                 ?>
-            </tbody>
+                </tbody>
+
         </table>
 
         <!-- SERVICE ONLY IF ps -->
