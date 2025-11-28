@@ -171,6 +171,8 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                     <th width="80">Satuan</th>
                     <th class="text-right">Harga</th>
                     <th class="text-right">Subtotal</th>
+                    <th class="text-right">Potongan</th>
+                    <th class="text-right">Total</th>
 
                 </tr>
             </thead>
@@ -210,8 +212,13 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                             <td>{$sp['satuan']}</td>
                             <td class='text-right'>" . rupiah($harga) . "</td>
                             <td class='text-right'>
-                            " . rupiah($total_normal) . " - {$diskon_text} = " . rupiah($sub) . "
-
+                            " . rupiah($total_normal) . "
+                            </td>
+                            <td class='text-right'>
+                            " . $diskon_text . "
+                            </td>
+                            <td class='text-right'>
+                            " . rupiah($sub) . "
                             </td>
                         </tr>";
                 
