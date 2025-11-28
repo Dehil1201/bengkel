@@ -501,6 +501,8 @@ $(document).ready(function() {
         let noFaktur = $("#noFakturText").val();
         $("#table-sparepart").DataTable({
             destroy: true,
+            order : [],
+            ordering : false,
             ajax: {
                 url: "pages/admin_bengkel/api_get_transaksi.php",
                 type: "GET",

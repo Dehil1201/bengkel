@@ -91,7 +91,7 @@ while ($row = mysqli_fetch_assoc($sql_detail_servis)) {
 }
 
 // Ambil detail sparepart
-$sql_detail_sparepart = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHERE no_faktur='$no_faktur'");
+$sql_detail_sparepart = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHERE no_faktur='$no_faktur' order by id_detail desc");
 $detail_sparepart = [];
 $total_sparepart = 0;
 while ($row = mysqli_fetch_assoc($sql_detail_sparepart)) {
