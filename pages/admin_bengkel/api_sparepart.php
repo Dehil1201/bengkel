@@ -39,7 +39,7 @@ if (isset($_POST['aksi'])) {
         mysqli_begin_transaction($conn);
         try {
             $nama_sparepart = sanitize_input($_POST['nama_sparepart']);
-            $kategori_id = sanitize_input($_POST['kategori_id']);
+            $kategori_id = !empty($_POST['kategori_id']) ? (int)$_POST['kategori_id'] : NULL;
             $merk_id = !empty($_POST['merk_id']) ? (int)$_POST['merk_id'] : NULL;
             $lokasi_rak = sanitize_input($_POST['lokasi_rak']);
             $harga_beli = (float)str_replace(',', '', $_POST['harga_beli']);
@@ -67,7 +67,7 @@ if (isset($_POST['aksi'])) {
                     (
                     '$kode_sparepart',
                     '$nama_sparepart',
-                    '$kategori_id',
+                    " . ($kategori_id === NULL ? "NULL" : "'$kategori_id'") . ",
                     " . ($merk_id === NULL ? "NULL" : "'$merk_id'") . ",
                     '$lokasi_rak',
                     '$harga_beli',
@@ -93,7 +93,7 @@ if (isset($_POST['aksi'])) {
                 $query = "UPDATE spareparts SET 
                     kode_sparepart = '$kode_sparepart',
                     nama_sparepart = '$nama_sparepart',
-                    kategori_id = '$kategori_id',
+                    kategori_id = " . ($kategori_id === NULL ? "NULL" : "'$kategori_id'") . ",
                     merk_id = " . ($merk_id === NULL ? "NULL" : "'$merk_id'") . ",
                     lokasi_rak = '$lokasi_rak',
                     harga_beli = '$harga_beli',
