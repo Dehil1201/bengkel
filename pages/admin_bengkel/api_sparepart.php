@@ -40,7 +40,7 @@ if (isset($_POST['aksi'])) {
         try {
             $nama_sparepart = sanitize_input($_POST['nama_sparepart']);
             $kategori_id = sanitize_input($_POST['kategori_id']);
-            $merk_id = sanitize_input($_POST['merk_id']);
+            $merk_id = !empty($_POST['merk_id']) ? (int)$_POST['merk_id'] : NULL;
             $lokasi_rak = sanitize_input($_POST['lokasi_rak']);
             $harga_beli = (float)str_replace(',', '', $_POST['harga_beli']);
             $satuan_beli_id = sanitize_input($_POST['satuan_beli_id']);
