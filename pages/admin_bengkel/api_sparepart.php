@@ -64,7 +64,21 @@ if (isset($_POST['aksi'])) {
                 $query = "INSERT INTO spareparts 
                     (kode_sparepart, nama_sparepart, kategori_id, merk_id, lokasi_rak, harga_beli, satuan_beli_id, isi_per_pcs_beli, hpp_per_pcs, stok_pcs, stok_minimal, bengkel_id)
                     VALUES
-                    ('$kode_sparepart', '$nama_sparepart', '$kategori_id', '$merk_id', '$lokasi_rak', '$harga_beli', '$satuan_beli_id', '$isi_per_pcs_beli', '$hpp_per_pcs', '$stok_pcs', '$stok_minimal', '$bengkel_id')";
+                    (
+                    '$kode_sparepart',
+                    '$nama_sparepart',
+                    '$kategori_id',
+                    " . ($merk_id === NULL ? "NULL" : "'$merk_id'") . ",
+                    '$lokasi_rak',
+                    '$harga_beli',
+                    '$satuan_beli_id',
+                    '$isi_per_pcs_beli',
+                    '$hpp_per_pcs',
+                    '$stok_pcs',
+                    '$stok_minimal',
+                    '$bengkel_id'
+                    )";
+
                 if (!mysqli_query($conn, $query)) {
                     throw new Exception(mysqli_error($conn));
                 }
@@ -80,7 +94,7 @@ if (isset($_POST['aksi'])) {
                     kode_sparepart = '$kode_sparepart',
                     nama_sparepart = '$nama_sparepart',
                     kategori_id = '$kategori_id',
-                    merk_id = '$merk_id',
+                    merk_id = " . ($merk_id === NULL ? "NULL" : "'$merk_id'") . ",
                     lokasi_rak = '$lokasi_rak',
                     harga_beli = '$harga_beli',
                     satuan_beli_id = '$satuan_beli_id',
@@ -89,7 +103,9 @@ if (isset($_POST['aksi'])) {
                     stok_pcs = '$stok_pcs',
                     stok_minimal = '$stok_minimal',
                     bengkel_id = '$bengkel_id'
-                    WHERE id_sparepart = '$id_sparepart' AND bengkel_id IN ('" . implode("','", $accessible_bengkel_ids) . "')";
+                    WHERE id_sparepart = '$id_sparepart'
+                    AND bengkel_id IN ('" . implode("','", $accessible_bengkel_ids) . "')";
+
 
                 if (!mysqli_query($conn, $query)) {
                     throw new Exception(mysqli_error($conn));
