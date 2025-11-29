@@ -698,6 +698,7 @@ $(document).ready(function() {
             }
             reloadSparepartTable();
             sumTotal();
+            kosongkanFormTambah();
         }, "json");
     });
 
@@ -778,8 +779,11 @@ $(document).ready(function() {
                         title: "Berhasil",
                         text: res.message
                     }).then(() => {
+                        
+                        kosongkanModal();
                         // redirect ke halaman cetak dan auto print
                         window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
+
                         // window.open("pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur, "_blank");
 
                         // reload halaman
@@ -805,6 +809,82 @@ $(document).ready(function() {
         $('#uangBayar').prop('disabled', true).prop('readonly', true).val('');
       }
     }
+
+    function kosongkanFormTambah() {
+        // Kosongkan input teks
+        document.getElementById('kode-barang-input').value = '';
+        document.getElementById('nama-barang-input').value = '';
+        document.getElementById('jumlah-barang-input').value = 1;
+        document.getElementById('input-spareparts').value = '';
+
+        // Reset select sparepart (jika pakai select2)
+        $("#sparepart-select").val(null).trigger("change");
+        $("#harga-jual-satuan").val(null).trigger("change");
+
+        // Fokuskan kembali ke pilih sparepart
+        setTimeout(() => {
+            $("#sparepart-select").focus();
+        }, 300);
+    }
+
+      function kosongkanModal() {
+          // ========================
+          // KIRI
+          // ========================
+
+          // No faktur (biasanya diisi ulang saat buka modal)
+          document.getElementById('textNoFakturModal').value = '';
+
+          // Set tanggal ke hari ini
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('dateTanggal').value = today;
+
+          // Metode bayar → default Tunai
+          document.querySelectorAll('input[name="metode_bayar"]').forEach(el => {
+              el.checked = false;
+          });
+          document.querySelector('input[name="metode_bayar"][value="Tunai"]').checked = true;
+
+          // Status transaksi
+          document.getElementById('statusTransaksi').value = '';
+
+          // Jatuh tempo (disable + kosongkan)
+          const jatuhTempo = document.getElementById('jatuhTempo');
+          jatuhTempo.value = '';
+          jatuhTempo.setAttribute('disabled', true);
+          jatuhTempo.setAttribute('readonly', true);
+
+          // ========================
+          // KANAN
+          // ========================
+
+          // Pelanggan (jika pakai select2)
+          if (window.jQuery && $('#pelanggan').hasClass("select2-hidden-accessible")) {
+              $('#pelanggan').val(null).trigger('change');
+          } else {
+              document.getElementById('pelanggan').selectedIndex = 0;
+          }
+
+          // Total awal
+          document.getElementById('totalAwal').value = '0';
+          document.getElementById('totalAwalHidden').value = '0';
+
+          // Diskon
+          document.getElementById('diskon').value = 0;
+
+          // Total bayar
+          document.getElementById('totalBayar').value = '0';
+          document.getElementById('totalBayarHidden').value = '0';
+
+          // Uang dibayar
+          document.getElementById('uangBayar').value = '';
+          document.getElementById('uangBayarHidden').value = '0';
+
+          // Kembalian
+          document.getElementById('kembalian').value = '0';
+          document.getElementById('kembalianHidden').value = '0';
+      }
+
 
     
     $('input[name="metode_bayar"]').on('change', toggleJatuhTempo);
