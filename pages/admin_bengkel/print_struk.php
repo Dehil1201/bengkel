@@ -228,7 +228,7 @@ foreach($chunks as $batch){
             <tr><td class="text-right" width="50%"><strong>Subtotal</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($subtotal).'</td></tr>
             <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right" style="padding-right:80px">'.$diskon.'%</td></tr>
             <tr><td class="text-right"><strong>PPN</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($ppn).'</td></tr>
-            <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:80px"><strong>'.rupiah($grand).'<br><i>(' . terbilang($grand) . 'Rupiah)</i> </strong>
+            <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:80px"><strong>'.rupiah($grand).'<br><i>(' . terbilang($grand) . ' Rupiah)</i> </strong>
             </td></tr>
             <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($dibayar).'</td></tr>
             <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($kembali).'</td></tr>
