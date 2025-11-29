@@ -85,7 +85,7 @@ h2 { font-size:18px; margin:0; }
 h4 { margin:12px 0 6px; padding:4px 0; border-bottom:1px solid #e5e5e5; font-size:14px; }
 table { width:100%; border-collapse: collapse; margin-bottom:6px; }
 tr { text-align:left; }
-table tr td, table tr th { padding:4px 6px; font-size:12px; }
+table tr td, table tr th { padding:0px 3px; font-size:12px; }
 table.items thead th { background:#7f7f7f; font-size:12px; color:#fff; }
 .text-right { text-align:right; }
 .muted { color:#000; }
