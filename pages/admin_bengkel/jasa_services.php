@@ -464,6 +464,7 @@ $(document).ready(function() {
                     }
                     $("#totalAwal").val(formatAngka(total));
                     $("#kembalian").val(formatAngka(kembalian));
+                    $("#kembalianHidden").val(kembalian);
                     $("#textKendaraan").val();
                     $("#textNoPolisi").val(no_polisi);
                     $("#statusTransaksi").val(status);
