@@ -17,9 +17,32 @@ $jenis      = $_POST['jenis'] ?? 'penjualan'; // default penjualan
 $metode_bayar  = $_POST['metode_bayar'] ?? ''; // default penjualan
 $discount  = $_POST['diskon'] ?? 0; // default 0
 $total_bayar  = $_POST['total_bayar_hidden'] ?? 0; // default 0
-$tanggal    = date('Y-m-d H:i:s');
 $tanggal_pelunasan    = $_POST['tanggal_pelunasan'] ?? null;
 $deskripsi    = $_POST['deskripsi'] ?? null;
+$tanggal = $_POST['tanggal'] ?? null;
+
+$tanggal = $_POST['tanggal'] ?? null;
+
+// Jika tidak dikirim, pakai waktu server
+if (empty($tanggal)) {
+    $tanggal = date('Y-m-d H:i:s');
+} else {
+    // Karena input type="date" hanya kirim Y-m-d,
+    // kita tambahkan jam sekarang
+    $tanggal = $tanggal . ' ' . date('H:i:s');
+}
+
+// Validasi akhir agar aman ke database
+$dt = DateTime::createFromFormat('Y-m-d H:i:s', $tanggal);
+if (!$dt) {
+    echo json_encode([
+        "status_code" => 400,
+        "message" => "Format tanggal tidak valid"
+    ]);
+    exit;
+}
+
+$tanggal = $dt->format('Y-m-d H:i:s');
 
 
 if (!$no_faktur || !$id_user) {
