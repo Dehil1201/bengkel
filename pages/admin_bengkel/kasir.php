@@ -657,7 +657,7 @@ $(document).ready(function() {
                 $("#uangBayar").val(totalIDR);
                 $("#uangBayarHidden").val(parseAngka(totalIDR));
                 $("#kembalian").val(0);
-                $("#kembalianHidden").val();
+                $("#kembalianHidden").val(0);
             },
             error: function() {
                 $("#total-display").html("Rp 0");
@@ -706,6 +706,7 @@ $(document).ready(function() {
         $("#textNoFakturModal").val(noFaktur);
         $("#uangBayar").val(0)
         $("#uangBayarHidden").val(0)
+        $("#kembalianHidden").val(0)
         $("#diskon").val(0)
         sumTotal(); // pastikan totalAwal diperbarui
         toggleJatuhTempo();
