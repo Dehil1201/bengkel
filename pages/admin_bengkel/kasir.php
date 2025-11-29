@@ -497,6 +497,33 @@ $(document).ready(function() {
         });
     });
 
+    $("#table-sparepart").on("keyup", ".input-harga", function () {
+        let nilai = $(this).val().replace(/[^\d]/g, ''); // buang selain angka
+        let formatted = nilai.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        $(this).val(formatted); // <- INI YANG KURANG
+    });
+
+    $("#table-sparepart").on("change", ".input-harga", function() {
+        let id_detail = $(this).data("id");
+        
+        let nilai = $(this).val().replace(/[^\d]/g, ''); // buang selain angka
+        let formatted = nilai.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        $(this).val(formatted);
+
+        $.ajax({
+            url: "pages/admin_bengkel/api_update_harga_sparepart.php",
+            type: "POST",
+            data: { id_detail: id_detail, harga: nilai },
+            success: function(res) {
+                reloadSparepartTable();
+                sumTotal();
+            },
+            error: function(err) {
+                alert("Gagal update harga");
+            }
+        });
+    });
+
     function reloadSparepartTable() {
         let noFaktur = $("#noFakturText").val();
         $("#table-sparepart").DataTable({
@@ -515,15 +542,19 @@ $(document).ready(function() {
                 { data: "kode_sparepart", title: "Kode" },
                 { data: "nama_sparepart", title: "Nama Sparepart" },
                 { 
-                  data: "harga", 
+                  data: "harga",
                   title: "Harga",
-                  render: function(data) {
-                      return new Intl.NumberFormat('id-ID', { 
-                          style: 'currency', 
-                          currency: 'IDR',
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0
-                      }).format(data);
+                  render: function(data, type, row) {
+                      let harga = parseInt(data) || 0;
+                      let hargaFormat = new Intl.NumberFormat('id-ID').format(harga);
+
+                      return `
+                        <input type="text" 
+                              class="form-control form-control-sm input-harga" 
+                              data-id="${row.id_detail}" 
+                              value="${hargaFormat}" 
+                              style="width:120px">
+                      `;
                   }
                 },
                 { 

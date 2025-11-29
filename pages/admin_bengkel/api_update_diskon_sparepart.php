@@ -3,21 +3,47 @@ include "../../inc/koneksi.php";
 header('Content-Type: application/json');
 
 $id_detail = $_POST['id_detail'] ?? '';
-$diskon = $_POST['diskon'] ?? 0;
+$diskon    = $_POST['diskon'] ?? '';
 
-if (!$id_detail) {
-    echo json_encode(['status_code' => 400, 'message' => 'Parameter id_detail wajib diisi.']);
+// Validasi wajib
+if (empty($id_detail) || $diskon === '') {
+    echo json_encode([
+        "status_code" => 400,
+        "message" => "Parameter id_detail dan diskon wajib diisi."
+    ]);
     exit;
 }
 
-// Update data di tabel detail transaksi
-$q = "UPDATE transaksi_detail_sparepart 
-      SET discount = '$diskon', 
-          subtotal = (harga * qty) - ((harga * qty) * ($diskon / 100)) 
-      WHERE id_detail = '$id_detail'";
+// Pastikan diskon benar-benar INT (0–100)
+$diskon = (int) preg_replace('/[^0-9]/', '', $diskon);
+if ($diskon < 0) $diskon = 0;
+if ($diskon > 100) $diskon = 100;
 
-if (mysqli_query($conn, $q)) {
-    echo json_encode(['status_code' => 200, 'message' => 'Diskon berhasil diperbarui.']);
+// ✅ Rumus subtotal KONSISTEN:
+// subtotal = (harga * qty) - ((harga * qty) * discount / 100)
+
+$sql = "
+    UPDATE transaksi_detail_sparepart 
+    SET 
+        discount = ?,
+        subtotal = ( (harga * qty) - ((harga * qty) * ? / 100) )
+    WHERE id_detail = ?
+";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "iis", $diskon, $diskon, $id_detail);
+
+if (mysqli_stmt_execute($stmt)) {
+    echo json_encode([
+        "status_code" => 200,
+        "message" => "Diskon berhasil diperbarui."
+    ]);
 } else {
-    echo json_encode(['status_code' => 500, 'message' => 'Gagal memperbarui diskon.']);
+    echo json_encode([
+        "status_code" => 500,
+        "message" => "Gagal memperbarui diskon.",
+        "error" => mysqli_error($conn)
+    ]);
 }
+
+mysqli_stmt_close($stmt);
