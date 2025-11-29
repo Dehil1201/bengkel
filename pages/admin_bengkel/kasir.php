@@ -1,24 +1,44 @@
 <?php
 // asumsi session sudah start dan koneksi sudah tersedia ($conn)
-function generateNoFaktur($conn) {
-    $id_user = $_SESSION['id_user'];
-    $q_user = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
-    $d_user = mysqli_fetch_assoc($q_user);
-    $id_bengkel = $d_user['bengkel_id'];
+function generateNoFaktur($conn, $tanggal_transaksi = null) {
+  if (!$tanggal_transaksi) {
+      $tanggal_transaksi = date("Y-m-d"); // default hari ini
+  }
 
-    $prefix = "PJ." . date("Ymd") . "." . $id_user . "." . $id_bengkel;
-    $today = date("Y-m-d");
-    $q = mysqli_query($conn, "SELECT COUNT(*) as total 
-                              FROM transaksi 
-                              WHERE DATE(tanggal)='$today' 
-                                AND id_user='$id_user' 
-                                AND id_bengkel='$id_bengkel'
-                                AND jenis='penjualan'");
-    $row = mysqli_fetch_assoc($q);
-    $no_urut = str_pad($row['total'] + 1, 4, "0", STR_PAD_LEFT);
+  $id_user = $_SESSION['id_user'] ?? null;
+  if (!$id_user) {
+      throw new Exception("User belum login");
+  }
 
-    return $prefix . "." . $no_urut;
+  $q_user = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
+  if (!$q_user) throw new Exception("Gagal ambil bengkel: ".mysqli_error($conn));
+  $d_user = mysqli_fetch_assoc($q_user);
+  $id_bengkel = $d_user['bengkel_id'] ?? null;
+  if (!$id_bengkel) throw new Exception("Bengkel user tidak ditemukan");
+
+  // pastikan tanggal transaksi valid
+  $tgl = date("Y-m-d", strtotime($tanggal_transaksi));
+  $today = date("Ymd", strtotime($tanggal_transaksi));
+
+  // ambil max urut, cast aman, fallback 0 jika null
+  $q = mysqli_query($conn, "
+      SELECT MAX(CAST(SUBSTRING_INDEX(no_faktur, '.', -1) AS UNSIGNED)) AS max_urut
+      FROM transaksi
+      WHERE id_user='$id_user'
+        AND id_bengkel='$id_bengkel'
+        AND jenis='penjualan'
+  ");
+  if (!$q) throw new Exception("Gagal ambil max faktur: ".mysqli_error($conn));
+  $row = mysqli_fetch_assoc($q);
+  $max_urut = isset($row['max_urut']) ? (int)$row['max_urut'] : 0;
+
+  $no_urut = str_pad($max_urut + 1, 4, "0", STR_PAD_LEFT);
+
+  return "PJ." . $today . "." . $id_user . "." . $id_bengkel . "." . $no_urut;
 }
+
+
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $no_faktur   = $_POST['no_faktur'];
@@ -637,7 +657,7 @@ $(document).ready(function() {
                 $("#uangBayar").val(totalIDR);
                 $("#uangBayarHidden").val(parseAngka(totalIDR));
                 $("#kembalian").val(0);
-                $("#kembalianHidden").val(0);
+                $("#kembalianHidden").val();
             },
             error: function() {
                 $("#total-display").html("Rp 0");
