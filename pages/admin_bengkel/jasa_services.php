@@ -463,13 +463,14 @@ $(document).ready(function() {
                         teknisi = res.data.transaksi.teknisi;
                     }
                     $("#totalAwal").val(formatAngka(total));
-                    $("#uangBayar").val(formatAngka(uang_bayar));
                     $("#kembalian").val(formatAngka(kembalian));
                     $("#textKendaraan").val();
                     $("#textNoPolisi").val(no_polisi);
                     $("#statusTransaksi").val(status);
                     $("#pelanggan").val(pelanggan).trigger("change");
                     $("#teknisi").val(teknisi).trigger("change");
+                    $("#uangBayar").val(formatAngka(total))
+                    $("#uangBayarHidden").val(total)
                 } else {
                     $("#totalBayar").val("0");
                 }
