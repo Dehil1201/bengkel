@@ -8,7 +8,7 @@ $jenis = strtolower(substr($no_faktur, 0, 2)); // pj / ps
 
 // Format rupiah
 function rupiah($n) {
-    return 'Rp ' . number_format((float)$n, 0, ',', '.');
+    return 'Rp' . number_format((float)$n, 0, ',', '.');
 }
 
 // Ambil header
@@ -209,7 +209,7 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                             <td>{$sp['kode_sparepart']}</td>
                             <td>{$sp['nama_sparepart']}</td>
                             <td>{$qty}</td>
-                            <td>{$sp['satuan']}</td>
+                            <td width='10px'>{$sp['satuan']}</td>
                             <td class='text-right'>" . rupiah($harga) . "</td>
                             <td class='text-right'>
                             " . rupiah($total_normal) . "
