@@ -731,8 +731,20 @@ $(document).ready(function() {
         // Container utama
         let $container = $(`
           <div style="padding:6px;">
-            <div style="font-weight:bold; font-size:14px; margin-bottom:4px;">
-              ${item.nama_sparepart}
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <div style="font-weight:bold; font-size:14px;">
+                ${item.nama_sparepart}
+              </div>
+              <span style="
+                background:#198754;
+                color:#fff;
+                font-size:11px;
+                padding:2px 8px;
+                border-radius:12px;
+                font-weight:600;
+              ">
+                Stok: ${item.stok}
+              </span>
             </div>
             <div class="harga-wrapper" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
           </div>

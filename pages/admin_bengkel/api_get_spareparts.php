@@ -38,7 +38,7 @@ $offset = ($page - 1) * $limit;
 
 // ========= Base Query =========
 $sql = "
-  SELECT sp.id_sparepart, sp.kode_sparepart, sp.nama_sparepart, sp.hpp_per_pcs
+  SELECT sp.id_sparepart, sp.kode_sparepart, sp.nama_sparepart, sp.hpp_per_pcs, sp.stok_pcs
   FROM spareparts sp
   WHERE sp.bengkel_id = ?
 ";
@@ -126,6 +126,7 @@ while ($row = $res->fetch_assoc()) {
     $items[] = [
         "id" => $kode_sparepart,
         "nama_sparepart" => $row['nama_sparepart'],
+        "stok" => $row['stok_pcs'],
         "harga_beli" => (float)$row['hpp_per_pcs'],
         "harga_satuan" => $hargaList
     ];
