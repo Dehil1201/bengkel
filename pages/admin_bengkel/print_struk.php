@@ -85,7 +85,7 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         font-size: 12px;
     }
     table.items thead th {
-        background: #f6f6f6;
+        background: #7f7f7f;
         font-size: 12px;
     }
 
@@ -165,15 +165,15 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         <table class="items">
             <thead>
                 <tr>
-                    <th style="border:1px solid">No</th>
-                    <th style="border:1px solid">Kode</th>
-                    <th style="border:1px solid">Nama Barang</th>
-                    <th style="border:1px solid" width="60">Qty</th>
-                    <th style="border:1px solid" width="10">Satuan</th>
-                    <th style="border:1px solid" class="text-right">Harga</th>
-                    <th style="border:1px solid" class="text-right">Subtotal</th>
-                    <th style="border:1px solid" class="text-right">Potongan</th>
-                    <th style="border:1px solid" class="text-right">Total</th>
+                    <th style="border:0 1px solid">No</th>
+                    <th style="border:0 1px solid">Kode</th>
+                    <th style="border:0 1px solid">Nama Barang</th>
+                    <th style="border:0 1px solid" width="60">Qty</th>
+                    <th style="border:0 1px solid" width="10">Satuan</th>
+                    <th style="border:0 1px solid" class="text-right">Harga</th>
+                    <th style="border:0 1px solid" class="text-right">Subtotal</th>
+                    <th style="border:0 1px solid" class="text-right">Potongan</th>
+                    <th style="border:0 1px solid" class="text-right">Total</th>
 
                 </tr>
             </thead>
