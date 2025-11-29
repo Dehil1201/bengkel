@@ -17,7 +17,7 @@ $jenis      = $_POST['jenis'] ?? 'penjualan'; // default penjualan
 $metode_bayar  = $_POST['metode_bayar'] ?? ''; // default penjualan
 $discount  = $_POST['diskon'] ?? 0; // default 0
 $total_bayar  = $_POST['total_bayar_hidden'] ?? 0; // default 0
-$tanggal    = date('Y-m-d H:i:s');
+$tanggal = $_POST['tanggal'] . ' ' . date('H:i:s');
 $tanggal_pelunasan    = $_POST['tanggal_pelunasan'] ?? null;
 $deskripsi    = $_POST['deskripsi'] ?? null;
 
