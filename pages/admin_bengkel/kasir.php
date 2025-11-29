@@ -637,7 +637,7 @@ $(document).ready(function() {
                 $("#uangBayar").val(totalIDR);
                 $("#uangBayarHidden").val(parseAngka(totalIDR));
                 $("#kembalian").val(0);
-                $("#kembalianHidden").val(parseAngka(0));
+                $("#kembalianHidden").val(0);
             },
             error: function() {
                 $("#total-display").html("Rp 0");
