@@ -202,7 +202,7 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                         $total_spare += $sub;
                 
                         // ✅ Format: Rp 10.000 (10%)
-                        $diskon_text = rupiah($discount_harga) . "({$diskon}%)";
+                        $diskon_text = rupiah($discount_harga) . " ({$diskon}%)";
                 
                         echo "
                         <tr>
