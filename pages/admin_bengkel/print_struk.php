@@ -217,22 +217,74 @@ foreach($chunks as $batch){
     // Tampilkan total hanya di halaman terakhir
     if($page_number==$total_pages){
         $subtotal = $total_spare + $total_servis;
-        $diskon = $transaksi['discount'] ?? 0;
-        $ppn = $transaksi['ppn'] ?? 0;
-        $grand = $transaksi['total_bayar'] ?? $subtotal;
-        $dibayar = $transaksi['uang_bayar'] ?? $grand;
-        $kembali = $transaksi['kembalian'] ?? 0;
+
+        // Diskon dari subtotal
+        $diskon = (float) ($transaksi['discount'] ?? 0);
+        $diskon_nilai = ($diskon / 100) * $subtotal;
+        $total_setelah_diskon = $subtotal - $diskon_nilai;
+        if ($total_setelah_diskon < 0) $total_setelah_diskon = 0;
+
+        // PPN 11% dari nilai setelah diskon
+        $ppn_persen = 11;
+        $ppn_nilai = ($ppn_persen / 100) * $total_setelah_diskon;
+
+        // Grand Total
+        $grand = $total_setelah_diskon + $ppn_nilai;
+
+        // Pembayaran
+        $dibayar = $transaksi['uang_bayar'];
+        $kembali = $transaksi['uang_bayar'] - $transaksi['total_bayar'];
+        if ($kembali < 0) $kembali = 0;
+
+
 
         echo '<h4>Total Pembayaran</h4>
-        <table>
-            <tr><td class="text-right" width="50%"><strong>Subtotal</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($subtotal).'</td></tr>
-            <tr><td class="text-right"><strong>Diskon</strong></td><td class="text-right" style="padding-right:80px">'.$diskon.'%</td></tr>
-            <tr><td class="text-right"><strong>PPN</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($ppn).'</td></tr>
-            <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:80px"><strong>'.rupiah($grand).'<br><i>(' . terbilang($grand) . ' Rupiah)</i> </strong>
-            </td></tr>
-            <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($dibayar).'</td></tr>
-            <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right" style="padding-right:80px">'.rupiah($kembali).'</td></tr>
-        </table>';
+            <table>
+                <tr>
+                    <td class="text-right" width="50%"><strong>Subtotal</strong></td>
+                    <td class="text-right" style="padding-right:80px">'.rupiah($subtotal).'</td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>Diskon '.$diskon.'%</strong></td>
+                    <td class="text-right" style="padding-right:80px">- '.rupiah($diskon_nilai).'</td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>Total</strong></td>
+                    <td class="text-right" style="padding-right:80px">'.rupiah($total_setelah_diskon).'</td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>PPN 11%</strong></td>
+                    <td class="text-right" style="padding-right:80px">'.rupiah($ppn_nilai).'</td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>Setelah PPN</strong></td>
+                    <td class="text-right" style="padding-right:80px">'.rupiah($grand).'</td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>Grand Total</strong></td>
+                    <td class="text-right" style="padding-right:80px">
+                        <strong>'.rupiah($total_setelah_diskon).'<br>
+                        <i>(' . terbilang($total_setelah_diskon) . ' Rupiah)</i></strong>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>Dibayar</strong></td>
+                    <td class="text-right" style="padding-right:80px">'.rupiah($dibayar).'</td>
+                </tr>
+
+                <tr>
+                    <td class="text-right"><strong>Kembali</strong></td>
+                    <td class="text-right" style="padding-right:80px">'.rupiah($kembali).'</td>
+                </tr>
+            </table>';
+
+
 
         // Tanda tangan
         echo '<table width="100%">
