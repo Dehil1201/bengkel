@@ -241,6 +241,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <input type="hidden" id="textUserId" name="id_user" value="<?= $_SESSION['id_user']; ?>">
                 <input type="text" id="textNoFakturModal" name="no_faktur" class="form-control" readonly>
               </div>
+              <div class="form-group">
+                <label for="dateTanggal">Tanggal</label>
+                <input type="date" id="dateTanggal" name="tanggal" class="form-control" value="<?= date("Y-m-d") ?>">
+              </div>
 
               <div class="form-group">
                 <label for="textKendaraan">Kendaraan</label>
