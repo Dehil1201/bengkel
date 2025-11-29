@@ -14,12 +14,15 @@ if (empty($id_detail) || $diskon === '') {
     exit;
 }
 
-// Pastikan diskon benar-benar INT (0–100)
-$diskon = (int) preg_replace('/[^0-9]/', '', $diskon);
-if ($diskon < 0) $diskon = 0;
+// ✅ Izinkan decimal (contoh: 2.5, 10.75)
+$diskon = str_replace(',', '.', $diskon);                     // jaga-jaga input koma
+$diskon = preg_replace('/[^0-9.]/', '', $diskon);            // hanya angka & titik
+$diskon = (float) $diskon;
+
+if ($diskon < 0)   $diskon = 0;
 if ($diskon > 100) $diskon = 100;
 
-// ✅ Rumus subtotal KONSISTEN:
+// ✅ Rumus subtotal KONSISTEN (support decimal):
 // subtotal = (harga * qty) - ((harga * qty) * discount / 100)
 
 $sql = "
@@ -31,7 +34,9 @@ $sql = "
 ";
 
 $stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "iis", $diskon, $diskon, $id_detail);
+
+// ✅ ganti bind "iis" → "dds"
+mysqli_stmt_bind_param($stmt, "dds", $diskon, $diskon, $id_detail);
 
 if (mysqli_stmt_execute($stmt)) {
     echo json_encode([

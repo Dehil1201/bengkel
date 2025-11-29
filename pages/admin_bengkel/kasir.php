@@ -274,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
               <div class="form-group">
                 <label for="diskon">Diskon (%)</label>
-                <input type="number" id="diskon" name="diskon" class="form-control" min="0" max="100" value="0">
+                <input type="number" id="diskon" name="diskon" class="form-control" step="0.01" min="0" max="100" value="0">
               </div>
 
               <div class="form-group">
@@ -599,7 +599,7 @@ $(document).ready(function() {
                               class="form-control form-control-sm input-diskon" 
                               data-id="${row.id_detail}" 
                               value="${data}" 
-                              min="1" style="width:80px">
+                              min="1" step="0.01" style="width:80px">
                       `;
                   }
                 },
