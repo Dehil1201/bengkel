@@ -664,6 +664,8 @@ $(document).ready(function() {
                         text: res.message
                     }).then(() => {
                         // redirect ke halaman cetak dan auto print
+                        
+                        kosongkanModal();
                         window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
                         // window.open("pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur, "_blank");
 
@@ -863,6 +865,7 @@ $(document).ready(function() {
             }
             reloadSparepartTable();
             sumTotal();
+            kosongkanFormTambah();
         }, "json");
     });
 
@@ -1285,6 +1288,66 @@ $(document).ready(function() {
 
         $("#diskon").val(persen.toFixed(2));                   // tampil 2 desimal
     });
+
+    
+    function kosongkanFormTambah() {
+        // Kosongkan input teks
+        document.getElementById('kode-barang-input').value = '';
+        document.getElementById('nama-barang-input').value = '';
+        document.getElementById('jumlah-barang-input').value = 1;
+        document.getElementById('input-spareparts').value = '';
+
+        // Reset select sparepart (jika pakai select2)
+        $("#sparepart-select").val(null).trigger("change");
+        $("#harga-jual-satuan").val(null).trigger("change");
+
+        // Fokuskan kembali ke pilih sparepart
+        setTimeout(() => {
+            $("#sparepart-select").focus();
+        }, 300);
+    }
+
+    function kosongkanModal() {
+        // Text & hidden input
+        $('#textNoFakturModal').val('');
+        $('#textUserId').val('<?= $_SESSION['id_user']; ?>');
+
+        // Tanggal → reset ke hari ini
+        let today = new Date().toISOString().split('T')[0];
+        $('#dateTanggal').val(today);
+
+        // Data kendaraan
+        $('#textKendaraan').val('');
+        $('#textNoPolisi').val('');
+
+        // Select pelanggan & teknisi
+        $('#pelanggan').val('').trigger('change');
+        $('#teknisi').val('').trigger('change');
+
+        // Deskripsi
+        $('#deskripsiText').val('');
+
+        // Status transaksi
+        $('#statusTransaksi').val('');
+
+        // Metode bayar default ke Tunai
+        $('input[name="metode_bayar"][value="Tunai"]').prop('checked', true);
+
+        // Total & pembayaran
+        $('#totalAwal').val('0');
+        $('#totalAwalHidden').val('0');
+
+        $('#diskon').val('0');
+
+        $('#totalBayar').val('');
+        $('#totalBayarHidden').val('');
+
+        $('#uangBayar').val('');
+        $('#uangBayarHidden').val('');
+
+        $('#kembalian').val('');
+        $('#kembalianHidden').val('');
+        }
 
 
     
