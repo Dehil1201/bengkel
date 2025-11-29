@@ -47,7 +47,7 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         font-family: Arial, sans-serif;
         background: #f3f3f3;
         margin: 0;
-        color: #333;
+        color: #000;
     }
     .invoice-wrapper {
         margin: auto;
@@ -90,7 +90,7 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
     }
 
     .text-right { text-align: right; }
-    .muted { color: #777; }
+    .muted { color: #000; }
     .actions { margin-bottom: 10px; text-align: center; }
     .btn {
         padding: 6px 12px;
@@ -165,14 +165,15 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
         <table class="items">
             <thead>
                 <tr>
-                    <th>No</th>
-                    <th>Kode</th>
-                    <th>Nama Barang</th><th width="60">Qty</th>
-                    <th width="80">Satuan</th>
-                    <th class="text-right">Harga</th>
-                    <th class="text-right">Subtotal</th>
-                    <th class="text-right">Potongan</th>
-                    <th class="text-right">Total</th>
+                    <th style="border:1px solid">No</th>
+                    <th style="border:1px solid">Kode</th>
+                    <th style="border:1px solid">Nama Barang</th>
+                    <th style="border:1px solid" width="60">Qty</th>
+                    <th style="border:1px solid" width="10">Satuan</th>
+                    <th style="border:1px solid" class="text-right">Harga</th>
+                    <th style="border:1px solid" class="text-right">Subtotal</th>
+                    <th style="border:1px solid" class="text-right">Potongan</th>
+                    <th style="border:1px solid" class="text-right">Total</th>
 
                 </tr>
             </thead>
@@ -201,7 +202,7 @@ $sparepart_q = mysqli_query($conn, "SELECT * FROM transaksi_detail_sparepart WHE
                         $total_spare += $sub;
                 
                         // ✅ Format: Rp 10.000 (10%)
-                        $diskon_text = rupiah($discount_harga) . " ({$diskon}%)";
+                        $diskon_text = rupiah($discount_harga) . "({$diskon}%)";
                 
                         echo "
                         <tr>
