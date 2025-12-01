@@ -70,23 +70,36 @@ if ($sparepart_q && mysqli_num_rows($sparepart_q)) {
 // Bagi batch per 10 item
 $chunks = [];
 $total_items = count($sparepart_items);
-$index = 0;
 
-while ($index < $total_items) {
-    $sisa = $total_items - $index;
+// ✅ Jika total <= 10 → hanya 1 halaman (maks 10)
+if ($total_items <= 10) {
+    $chunks[] = $sparepart_items;
+} 
+// ✅ Jika lebih dari 10
+else {
 
-    // Jika sisa <= 10 → ini halaman terakhir (max 10)
-    if ($sisa <= 10) {
-        $chunks[] = array_slice($sparepart_items, $index, 10);
-        break;
+    // ✅ Ambil dulu sisa untuk halaman terakhir (max 10)
+    $last_limit = $total_items % 25;
+
+    if ($last_limit == 0 || $last_limit > 10) {
+        $last_limit = 10;
     }
 
-    // Jika sisa > 10 → ambil 15
-    $chunks[] = array_slice($sparepart_items, $index, 25);
-    $index += 25;
+    $main_count = $total_items - $last_limit;
+
+    // ✅ Halaman penuh isi 25
+    $index = 0;
+    while ($index < $main_count) {
+        $chunks[] = array_slice($sparepart_items, $index, 25);
+        $index += 25;
+    }
+
+    // ✅ Halaman terakhir isi max 10
+    $chunks[] = array_slice($sparepart_items, $main_count, $last_limit);
 }
 
 $total_pages = count($chunks);
+
 
 ?>
 
