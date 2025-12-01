@@ -588,6 +588,7 @@ $(document).ready(function () {
         let noFaktur = $("#noFakturText").val();
         const table = $('#tableBarangPembelianDetail').DataTable({
             destroy: true, 
+            ordering: false,
             ajax: {
                 url: "pages/admin_bengkel/api_get_transaksi.php",
                 type: "GET",
@@ -782,6 +783,7 @@ $(document).ready(function () {
                         title: "Berhasil",
                         text: res.message
                     }).then(() => {
+                        resetModalPembelian()
                         window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
                     });
                 } else {
@@ -823,6 +825,30 @@ $(document).ready(function () {
             }
         });
     });
+
+    function resetModalPembelian(){
+        $('#formTransaksiPembelian')[0].reset();
+
+        // Reset Select2 / Select biasa
+        $('#selectSupplierInput').val('').trigger('change');
+        $('#akunSelected').val('').trigger('change');
+        $('#sparepart-select').val('').trigger('change');
+
+        // Reset tabel detail
+        $('#tableBarangPembelianDetail').DataTable().clear().draw();
+
+        // Reset total tampilan
+        $('#totalPembelian').html('Rp 0');
+        $('#totalBayar').val(0);
+        $('#inputTotalHidden').val(0);
+        $('#inputDaftarBarang').val('');
+
+        // Reset field manual
+        $('#hargaBeli').val('');
+        $('#hargaBeliRaw').val('');
+        $('#jumlahBarang').val(1);
+        $('#diskonBarang').val(0);
+    }
 
 });
 
