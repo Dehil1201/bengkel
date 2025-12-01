@@ -750,7 +750,7 @@ $(document).ready(function () {
 
         // Ambil semua data dari DataTable
         const table = $('#tableBarangPembelianDetail').DataTable();
-        const allData = table.rows().data().toArray(); // ambil array objek
+        const allData = table.rows().data().toArray();
         if(allData.length === 0){
             Swal.fire('Belum ada barang di tabel!');
             return false;
@@ -771,30 +771,63 @@ $(document).ready(function () {
 
         // Serialize form & kirim AJAX
         let dataForm = $(this).serialize();
+
         $.ajax({
             url: "pages/admin_bengkel/api_selesai_transaksi.php",
             type: "POST",
             data: dataForm,
             dataType: "json",
+
+            // ✅ LOADING DIMULAI
+            beforeSend: function () {
+                Swal.fire({
+                    title: 'Menyimpan Transaksi...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // disable tombol submit supaya tidak dobel submit
+                $("#formTransaksiPembelian button[type='submit']")
+                    .prop("disabled", true);
+            },
+
             success: function(res){
+                Swal.close();
+
+                $("#formTransaksiPembelian button[type='submit']")
+                    .prop("disabled", false);
+
                 if(res.status_code == 200){
                     Swal.fire({
                         icon: "success",
                         title: "Berhasil",
                         text: res.message
                     }).then(() => {
-                        resetModalPembelian()
-                        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
+                        resetModalPembelian();
+                        window.location.href =
+                            "pages/admin_bengkel/print_struk.php?no_faktur=" +
+                            res.data.no_faktur + "&auto_print=1";
                     });
                 } else {
                     Swal.fire("Error", res.message, "error");
                 }
             },
+
             error: function(){
+                Swal.close();
+
+                $("#formTransaksiPembelian button[type='submit']")
+                    .prop("disabled", false);
+
                 Swal.fire("Error", "Terjadi kesalahan koneksi!", "error");
             }
         });
     });
+
 
     $(document).on("click", ".btn-delete-sparepart", function() {
         let id_detail = $(this).data("id");
