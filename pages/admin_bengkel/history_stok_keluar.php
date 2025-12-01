@@ -24,7 +24,7 @@
                     <div class="col-md-3 d-none">
                         <label>Jenis Transaksi</label>
                         <select id="jenis" class="form-control">
-                            <option value="pembelian">Pembelian (Stok Masuk)</option>
+                            <option value="penjualan">Penjualan (Stok Keluar)</option>
                         </select>
                     </div>
 
