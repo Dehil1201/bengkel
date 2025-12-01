@@ -5,25 +5,42 @@ $tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
 $id_supplier = $_GET['id_supplier'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 
-function generateNoFaktur($conn) {
-    $id_user = $_SESSION['id_user'];
+function generateNoFaktur($conn, $tanggal_transaksi = null) {
+    if (!$tanggal_transaksi) {
+        $tanggal_transaksi = date("Y-m-d"); // default hari ini
+    }
+  
+    $id_user = $_SESSION['id_user'] ?? null;
+    if (!$id_user) {
+        throw new Exception("User belum login");
+    }
+  
     $q_user = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
+    if (!$q_user) throw new Exception("Gagal ambil bengkel: ".mysqli_error($conn));
     $d_user = mysqli_fetch_assoc($q_user);
-    $id_bengkel = $d_user['bengkel_id'];
-
-    $prefix = "PB." . date("Ymd") . "." . $id_user . "." . $id_bengkel;
-    $today = date("Y-m-d");
-    $q = mysqli_query($conn, "SELECT COUNT(*) as total 
-                              FROM transaksi 
-                              WHERE DATE(tanggal)='$today' 
-                                AND id_user='$id_user' 
-                                AND id_bengkel='$id_bengkel'
-                                AND jenis='pembelian'");
+    $id_bengkel = $d_user['bengkel_id'] ?? null;
+    if (!$id_bengkel) throw new Exception("Bengkel user tidak ditemukan");
+  
+    // pastikan tanggal transaksi valid
+    $tgl = date("Y-m-d", strtotime($tanggal_transaksi));
+    $today = date("Ymd", strtotime($tanggal_transaksi));
+  
+    // ambil max urut, cast aman, fallback 0 jika null
+    $q = mysqli_query($conn, "
+        SELECT MAX(CAST(SUBSTRING_INDEX(no_faktur, '.', -1) AS UNSIGNED)) AS max_urut
+        FROM transaksi
+        WHERE id_user='$id_user'
+          AND id_bengkel='$id_bengkel'
+          AND jenis='penjualan'
+    ");
+    if (!$q) throw new Exception("Gagal ambil max faktur: ".mysqli_error($conn));
     $row = mysqli_fetch_assoc($q);
-    $no_urut = str_pad($row['total'] + 1, 4, "0", STR_PAD_LEFT);
-
-    return $prefix . "." . $no_urut;
-}
+    $max_urut = isset($row['max_urut']) ? (int)$row['max_urut'] : 0;
+  
+    $no_urut = str_pad($max_urut + 1, 4, "0", STR_PAD_LEFT);
+  
+    return "PB." . $today . "." . $id_user . "." . $id_bengkel . "." . $no_urut;
+  }
 
 $where = "WHERE t.no_faktur LIKE '%PB%'";
 if ($tgl_dari && $tgl_sampai) {
