@@ -217,7 +217,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
                     <div class="form-group">
                         <label>Supplier</label>
-                        <select id='selectSupplierInput' name="id_supplier" class="form-control" required style="width:100%">
+                        <select id='selectSupplierInput' name="id_supplier" class="form-control" style="width:100%">
                         <option value="">-- Pilih Supplier --</option>
                         <?php
                         $qSupplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM suppliers WHERE bengkel_id = '$id_bengkel'");
@@ -230,7 +230,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
                     <div class="form-group">
                         <label>Nama Akun</label>
-                        <select id='akunSelected' name="id_akun" class="form-control" required style="width:100%">
+                        <select id='akunSelected' name="id_akun" class="form-control" style="width:100%">
                         <option value="">-- Pilih Akun --</option>
                         <?php
                         $qAkun = mysqli_query($conn, "SELECT id_akun, nama_akun FROM akun WHERE id_bengkel = '$id_bengkel'");
