@@ -82,8 +82,8 @@ while ($index < $total_items) {
     }
 
     // Jika sisa > 10 → ambil 15
-    $chunks[] = array_slice($sparepart_items, $index, 20);
-    $index += 20;
+    $chunks[] = array_slice($sparepart_items, $index, 25);
+    $index += 25;
 }
 
 $total_pages = count($chunks);
