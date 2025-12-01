@@ -6,73 +6,72 @@ $id_supplier = $_GET['id_supplier'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 
 function generateNoFaktur($conn, $tanggal_transaksi = null) {
-    if (!$tanggal_transaksi) {
-        $tanggal_transaksi = date("Y-m-d"); // default hari ini
+
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
     }
-  
+
+    if (!$tanggal_transaksi) {
+        $tanggal_transaksi = date("Y-m-d");
+    }
+
     $id_user = $_SESSION['id_user'] ?? null;
     if (!$id_user) {
         throw new Exception("User belum login");
     }
-  
-    $q_user = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
-    if (!$q_user) throw new Exception("Gagal ambil bengkel: ".mysqli_error($conn));
-    $d_user = mysqli_fetch_assoc($q_user);
-    $id_bengkel = $d_user['bengkel_id'] ?? null;
-    if (!$id_bengkel) throw new Exception("Bengkel user tidak ditemukan");
-  
-    // pastikan tanggal transaksi valid
-    $tgl = date("Y-m-d", strtotime($tanggal_transaksi));
-    $today = date("Ymd", strtotime($tanggal_transaksi));
-  
-    // ambil max urut, cast aman, fallback 0 jika null
-    $q = mysqli_query($conn, "
-        SELECT MAX(CAST(SUBSTRING_INDEX(no_faktur, '.', -1) AS UNSIGNED)) AS max_urut
-        FROM transaksi
-        WHERE id_user='$id_user'
-          AND id_bengkel='$id_bengkel'
-          AND jenis='penjualan'
+
+    // Ambil bengkel user
+    $stmtUser = mysqli_prepare($conn, "
+        SELECT bengkel_id 
+        FROM users 
+        WHERE id_user = ?
+        LIMIT 1
     ");
-    if (!$q) throw new Exception("Gagal ambil max faktur: ".mysqli_error($conn));
-    $row = mysqli_fetch_assoc($q);
-    $max_urut = isset($row['max_urut']) ? (int)$row['max_urut'] : 0;
-  
-    $no_urut = str_pad($max_urut + 1, 4, "0", STR_PAD_LEFT);
-  
-    return "PB." . $today . "." . $id_user . "." . $id_bengkel . "." . $no_urut;
-  }
+    mysqli_stmt_bind_param($stmtUser, "i", $id_user);
+    mysqli_stmt_execute($stmtUser);
+    $resUser = mysqli_stmt_get_result($stmtUser);
+    $d_user  = mysqli_fetch_assoc($resUser);
 
-$where = "WHERE t.no_faktur LIKE '%PB%'";
-if ($tgl_dari && $tgl_sampai) {
-    $where .= " AND DATE(t.tanggal) BETWEEN '$tgl_dari' AND '$tgl_sampai'";
-}
-if ($id_supplier) {
-    $where .= " AND t.id_supplier = '$id_supplier'";
-}
-if ($id_user) {
-    $where .= " AND t.id_user = '$id_user'";
+    $id_bengkel = $d_user['bengkel_id'] ?? null;
+    if (!$id_bengkel) {
+        throw new Exception("Bengkel user tidak ditemukan");
+    }
+
+    $todayYmd = date("Ymd", strtotime($tanggal_transaksi));
+    $todaySql = date("Y-m-d", strtotime($tanggal_transaksi));
+
+    mysqli_begin_transaction($conn);
+
+    try {
+
+        // 🔥 FILTER BERDASAR FAKTUR + TANGGAL + BENGKEL (PALING AMAN)
+        $stmt = mysqli_prepare($conn, "
+            SELECT MAX(CAST(SUBSTRING_INDEX(no_faktur, '.', -1) AS UNSIGNED)) AS max_urut
+            FROM transaksi
+            WHERE id_bengkel = ?
+              AND no_faktur LIKE CONCAT('PB.', ?, '.%')
+        ");
+
+        mysqli_stmt_bind_param($stmt, "is", $id_bengkel, $todayYmd);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($res);
+
+        $max_urut = (int)($row['max_urut'] ?? 0);
+        $no_urut  = str_pad($max_urut + 1, 4, "0", STR_PAD_LEFT);
+
+        mysqli_commit($conn);
+
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        throw $e;
+    }
+
+    return "PB.$todayYmd.$id_user.$id_bengkel.$no_urut";
 }
 
-// ADD: Total penjualan
-$total_pembelian = 0;
-$q_total = mysqli_query($conn, "
-    SELECT SUM(t.total) as total_pembelian
-    FROM transaksi t
-    $where AND id_bengkel = '$id_bengkel'
-");
-if ($row = mysqli_fetch_assoc($q_total)) {
-    $total_pembelian = $row['total_pembelian'] ?? 0;
-}
 
-// Get transaksi
-$query_laporan = mysqli_query($conn, "
-    SELECT t.no_faktur, t.tanggal, p.nama_supplier, u.nama_lengkap, t.total, t.status
-    FROM transaksi t
-    LEFT JOIN suppliers p ON t.id_supplier = p.id_supplier
-    LEFT JOIN users u ON t.id_user = u.id_user
-    $where AND id_bengkel = '$id_bengkel'
-    ORDER BY t.tanggal DESC
-");
+
 
 // Dropdown data
 $list_supplier = mysqli_query($conn, "SELECT id_supplier, nama_supplier FROM suppliers WHERE bengkel_id = '$id_bengkel'");
@@ -88,7 +87,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
         <div class="row">
             <!-- Filter Form -->
             <div class="col-md-8">
-                <form method="get" class="form-inline" style="margin-bottom: 20px;">
+                <form class="form-inline" style="margin-bottom: 20px;">
                     <input type="hidden" name="page" value="pembelian">
                     <div class="form-group">
                         <label>Dari</label>
@@ -128,7 +127,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
             <div class="col-md-4">
                 <div class="callout callout-warning" style="margin-bottom: 20px;">
                     <h4>Total Pembelian</h4>
-                    <p style="font-size: 18px; font-weight: bold;">Rp <?= number_format($total_pembelian, 0, ',', '.'); ?></p>
+                    <p style="font-size: 18px; font-weight: bold;" id="totalPembelianCallout"></p>
                 </div>
             </div>
         </div>
@@ -154,29 +153,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                     <th>Detail</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php while ($row = mysqli_fetch_assoc($query_laporan)) : ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['no_faktur']); ?></td>
-                        <td><?= date('d-m-Y', strtotime($row['tanggal'])); ?></td>
-                        <td><?= htmlspecialchars($row['nama_supplier'] ?? '-'); ?></td>
-                        <td><?= htmlspecialchars($row['nama_lengkap'] ?? '-'); ?></td>
-                        <td>
-                            <?php if ($row['status'] == 'selesai') : ?>
-                                <span class="label label-success">selesai</span>
-                            <?php else : ?>
-                                <span class="label label-warning"><?= htmlspecialchars($row['status']); ?></span>
-                            <?php endif; ?>
-                        </td>
-                        <td>Rp <?= number_format($row['total'], 0, ',', '.'); ?></td>
-                        <td>
-                            <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
-                                <i class="fa fa-eye"></i> Detail
-                            </button>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
@@ -409,9 +386,7 @@ $(document).ready(function () {
         $('#totalPembelian').text('Rp 0');
     });
 
-    $('#tableLaporan').DataTable({
-        order: [[1, 'desc']]
-    });
+    
     $('#selectSupplierInput').select2();
 
     
@@ -497,7 +472,7 @@ $(document).ready(function () {
     });
 
 
-    $('.btn-detail').on('click', function () {
+    $(document).on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
         $('#modalDetail').modal('show');
 
@@ -520,9 +495,8 @@ $(document).ready(function () {
                 { data: 'subtotal', render: d => 'Rp ' + parseInt(d).toLocaleString('id-ID') }
             ]
         });
-
-        
     });
+
 
     $("#btnTambahBarang").on("click", function() {
 
@@ -825,6 +799,9 @@ $(document).ready(function () {
                         text: res.message
                     }).then(() => {
                         resetModalPembelian();
+
+                        tableLaporan.ajax.reload(null,false);
+                        loadTotalPembelian();
                         window.location.href =
                             "pages/admin_bengkel/print_struk.php?no_faktur=" +
                             res.data.no_faktur + "&auto_print=1";
@@ -879,26 +856,65 @@ $(document).ready(function () {
     function resetModalPembelian(){
         $('#formTransaksiPembelian')[0].reset();
 
-        // Reset Select2 / Select biasa
         $('#selectSupplierInput').val('').trigger('change');
         $('#akunSelected').val('').trigger('change');
         $('#sparepart-select').val('').trigger('change');
 
-        // Reset tabel detail
         $('#tableBarangPembelianDetail').DataTable().clear().draw();
 
-        // Reset total tampilan
-        $('#totalPembelian').html('Rp 0');
+        $('#totalPembelianCallout').html('Rp 0');
         $('#totalBayar').val(0);
         $('#inputTotalHidden').val(0);
         $('#inputDaftarBarang').val('');
 
-        // Reset field manual
         $('#hargaBeli').val('');
         $('#hargaBeliRaw').val('');
         $('#jumlahBarang').val(1);
         $('#diskonBarang').val(0);
     }
+
+
+    const tableLaporan = $('#tableLaporan').DataTable({
+        processing: true,
+        serverSide: true,
+        scrollX:true,
+        order: [[1, 'desc']],
+        ajax: {
+            url: "pages/admin_bengkel/api_laporan_pembelian_server.php",
+            type: "GET",
+            data: function(d) {
+                d.tgl_dari     = "<?= $tgl_dari ?>";
+                d.tgl_sampai   = "<?= $tgl_sampai ?>";
+                d.id_supplier = "<?= $id_supplier ?>";
+                d.id_user     = "<?= $id_user ?>";
+            }
+        },
+        columns: [
+            { data: "no_faktur" },
+            { data: "tanggal" },
+            { data: "supplier" },
+            { data: "user" },
+            { data: "status" },
+            { data: "total" },
+            { data: "aksi", orderable:false, searchable:false }
+        ]
+    });
+
+
+    function loadTotalPembelian(){
+        $.get("pages/admin_bengkel/api_total_pembelian.php", {
+            tgl_dari: "<?= $tgl_dari ?>",
+            tgl_sampai: "<?= $tgl_sampai ?>",
+            id_supplier: "<?= $id_supplier ?>",
+            id_user: "<?= $id_user ?>"
+        }, function(res){
+            $("#totalPembelianCallout").html(res.total_format);
+        }, "json");
+    }
+
+    loadTotalPembelian();
+
+
 
 });
 
