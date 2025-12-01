@@ -68,8 +68,26 @@ if ($sparepart_q && mysqli_num_rows($sparepart_q)) {
 }
 
 // Bagi batch per 10 item
-$chunks = array_chunk($sparepart_items, 10);
+$chunks = [];
+$total_items = count($sparepart_items);
+$index = 0;
+
+while ($index < $total_items) {
+    $sisa = $total_items - $index;
+
+    // Jika sisa <= 10 → ini halaman terakhir (max 10)
+    if ($sisa <= 10) {
+        $chunks[] = array_slice($sparepart_items, $index, 10);
+        break;
+    }
+
+    // Jika sisa > 10 → ambil 15
+    $chunks[] = array_slice($sparepart_items, $index, 15);
+    $index += 15;
+}
+
 $total_pages = count($chunks);
+
 ?>
 
 <!DOCTYPE html>
@@ -112,6 +130,8 @@ table.items thead th { background:#7f7f7f; font-size:12px; color:#fff; }
 <?php
 $total_spare = 0;
 $page_number = 1;
+$no_urut_global = 1; // ← TAMBAHKAN INI
+
 
 // Loop tiap batch 10 item
 foreach($chunks as $batch){
@@ -151,7 +171,7 @@ foreach($chunks as $batch){
             <tr>
                 <th>No</th>
                 <th>Kode</th>
-                <th>Nama Barang</th>
+                <th width="400px">Nama Barang</th>
                 <th>Qty</th>
                 <th>Satuan</th>
                 <th class="text-right">Harga</th>
@@ -161,7 +181,7 @@ foreach($chunks as $batch){
             </tr>
         </thead>
         <tbody>';
-    $i = ($page_number - 1) * 10 + 1;
+        $i = $no_urut_global;
     foreach($batch as $sp){
         $harga = (float)$sp['harga'];
         $qty = (int)$sp['qty'];
@@ -182,6 +202,8 @@ foreach($chunks as $batch){
                 <td class='text-right'>".rupiah($sub)."</td>
               </tr>";
         $i++;
+$no_urut_global++;
+
     }
     echo '</tbody></table>';
 

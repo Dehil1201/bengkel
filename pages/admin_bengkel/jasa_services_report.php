@@ -1,95 +1,62 @@
 <?php
-// Filter
-$tgl_dari = $_GET['tgl_dari'] ?? date('Y-m-01'); // Awal bulan ini
-$tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-t'); // Akhir bulan ini
+
+/* ================= AMBIL NILAI FILTER ================= */
+$tgl_dari     = $_GET['tgl_dari'] ?? date('Y-m-01');
+$tgl_sampai   = $_GET['tgl_sampai'] ?? date('Y-m-d');
 $id_pelanggan = $_GET['id_pelanggan'] ?? '';
-$id_user = $_GET['id_user'] ?? '';
-$id_teknisi = $_GET['id_teknisi'] ?? '';
+$id_user      = $_GET['id_user'] ?? '';
+$id_teknisi   = $_GET['id_teknisi'] ?? '';
 
-$where = "WHERE t.no_faktur LIKE '%PS%' OR t.no_faktur LIKE '%JS%'";
-if ($tgl_dari && $tgl_sampai) {
-    $where .= " AND DATE(t.tanggal) BETWEEN '$tgl_dari' AND '$tgl_sampai'";
-}
-if ($id_pelanggan) {
-    $where .= " AND t.id_pelanggan = '$id_pelanggan'";
-}
-if ($id_user) {
-    $where .= " AND t.id_user = '$id_user'";
-}
-if ($id_teknisi) {
-    $where .= " AND t.id_teknisi = '$id_teknisi'";
-}
+/* ================= DATA UNTUK SELECT FILTER ================= */
 
-// Get transaksi
-$query_laporan = mysqli_query($conn, "
-    SELECT 
-    t.no_faktur, 
-    t.tanggal, 
-    t.no_polisi,
-    t.kendaraan,
-    p.nama_pelanggan, 
-    u.nama_lengkap, 
-    t.total_bayar, 
-    t.status, 
-    tk.nama_teknisi,
-
-    -- Total servis per faktur
-    IFNULL((
-        SELECT SUM(td.biaya)
-        FROM transaksi_detail_servis td
-        WHERE td.no_faktur = t.no_faktur
-    ), 0) AS total_servis,
-
-    -- Total sparepart per faktur
-    IFNULL((
-        SELECT SUM(ts.subtotal)
-        FROM transaksi_detail_sparepart ts
-        WHERE ts.no_faktur = t.no_faktur
-    ), 0) AS total_sparepart
-
-FROM transaksi t
-LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
-LEFT JOIN users u ON t.id_user = u.id_user
-LEFT JOIN teknisis tk ON t.id_teknisi = tk.id_teknisi
-$where AND t.id_bengkel = '$id_bengkel'
-ORDER BY t.tanggal DESC
+// Pelanggan
+$list_pelanggan = mysqli_query($conn, "
+    SELECT id_pelanggan, nama_pelanggan
+    FROM pelanggans
+    ORDER BY nama_pelanggan ASC
 ");
 
-// Hitung total keseluruhan
-$total_semua = 0;
-$total_sparepart_all = 0;
-$total_servis_all = 0;
+// User
+$list_user = mysqli_query($conn, "
+    SELECT id_user, nama_lengkap 
+    FROM users
+    ORDER BY nama_lengkap ASC
+");
 
-mysqli_data_seek($query_laporan, 0);
-while ($row = mysqli_fetch_assoc($query_laporan)) {
-    $total_semua += $row['total_bayar'];
-    $total_sparepart_all += $row['total_sparepart'];
-    $total_servis_all += $row['total_servis'];
+// Teknisi
+$list_teknisi = mysqli_query($conn, "
+    SELECT id_teknisi, nama_teknisi 
+    FROM teknisis
+    ORDER BY nama_teknisi ASC
+");
+
+if (!$list_pelanggan || !$list_user || !$list_teknisi) {
+    die("Query filter gagal: " . mysqli_error($conn));
 }
-mysqli_data_seek($query_laporan, 0);
-
-// Dropdown data
-$list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM pelanggans where bengkel_id = '$id_bengkel'");
-$list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users where bengkel_id = '$id_bengkel'");
-$list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknisis where bengkel_id = '$id_bengkel'");
 ?>
+
 
 <div class="box box-primary">
     <div class="box-header with-border">
         <h3 class="box-title">Laporan Jasa Service</h3>
     </div>
+
     <div class="box-body">
-        <!-- Filter -->
-        <form method="get" class="form-inline" style="margin-bottom: 20px;">
+
+        <!-- ================= FILTER ================= -->
+        <form id="formFilter" class="form-inline mb-5">
             <input type="hidden" name="page" value="jasa_services_report">
+
             <div class="form-group">
                 <label>Dari</label>
                 <input type="date" name="tgl_dari" class="form-control" value="<?= $tgl_dari ?>">
             </div>
+
             <div class="form-group">
                 <label>Sampai</label>
                 <input type="date" name="tgl_sampai" class="form-control" value="<?= $tgl_sampai ?>">
             </div>
+
             <div class="form-group">
                 <label>Pelanggan</label>
                 <select name="id_pelanggan" class="form-control">
@@ -101,6 +68,7 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                     <?php endwhile; ?>
                 </select>
             </div>
+
             <div class="form-group">
                 <label>User</label>
                 <select name="id_user" class="form-control">
@@ -112,6 +80,7 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                     <?php endwhile; ?>
                 </select>
             </div>
+
             <div class="form-group">
                 <label>Teknisi</label>
                 <select name="id_teknisi" class="form-control">
@@ -123,33 +92,36 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                     <?php endwhile; ?>
                 </select>
             </div>
+
             <button type="submit" class="btn btn-primary">Filter</button>
         </form>
 
-        <!-- Total Summary -->
-        <div class="row" style="margin-bottom: 20px;">
+        <!-- ================= SUMMARY ================= -->
+        <div class="row" style="margin-bottom:20px;">
             <div class="col-md-4">
                 <div class="callout callout-success">
-                    <strong>Total Transaksi:</strong><br>
-                    <h3>Rp <?= number_format($total_semua, 0, ',', '.') ?></h3>
+                    <strong>Total Transaksi</strong>
+                    <h3 id="txtTotalTransaksi">Rp 0</h3>
                 </div>
             </div>
+
             <div class="col-md-4">
                 <div class="callout callout-info">
-                    <strong>Total Sparepart:</strong><br>
-                    <h3> Rp <?= number_format($total_sparepart_all, 0, ',', '.') ?></h3>
+                    <strong>Total Sparepart</strong>
+                    <h3 id="txtTotalSparepart">Rp 0</h3>
                 </div>
             </div>
+
             <div class="col-md-4">
                 <div class="callout callout-warning">
-                    <strong>Total Servis:</strong><br>
-                    <h3>Rp <?= number_format($total_servis_all, 0, ',', '.') ?></h3>
+                    <strong>Total Servis</strong>
+                    <h3 id="txtTotalServis">Rp 0</h3>
                 </div>
             </div>
         </div>
 
-        <!-- Table -->
-        <table id="tableLaporan" class="table table-bordered table-striped">
+        <!-- ================= TABLE ================= -->
+        <table id="tableLaporan" class="table table-bordered table-striped" width="100%">
             <thead>
                 <tr>
                     <th>No Faktur</th>
@@ -163,40 +135,15 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
                     <th>Total Belanja</th>
                     <th>Total Servis</th>
                     <th>Teknisi</th>
-                    <th>Detail</th>
+                    <th width="80">Detail</th>
                 </tr>
             </thead>
-            <tbody>
-                <?php while ($row = mysqli_fetch_assoc($query_laporan)) : ?>
-                    <tr>
-                        <td><?= htmlspecialchars($row['no_faktur']); ?></td>
-                        <td><?= date('d-m-Y', strtotime($row['tanggal'])); ?></td>
-                        <td><?= htmlspecialchars($row['nama_pelanggan'] ?? '-'); ?></td>
-                        <td><?= htmlspecialchars($row['kendaraan'] ?? '-'); ?></td>
-                        <td><?= htmlspecialchars($row['no_polisi'] ?? '-'); ?></td>
-                        <td><?= htmlspecialchars($row['nama_lengkap'] ?? '-'); ?></td>
-                        <td>
-                            <?php if ($row['status'] == 'selesai') : ?>
-                                <span class="label label-success">selesai</span>
-                            <?php else : ?>
-                                <span class="label label-warning"><?= htmlspecialchars($row['status']); ?></span>
-                            <?php endif; ?>
-                        </td>
-                        <td>Rp <?= number_format($row['total_bayar'], 0, ',', '.'); ?></td>
-                        <td>Rp <?= number_format($row['total_sparepart'], 0, ',', '.'); ?></td>
-                        <td>Rp <?= number_format($row['total_servis'], 0, ',', '.'); ?></td>
-                        <td><?= htmlspecialchars($row['nama_teknisi'] ?? '-'); ?></td>
-                        <td>
-                            <button class="btn btn-info btn-sm btn-detail" data-faktur="<?= htmlspecialchars($row['no_faktur']); ?>">
-                                <i class="fa fa-eye"></i> Detail
-                            </button>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
+            <tbody></tbody> <!-- ✅ WAJIB KOSONG KARENA SERVER-SIDE -->
         </table>
+
     </div>
 </div>
+
 
 <!-- Modal -->
 <div class="modal fade" id="modalDetail" tabindex="-1">
@@ -274,15 +221,39 @@ $list_teknisi = mysqli_query($conn, "SELECT id_teknisi, nama_teknisi FROM teknis
 
 <script>
 $(document).ready(function () {
-    $('#tableLaporan').DataTable({
+
+    // ===== INIT DATATABLE SERVER SIDE =====
+    const table = $('#tableLaporan').DataTable({
+        processing: true,
+        serverSide: true,
         order: [[1, 'desc']],
-        scrollY: true
+        ajax: {
+            url: 'pages/admin_bengkel/api_laporan_jasa_service.php',
+            type: 'GET',
+            data: function (d) {
+                d.tgl_dari     = $('input[name="tgl_dari"]').val();
+                d.tgl_sampai   = $('input[name="tgl_sampai"]').val();
+                d.id_pelanggan = $('select[name="id_pelanggan"]').val();
+                d.id_user      = $('select[name="id_user"]').val();
+                d.id_teknisi   = $('select[name="id_teknisi"]').val();
+            }
+        }
     });
-    
+
+    // ===== LOAD SUMMARY PERTAMA KALI =====
+    loadSummary();
+
+    // ===== FILTER SUBMIT (SATU KALI SAJA) =====
+    $('#formFilter').on('submit', function(e){
+        e.preventDefault();
+        table.ajax.reload();   // reload datatable
+        loadSummary();         // reload summary
+    });
+
+    // ===== DETAIL BUTTON =====
     $('#tableLaporan').on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
-        const table = $('#tableLaporan').DataTable();
-        const data = table.row($(this).closest('tr')).data();
+        const data   = table.row($(this).closest('tr')).data();
 
         $("#headTanggal").html(data[1]);
         $("#headNoFaktur").html(data[0]);
@@ -292,14 +263,15 @@ $(document).ready(function () {
         $("#headKendaraan").html(data[3]);
         $("#headNoPolisi").html(data[4]);
 
-        // Ambil deskripsi via API (lebih aman)
+        // Ambil deskripsi
         $.getJSON('pages/admin_bengkel/api_get_transaksi.php', { no_faktur: faktur }, function (res) {
-            const trx = res.data.transaksi || {};
+            const trx = res.data?.transaksi || {};
             $("#textDeskripsi").val(trx.deskripsi || '');
         });
 
         $('#modalDetail').modal('show');
 
+        // ===== DETAIL SERVIS =====
         $('#table-servis').DataTable({
             destroy: true,
             ajax: {
@@ -314,6 +286,7 @@ $(document).ready(function () {
             ]
         });
 
+        // ===== DETAIL SPAREPART =====
         $('#table-sparepart').DataTable({
             destroy: true,
             ajax: {
@@ -333,6 +306,33 @@ $(document).ready(function () {
         });
     });
 
+    // ===== LOAD SUMMARY FUNCTION =====
+    function loadSummary() {
+        $.getJSON(
+            'pages/admin_bengkel/api_laporan_jasa_service_summary.php',
+            {
+                tgl_dari: $('input[name="tgl_dari"]').val(),
+                tgl_sampai: $('input[name="tgl_sampai"]').val(),
+                id_pelanggan: $('select[name="id_pelanggan"]').val(),
+                id_user: $('select[name="id_user"]').val(),
+                id_teknisi: $('select[name="id_teknisi"]').val()
+            },
+            function (res) {
+                if (res.success) {
+                    $('#txtTotalTransaksi').text(
+                        'Rp ' + parseInt(res.data.total_transaksi || 0).toLocaleString('id-ID')
+                    );
+                    $('#txtTotalSparepart').text(
+                        'Rp ' + parseInt(res.data.total_sparepart || 0).toLocaleString('id-ID')
+                    );
+                    $('#txtTotalServis').text(
+                        'Rp ' + parseInt(res.data.total_servis || 0).toLocaleString('id-ID')
+                    );
+                }
+            }
+        );
+    }
 
 });
 </script>
+
