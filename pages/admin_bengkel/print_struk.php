@@ -89,6 +89,20 @@ table thead th { background:#777; color:#fff; }
 $total_spare = 0;
 $no_urut_global = 1;
 
+// ✅ HITUNG TOTAL SEMUA SPAREPART SEKALI SAJA
+foreach ($sparepart_items as $sp) {
+    $harga = (float)$sp['harga'];
+    $qty = (int)$sp['qty'];
+    $diskon = (float)($sp['discount'] ?? 0);
+
+    $total_normal = $harga * $qty;
+    $potongan = ($diskon / 100) * $total_normal;
+    $sub = max($total_normal - $potongan, 0);
+
+    $total_spare += $sub;
+}
+
+
 foreach ($chunks as $page => $batch) :
 ?>
 <div class="invoice-box page-break">
@@ -144,7 +158,6 @@ foreach ($chunks as $page => $batch) :
     $total_normal = $harga * $qty;
     $potongan = ($diskon / 100) * $total_normal;
     $sub = max($total_normal - $potongan, 0);
-    $total_spare += $sub;
 ?>
 <tr>
     <td><?= $no_urut_global++ ?></td>
@@ -175,7 +188,7 @@ $diskon = (float) ($transaksi['discount'] ?? 0);
 $diskon_nilai = ($diskon / 100) * $subtotal;
 $total_setelah_diskon = max($subtotal - $diskon_nilai, 0);
 $ppn_nilai = 0.11 * $total_setelah_diskon;
-$grand = $total_setelah_diskon + $ppn_nilai;
+$grand = $total_setelah_diskon + $ppn_nilai - $ppn_nilai;
 $dibayar = $transaksi['uang_bayar'] ?? 0;
 $kembali = max($dibayar - $transaksi['total_bayar'], 0);
 ?>
@@ -187,7 +200,7 @@ $kembali = max($dibayar - $transaksi['total_bayar'], 0);
 <tr><td class="text-right"><strong>Diskon <?= $diskon ?>%</strong></td><td class="text-right" style="padding-right:100px">- <?= rupiah($diskon_nilai) ?></td></tr>
 <tr><td class="text-right"><strong>Total</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($total_setelah_diskon) ?></td></tr>
 <tr><td class="text-right"><strong>PPN 11%</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($ppn_nilai) ?></td></tr>
-<tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:100px"><strong><?= rupiah($grand) ?></strong></td></tr>
+<tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:100px"><strong><?= rupiah($grand) ?><br><i>(<?= terbilang($grand) ?> Rupiah)</i></strong></td></tr>
 <tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($dibayar) ?></td></tr>
 <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($kembali) ?></td></tr>
 </tbody>
