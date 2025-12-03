@@ -35,9 +35,10 @@ $d2 = mysqli_fetch_assoc($q2);
 $id_bengkel = $d2['bengkel_id'] ?? null;
 
 // ===== Parameter DataTables =====
-$draw   = intval($_GET['draw'] ?? 0);
-$start  = intval($_GET['start'] ?? 0);
-$length = intval($_GET['length'] ?? 10);
+$draw   = intval($_POST['draw'] ?? 0);
+$start  = intval($_POST['start'] ?? 0);
+$length = intval($_POST['length'] ?? 10);
+
 
 // ===== Hitung Total Data =====
 $totalQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM spareparts WHERE bengkel_id = '$id_bengkel'");
