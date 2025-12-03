@@ -98,6 +98,7 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                                 <th>Merk</th>
                                 <th>Kategori</th>
                                 <th>Stok</th>
+                                <th>Terjual</th>
                                 <th>Harga Beli</th>
                                 <th>Harga Jual</th>
                                 <th>Aksi</th>
@@ -319,58 +320,52 @@ $(document).ready(function() {
         },
 
         columns: [
-            { title: "No", data: 'no', orderable: false },
-
-            { title: "Kode", data: 'kode_sparepart' },
-
-            { title: "Nama", data: 'nama_sparepart' },
-
-            { title: "Merk", data: "nama_merk" },
-
-            { title: "Stok PCS", data: "stok_pcs" },
-
-            { 
-                title: "Harga Beli",
-                data: "harga_beli",
-                className: "text-right",
-                render: function(data, type, row) {
-                    if (type === 'display' || type === 'filter') {
-                        return new Intl.NumberFormat('id-ID', { 
-                            style: 'currency',
-                            currency: 'IDR',
-                            minimumFractionDigits: 0 
-                        }).format(data);
-                    }
-                    return data; 
+        { title: "No", data: 'no', orderable: false },
+        { title: "Kode", data: 'kode_sparepart' },
+        { title: "Nama", data: 'nama_sparepart' },
+        { title: "Merk", data: "nama_merk" },
+        { title: "Kategori", data: "nama_kategori" },
+        { title: "Stok PCS", data: "stok_pcs" },
+        { title: "Terjual", data: "terjual" },  // kolom baru terjual
+        { 
+            title: "Harga Beli",
+            data: "harga_beli",
+            className: "text-right",
+            render: function(data, type, row) {
+                if (type === 'display' || type === 'filter') {
+                    return new Intl.NumberFormat('id-ID', { 
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0 
+                    }).format(data);
                 }
-            },
-
-            { 
-                title: "Harga Jual", 
-                data: "harga_jual", 
-                orderable: false,
-                searchable: false 
-            },
-
-            { title: "Kategori", data: "nama_kategori" },
-
-            { 
-                title: "Aksi",
-                data: null,
-                orderable: false,
-                searchable: false,
-                render: function (data, type, row) {
-                    return `
-                        <a href="#" class="btn btn-warning btn-xs btn-edit" data-id="${row.id_sparepart}">
-                            <i class="fa fa-pencil"></i> Edit
-                        </a>
-                        <button type="button" class="btn btn-danger btn-xs btn-hapus" data-id="${row.id_sparepart}">
-                            <i class="fa fa-trash"></i> Hapus
-                        </button>
-                    `;
-                }
+                return data; 
             }
-        ],
+        },
+        { 
+            title: "Harga Jual", 
+            data: "harga_jual", 
+            orderable: false,
+            searchable: false 
+        },
+        { 
+            title: "Aksi",
+            data: null,
+            orderable: false,
+            searchable: false,
+            render: function (data, type, row) {
+                return `
+                    <a href="#" class="btn btn-warning btn-xs btn-edit" data-id="${row.id_sparepart}">
+                        <i class="fa fa-pencil"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-danger btn-xs btn-hapus" data-id="${row.id_sparepart}">
+                        <i class="fa fa-trash"></i> Hapus
+                    </button>
+                `;
+            }
+        }
+    ],
+
 
         order: [[1, 'asc']], // default sort kode sparepart
 
