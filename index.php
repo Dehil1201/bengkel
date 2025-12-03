@@ -13,6 +13,8 @@ include 'plugins/php_reader/excel_reader2.php';
 $page = $_GET['page'] ?? 'default_page'; // Menggunakan operator null coalescing untuk menghindari error jika 'page' tidak disetel
 $breadcrumb = str_replace("_", " ", $page);
 
+
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -53,13 +55,58 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
             return $_SESSION['role'] ?? 'admin';
         }
     }
+    $page_titles = [
+        'dashboard' => 'Dashboard',
+        'users_data' => 'Management Pengguna',
+        'management_bengkel' => 'Management Bengkel',
+        'sparepart' => 'Sparepart',
+        'barcode' => 'Barcode',
+        'supplier' => 'Supplier',
+        'pelanggan' => 'Pelanggan',
+        'teknisi' => 'Teknisi',
+        'jenis_services' => 'Jenis Services',
+        'merk' => 'Merk',
+        'sub_merk' => 'Sub Merk',
+        'stok_opname' => 'Stok Opname',
+        'history_stok_masuk' => 'History Stok Masuk',
+        'history_stok_keluar' => 'History Stok Keluar',
+        'akun' => 'Akun',
+        'asset' => 'Aset',
+        'modal' => 'Modal',
+        'biaya' => 'Biaya',
+        'kasir' => 'Kasir',
+        'jasa_services' => 'Jasa Services',
+        'penjualan' => 'Penjualan',
+        'jasa_services_report' => 'Jasa Services',
+        'pembelian' => 'Pembelian',
+        'piutang' => 'Piutang',
+        'hutang' => 'Hutang',
+        'return_penjualan' => 'Return Penjualan',
+        'return_pembelian' => 'Return Pembelian',
+        'transactions' => 'Semua Transaksi',
+        'kas_report' => 'Kas',
+        'laba_rugi_penjualan' => 'Laba Rugi Penjualan',
+        'grafik' => 'Grafik',
+        'management_users_by_owner' => 'Manajemen Pengguna',
+        'pengaturan' => 'Pengaturan',
+        'management_teknisi' => 'Manajemen Teknisi',
+        'laporan_penjualan' => 'Laporan Penjualan',
+        'laporan_jasa_services' => 'Laporan Jasa Services',
+        'laporan_pembelian' => 'Laporan Pembelian',
+        'laporan_keuangan' => 'Laporan Keuangan',
+        'laporan_stok' => 'Laporan Stok',
+        'laporan_piutang_hutang' => 'Laporan Piutang & Hutang'
+    ];
+
+    // Ambil judul berdasarkan halaman, default 'Aplikasi Bengkel'
+    $title = $page_titles[$page] ?? 'Aplikasi Bengkel';
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>RC Motor | Dashboard</title>
+    <title><?= $nama_bengkel ?> | <?php echo htmlspecialchars($title); ?></title>
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
