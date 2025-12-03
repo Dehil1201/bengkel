@@ -534,10 +534,24 @@ $(document).ready(function () {
         }, function(res){
             if (res.status_code == 400) {
                 Swal.fire('Gagal!', res.message, 'warning');
+                return; // jangan lanjut reset jika gagal
             }
+
+            // Reload tabel
             reloadSparepartTable();
+
+            // Reset form input setelah berhasil tambah
+            $("#sparepart-select").val(null).trigger('change'); // reset select2
+            $("#hargaBeli").val('');
+            $("#hargaBeliRaw").val('');
+            $("#jumlahBarang").val(1);
+            $("#diskonBarang").val(0);
+
+            // Update total
             sumTotal();
+
         }, "json");
+
     });
 
 
@@ -646,7 +660,7 @@ $(document).ready(function () {
                     data: null,
                     orderable: false,
                     render: (data, type, row) => `
-                        <button class="btn btn-xs btn-danger btn-delete-sparepart" data-id="${row.id_detail}">
+                        <button type="button" class="btn btn-xs btn-danger btn-delete-sparepart" data-id="${row.id_detail}">
                         <i class="fa fa-trash"></i> Hapus
                         </button>`
                 }
