@@ -498,19 +498,18 @@ $(document).ready(function () {
     });
 
 
-    $("#btnTambahBarang").on("click", function() {
+    $("#btnTambahBarang").off("click").on("click", function(e) {
+        e.preventDefault(); // cegah submit form bawaan
 
         let kode = $("#sparepart-select").val();
 
-        // 🔥 ambil data dengan cara Select2
         let selected = $('#sparepart-select').select2('data')[0] || {};
-
         let nama = selected.nama_sparepart || "";
         let satuan = "PCS";
 
-        let harga = parseInt($("#hargaBeliRaw").val());
-        let qty = parseInt($("#jumlahBarang").val());
-        let diskon = parseInt($("#diskonBarang").val());
+        let harga = parseInt($("#hargaBeliRaw").val()) || 0;
+        let qty = parseInt($("#jumlahBarang").val()) || 0;
+        let diskon = parseInt($("#diskonBarang").val()) || 0;
 
         if (!kode) {
             Swal.fire('Pilih sparepart dulu!');
@@ -520,6 +519,9 @@ $(document).ready(function () {
             Swal.fire('Jumlah harus minimal 1!');
             return;
         }
+
+        // 🔒 KUNCI TOMBOL AGAR TIDAK BISA KLIK DOBEL
+        $("#btnTambahBarang").prop("disabled", true);
 
         $.post("pages/admin_bengkel/api_transaksi_sparepart.php", {
             action: "create",
@@ -532,27 +534,33 @@ $(document).ready(function () {
             discount: diskon,
             jenis_transaksi: 'pembelian'
         }, function(res){
-            if (res.status_code == 400) {
+
+            // 🔓 BUKA LAGI TOMBOL
+            $("#btnTambahBarang").prop("disabled", false);
+
+            if (res.status_code != 200) {
                 Swal.fire('Gagal!', res.message, 'warning');
-                return; // jangan lanjut reset jika gagal
+                return;
             }
 
-            // Reload tabel
             reloadSparepartTable();
 
-            // Reset form input setelah berhasil tambah
-            $("#sparepart-select").val(null).trigger('change'); // reset select2
+            $("#sparepart-select").val(null).trigger('change');
             $("#hargaBeli").val('');
             $("#hargaBeliRaw").val('');
             $("#jumlahBarang").val(1);
             $("#diskonBarang").val(0);
 
-            // Update total
             sumTotal();
 
-        }, "json");
+        }, "json")
+        .fail(function(){
+            $("#btnTambahBarang").prop("disabled", false);
+            Swal.fire('Error!', 'Server tidak merespon', 'error');
+        });
 
     });
+
 
 
     function sumTotal() {

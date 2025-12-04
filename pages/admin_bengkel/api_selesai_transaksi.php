@@ -169,19 +169,6 @@ try {
         }
     }
 
-    // Jika pembelian update stok sparepart
-    if (strtolower($jenis) === 'pembelian') {
-        $qDetail = mysqli_query($conn, "SELECT kode_sparepart, qty FROM transaksi_detail_sparepart WHERE no_faktur='$no_faktur'");
-        while ($row = mysqli_fetch_assoc($qDetail)) {
-            $kode = $row['kode_sparepart'];
-            $qty = (int) $row['qty'];
-
-            $up = mysqli_query($conn, "UPDATE spareparts 
-                                       SET stok_pcs = stok_pcs + $qty 
-                                       WHERE kode_sparepart = '$kode'");
-            if (!$up) throw new Exception("Gagal update stok untuk $kode: " . mysqli_error($conn), 500);
-        }
-    }
 
     mysqli_commit($conn);
 
