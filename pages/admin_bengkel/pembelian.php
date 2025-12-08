@@ -211,7 +211,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
 
                     <div class="form-group">
                         <label>Faktur</label>
-                        <input type="text" id="noFakturText" name="no_faktur" class="form-control" readonly value="<?= generateNoFaktur($conn); ?>">
+                        <input type="text" id="noFakturText" name="no_faktur" class="form-control"  value="<?= generateNoFaktur($conn); ?>">
                         <input type="hidden" id="jenisTransaksiInput" name="jenis" class="form-control" readonly value="pembelian">
                     </div>
 

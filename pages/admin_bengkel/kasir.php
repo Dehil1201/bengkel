@@ -157,7 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
           <button type="button" class="btn btn-primary btn-block btn-lg" style="margin-top:20px;" data-toggle="modal" data-target="#modalSelesaiTransaksi">
               <i class="fa fa-check"></i> Selesai Transaksi
-          </button>
+          </button>  
+          <button type="button" class="btn btn-default btn-block" id="btn-list-servis"><i class="fa fa-list"></i> List Pending Servis</button>
         </form>
       </div>
     </div>
@@ -303,6 +304,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Simpan & Cetak</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalPendingServis" tabindex="-1" role="dialog" aria-labelledby="modalPendingServisLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalListPending"><i class="fa fa-check"></i> List Pending Transaksi </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      <div class="modal-body">
+        <table id="tablePendingServis" class="table table-bordered table-striped" style="width:100%">
+          <thead style="width:100%">
+            <tr>
+              <th style="width:100%">No Faktur</th>
+              <th style="width:100%">Kendaraan</th>
+              <th style="width:100%">No Polisi</th>
+              <th style="width:100%">Pelanggan</th>
+              <th style="width:100%">Teknisi</th>
+              <th style="width:100%">Tanggal</th>
+              <th style="width:100%">Total</th>
+              <th style="width:100%">Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -901,6 +932,57 @@ $(document).ready(function() {
 
     
     $('input[name="metode_bayar"]').on('change', toggleJatuhTempo);
+
+    $('#btn-list-servis').on('click', function() {
+        $('#modalPendingServis').modal('show');
+
+        // Inisialisasi atau reload DataTable
+        if ( $.fn.DataTable.isDataTable('#tablePendingServis') ) {
+            $('#tablePendingServis').DataTable().ajax.reload();
+        } else {
+            $('#tablePendingServis').DataTable({
+                "ajax": {
+                    "url": "pages/admin_bengkel/api_get_list_pending_transaction.php", // sesuaikan path API
+                    "dataSrc": "data"
+                },
+                "columns": [
+                    { "data": "no_faktur" },
+                    { "data": "kendaraan" },
+                    { "data": "no_polisi" },
+                    { "data": "pelanggan" },
+                    { "data": "teknisi" },
+                    { "data": "tanggal" },
+                    { 
+                        "data": "total",
+                        "render": function(data) {
+                            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data);
+                        }
+                    },
+                    { 
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return '<button class="btn btn-primary btn-sm btn-pilih" data-no_faktur="'+row.no_faktur+'">Pilih</button>';
+                        }
+                    }
+                ],
+                responsive: true,
+                scrollY:500,
+                deferRender:true,
+                scroller:true
+            });
+        }
+    });
+
+    $('#tablePendingServis').on('click', '.btn-pilih', function() {
+        var noFaktur = $(this).data('no_faktur');
+
+        $("#noFakturText").val(noFaktur);
+
+        
+        reloadSparepartTable();
+        sumTotal();
+        $('#modalPendingServis').modal('hide');
+    });
 
 
     reloadSparepartTable();
