@@ -489,7 +489,7 @@ $(document).ready(function() {
         } else {
             $('#tablePendingServis').DataTable({
                 "ajax": {
-                    "url": "pages/admin_bengkel/api_get_list_pending_transaction.php", // sesuaikan path API
+                    "url": "pages/admin_bengkel/api_get_list_pending_transaction.php?jenis_faktur=PS", // sesuaikan path API
                     "dataSrc": "data"
                 },
                 "columns": [

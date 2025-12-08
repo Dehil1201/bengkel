@@ -112,6 +112,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+<style>
+  .sorting_disabled{
+    width:100%;
+  }
+</style>
+
 <div class="row">
   <div class="col-md-4">
     <div class="box box-primary">
@@ -158,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           <button type="button" class="btn btn-primary btn-block btn-lg" style="margin-top:20px;" data-toggle="modal" data-target="#modalSelesaiTransaksi">
               <i class="fa fa-check"></i> Selesai Transaksi
           </button>  
-          <button type="button" class="btn btn-default btn-block" id="btn-list-servis"><i class="fa fa-list"></i> List Pending Servis</button>
+          <button type="button" class="btn btn-default btn-block" id="btn-list-servis"><i class="fa fa-list"></i> List Pending</button>
         </form>
       </div>
     </div>
@@ -319,14 +325,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
       <div class="modal-body">
         <table id="tablePendingServis" class="table table-bordered table-striped" style="width:100%">
-          <thead style="width:100%">
+          <thead>
             <tr>
-              <th style="width:100%">No Faktur</th>
-              <th style="width:100%">Kendaraan</th>
-              <th style="width:100%">No Polisi</th>
+              <th style="width:100px">No Faktur</th>
               <th style="width:100%">Pelanggan</th>
-              <th style="width:100%">Teknisi</th>
-              <th style="width:100%">Tanggal</th>
+              <th style="width:100px">Tanggal</th>
               <th style="width:100%">Total</th>
               <th style="width:100%">Action</th>
             </tr>
@@ -942,15 +945,12 @@ $(document).ready(function() {
         } else {
             $('#tablePendingServis').DataTable({
                 "ajax": {
-                    "url": "pages/admin_bengkel/api_get_list_pending_transaction.php", // sesuaikan path API
+                    "url": "pages/admin_bengkel/api_get_list_pending_transaction.php?jenis_faktur=PJ", // sesuaikan path API
                     "dataSrc": "data"
                 },
                 "columns": [
                     { "data": "no_faktur" },
-                    { "data": "kendaraan" },
-                    { "data": "no_polisi" },
                     { "data": "pelanggan" },
-                    { "data": "teknisi" },
                     { "data": "tanggal" },
                     { 
                         "data": "total",
@@ -965,10 +965,10 @@ $(document).ready(function() {
                         }
                     }
                 ],
-                responsive: true,
                 scrollY:500,
                 deferRender:true,
-                scroller:true
+                scroller:true,
+                ordering: false,
             });
         }
     });
