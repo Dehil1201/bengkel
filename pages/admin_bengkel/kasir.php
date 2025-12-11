@@ -111,11 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
-<style>
-  .sorting_disabled{
-    width:100%;
-  }
 </style>
 
 <div class="row">
