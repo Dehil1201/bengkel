@@ -488,7 +488,7 @@ $(document).ready(function() {
             $('#tablePendingServis').DataTable().ajax.reload();
         } else {
             $('#tablePendingServis').DataTable({
-                dom: 'Bfrtip',   // ⬅️ WAJIB
+                dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

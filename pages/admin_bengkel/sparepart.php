@@ -309,7 +309,7 @@ $(document).ready(function() {
         ordering: true,
         deferRender: true,
         pageLength: 10,
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',
@@ -442,7 +442,7 @@ $(document).ready(function() {
 
     $('#dataTable tbody').on('click', '.btn-edit', function (e) {
         e.preventDefault();
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

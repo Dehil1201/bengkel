@@ -187,7 +187,7 @@ if ($selected_bengkel_id) {
 <script>
 $(document).ready(function() {
     $('#dataTable').DataTable(
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

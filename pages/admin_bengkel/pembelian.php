@@ -510,7 +510,7 @@ $(document).ready(function () {
 
         $('#tableBarangPembelian').DataTable({
             destroy: true,
-            dom: 'Bfrtip',   // ⬅️ WAJIB
+            dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',
@@ -664,7 +664,7 @@ $(document).ready(function () {
         const table = $('#tableBarangPembelianDetail').DataTable({
             destroy: true, 
             ordering: false,
-            dom: 'Bfrtip',   // ⬅️ WAJIB
+            dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

@@ -145,7 +145,7 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
 
     let table = $('#tabel-piutang').DataTable({
       scrollY: true,
-      dom: 'Bfrtip',   // ⬅️ WAJIB
+      dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

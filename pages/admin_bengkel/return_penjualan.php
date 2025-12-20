@@ -191,7 +191,7 @@ $(document).ready(function () {
     const tableReturPenjualan = $('#tableReturPenjualan').DataTable({
         processing: true,
         serverSide: true,
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',
@@ -251,7 +251,7 @@ $(document).ready(function () {
         searching: false,
         paging: false,
         info: false,
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

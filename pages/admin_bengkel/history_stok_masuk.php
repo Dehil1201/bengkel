@@ -77,7 +77,7 @@ $(document).ready(function() {
         searching: true,
         ordering: true,
         autoWidth: false,
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

@@ -226,7 +226,7 @@ $(document).ready(function () {
     const table = $('#tableLaporan').DataTable({
         processing: true,
         serverSide: true,
-        dom: 'Bfrtip',   // ⬅️ WAJIB
+        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',
@@ -304,7 +304,7 @@ $(document).ready(function () {
         // ===== DETAIL SERVIS =====
         $('#table-servis').DataTable({
             destroy: true,
-            dom: 'Bfrtip',   // ⬅️ WAJIB
+            dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',

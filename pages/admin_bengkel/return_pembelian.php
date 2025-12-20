@@ -42,7 +42,7 @@ $(document).ready(function () {
   const tablePembelian = $('#tableReturPembelian').DataTable({
     processing: true,
     serverSide: true,
-    dom: 'Bfrtip',   // ⬅️ WAJIB
+    dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
             buttons: [
                 {
                     extend: 'excelHtml5',
