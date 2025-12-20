@@ -33,10 +33,12 @@ if ($id_teknisi) {
 if ($search) {
     $where .= " AND (
         t.no_faktur LIKE '%$search%' OR
+        t.no_polisi LIKE '%$search%' OR
         p.nama_pelanggan LIKE '%$search%' OR
         tk.nama_teknisi LIKE '%$search%'
     )";
 }
+
 
 $baseQuery = "
 FROM transaksi t
