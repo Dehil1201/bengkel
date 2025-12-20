@@ -145,6 +145,36 @@ $list_pelanggan = mysqli_query($conn, "SELECT id_pelanggan, nama_pelanggan FROM 
 
     let table = $('#tabel-piutang').DataTable({
       scrollY: true,
+      dom: 'Bfrtip',   // ⬅️ WAJIB
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)' // kecuali kolom Detail
+                    }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: 'Laporan Penjualan',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    },
+                    customize: function (doc) {
+                        doc.defaultStyle.fontSize = 9;
+                        doc.styles.tableHeader.fontSize = 10;
+                    }
+                }
+            ],
       ajax: {
         url: 'pages/admin_bengkel/api_get_piutang.php',
         data: function (d) {

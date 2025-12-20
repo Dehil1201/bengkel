@@ -226,6 +226,36 @@ $(document).ready(function () {
     const table = $('#tableLaporan').DataTable({
         processing: true,
         serverSide: true,
+        dom: 'Bfrtip',   // ⬅️ WAJIB
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)' // kecuali kolom Detail
+                    }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: 'Laporan Penjualan',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    },
+                    customize: function (doc) {
+                        doc.defaultStyle.fontSize = 9;
+                        doc.styles.tableHeader.fontSize = 10;
+                    }
+                }
+            ],
         order: [[1, 'desc']],
         ajax: {
             url: 'pages/admin_bengkel/api_laporan_jasa_service.php',
@@ -274,6 +304,36 @@ $(document).ready(function () {
         // ===== DETAIL SERVIS =====
         $('#table-servis').DataTable({
             destroy: true,
+            dom: 'Bfrtip',   // ⬅️ WAJIB
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)' // kecuali kolom Detail
+                    }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: 'Laporan Penjualan',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    },
+                    customize: function (doc) {
+                        doc.defaultStyle.fontSize = 9;
+                        doc.styles.tableHeader.fontSize = 10;
+                    }
+                }
+            ],
             ajax: {
                 url: 'pages/admin_bengkel/api_get_transaksi.php',
                 type: 'GET',

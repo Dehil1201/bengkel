@@ -311,7 +311,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <script>
 $(document).ready(function() {
 
-    $('#dataTable').DataTable();
+    $('#dataTable').DataTable({
+        dom: 'Bfrtip',   // ⬅️ WAJIB
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)' // kecuali kolom Detail
+                    }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: 'Laporan Penjualan',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    },
+                    customize: function (doc) {
+                        doc.defaultStyle.fontSize = 9;
+                        doc.styles.tableHeader.fontSize = 10;
+                    }
+                }
+            ],
+    });
 
     // SweetAlert Notifikasi
     const urlParams = new URLSearchParams(window.location.search);
