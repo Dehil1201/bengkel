@@ -442,37 +442,6 @@ $(document).ready(function() {
 
     $('#dataTable tbody').on('click', '.btn-edit', function (e) {
         e.preventDefault();
-        dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
-            buttons: [
-                {
-                    extend: 'excelHtml5',
-                    title: 'Laporan_Penjualan',
-                    exportOptions: {
-                        columns: ':not(:last-child)' // kecuali kolom Detail
-                    }
-                },
-                {
-                    extend: 'csvHtml5',
-                    title: 'Laporan_Penjualan',
-                    exportOptions: {
-                        columns: ':not(:last-child)'
-                    }
-                },
-                {
-                    extend: 'pdfHtml5',
-                    title: 'Laporan Penjualan',
-                    orientation: 'landscape',
-                    pageSize: 'A4',
-                    exportOptions: {
-                        columns: ':not(:last-child)'
-                    },
-                    customize: function (doc) {
-                        doc.defaultStyle.fontSize = 9;
-                        doc.styles.tableHeader.fontSize = 10;
-                    }
-                }
-            ],
-        
         const data = table.row($(this).closest('tr')).data();
         $('#myModalLabel').text('Edit Spare Part');
         $('#id_sparepart_edit').val(data.id_sparepart);
