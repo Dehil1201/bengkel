@@ -41,10 +41,13 @@ if ($no_faktur == '') {
         $where .= " AND jenis = '$jenis'";
     }
 
-    $q = mysqli_query($conn, "SELECT * FROM t.*, p.nama_pelanggan, u.nama_lengkap FROM transaksi t
-    LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
-    LEFT JOIN users u ON t.id_user = u.id_user
-    $where ORDER BY tanggal DESC");
+    $q = mysqli_query($conn, "SELECT t.*, p.nama_pelanggan, u.nama_lengkap 
+        FROM transaksi t
+        LEFT JOIN pelanggans p ON t.id_pelanggan = p.id_pelanggan
+        LEFT JOIN users u ON t.id_user = u.id_user
+        $where 
+        ORDER BY t.tanggal DESC");
+
     $list_transaksi = [];
     while ($row = mysqli_fetch_assoc($q)) {
         $list_transaksi[] = $row;
