@@ -47,6 +47,13 @@ while ($sp = mysqli_fetch_assoc($sparepart_q)) {
     $sparepart_items[] = $sp;
 }
 
+$servis_items = [];
+if ($servis_q) {
+    while ($sv = mysqli_fetch_assoc($servis_q)) {
+        $servis_items[] = $sv;
+    }
+}
+
 // PAGING 10 ITEM
 $chunks = array_chunk($sparepart_items, 10);
 $total_pages = count($chunks);
@@ -88,6 +95,7 @@ table thead th { background:#777; color:#fff; }
 <?php
 $total_spare = 0;
 $no_urut_global = 1;
+$i=1;
 
 // ✅ HITUNG TOTAL SEMUA SPAREPART SEKALI SAJA
 foreach ($sparepart_items as $sp) {
@@ -171,6 +179,31 @@ foreach ($chunks as $page => $batch) :
     <td class="text-right"><?= rupiah($sub) ?></td>
 </tr>
 <?php endforeach; ?>
+
+<?php foreach ($batch as $sp): ?>
+    <!-- BARIS SPAREPART -->
+<?php endforeach; ?>
+
+<?php if (!empty($servis_items)): ?>
+<tr>
+    <td colspan="9" style="background:#eee"><strong>JASA SERVIS</strong></td>
+</tr>
+
+<?php foreach ($servis_items as $sv): ?>
+<tr>
+    <td><?= $i++ ?></td>
+    <td>-</td>
+    <td><?= htmlspecialchars($sv['nama_servis']) ?></td>
+    <td>1</td>
+    <td>Jasa</td>
+    <td class="text-right"><?= rupiah($sv['biaya']) ?></td>
+    <td class="text-right"><?= rupiah($sv['biaya']) ?></td>
+    <td class="text-right">-</td>
+    <td class="text-right"><?= rupiah($sv['biaya']) ?></td>
+</tr>
+<?php endforeach; ?>
+<?php endif; ?>
+
 </tbody>
 </table>
 
@@ -179,7 +212,7 @@ $total_servis = 0;
 if ($servis_q) {
     mysqli_data_seek($servis_q, 0);
     while ($sv = mysqli_fetch_assoc($servis_q)) {
-        $total_servis += $sv['biaya'] * $sv['qty'];
+        $total_servis += $sv['biaya'];
     }
 }
 
