@@ -3,10 +3,7 @@
 // Pastikan juga session_start() sudah aktif di index.php
 
 // Cek hak akses: hanya super_user yang bisa mengakses halaman ini
-if (get_user_role() !== 'super_user') {
-    echo "<div class='alert alert-danger'>Anda tidak memiliki akses untuk melihat halaman ini.</div>";
-    exit(); // Hentikan eksekusi script
-}
+
 
 // Logika Tambah/Edit/Hapus Pengguna
 // Pastikan untuk selalu menambahkan session_start() di awal file jika ini adalah file standalone.

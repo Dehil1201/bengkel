@@ -33,15 +33,19 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
 
     $current_user_role = $_SESSION['role'];
 
+    $current_user_role;
+
     // Ambil data pengguna lengkap dari tabel 'users'
-    $query_data_users = mysqli_query($conn, "SELECT nama_lengkap, role, users.bengkel_id, bengkels.nama_bengkel, bengkels.alamat as alamat_bengkel, bengkels.telepon as telepon_bengkel FROM users join bengkels on users.bengkel_id = bengkels.id_bengkel WHERE email = '$_SESSION[email]'");
+    $query_data_users = mysqli_query($conn, "SELECT nama_lengkap, role, users.bengkel_id, bengkels.nama_bengkel, bengkels.alamat as alamat_bengkel, bengkels.telepon as telepon_bengkel FROM users left join bengkels on users.bengkel_id = bengkels.id_bengkel WHERE email = '$_SESSION[email]'");
     $data_users = mysqli_fetch_array($query_data_users);
 
-    $roletext = str_replace("_"," ", $data_users['role']);
-    $nama_bengkel = htmlspecialchars($data_users['nama_bengkel']);
-    $alamat_bengkel = htmlspecialchars($data_users['alamat_bengkel']);
-    $telepon_bengkel = htmlspecialchars($data_users['telepon_bengkel']);
-    $id_bengkel = htmlspecialchars($data_users['bengkel_id']);
+    $role = $data_users['role'];
+    $roletext = str_replace("_", " ", $role);
+
+    $nama_bengkel    = $data_users['nama_bengkel'] ?? '';
+    $alamat_bengkel  = $data_users['alamat_bengkel'] ?? '';
+    $telepon_bengkel = $data_users['telepon_bengkel'] ?? '';
+    $id_bengkel      = $data_users['bengkel_id'] ?? null;
 
     // Periksa apakah data pengguna ditemukan. Jika tidak, redirect ke logout.
     if (!$data_users) {
