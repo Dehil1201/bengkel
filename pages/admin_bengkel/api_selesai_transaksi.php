@@ -12,7 +12,7 @@ $id_user    = $_SESSION['id_user'] ?? null;
 $id_pelanggan = $_POST['id_pelanggan'] ?? null;
 $kendaraan = $_POST['kendaraan'] ?? null;
 $no_polisi = $_POST['no_polisi'] ?? null;
-$id_teknisi   = $_POST['id_teknisi'] ?? null;
+$id_teknisi = $_POST['id_teknisi'] ?? null;
 $id_supplier = $_POST['id_supplier'] ?? null;
 
 $uangBayar   = floatval($_POST['uangBayarHidden'] ?? 0);
@@ -34,44 +34,36 @@ if (!$no_faktur || !$id_user) {
 }
 
 /* =========================
-   TRANSAKSI DB
+   TRANSAKSI DIMULAI (SESUDAH DATA SIAP)
 ========================= */
 mysqli_begin_transaction($conn);
 
 try {
 
     /* =========================
-       AMBIL ID BENGKEL (SEKALI)
+       ID BENGKEL
     ========================= */
-    $qBengkel = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
-    $id_bengkel = mysqli_fetch_assoc($qBengkel)['bengkel_id'] ?? null;
+    $q = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user='$id_user' LIMIT 1");
+    $id_bengkel = mysqli_fetch_assoc($q)['bengkel_id'] ?? null;
     if (!$id_bengkel) throw new Exception("Bengkel tidak ditemukan",400);
 
     /* =========================
-       HITUNG TOTAL
+       TOTAL
     ========================= */
-    $q1 = mysqli_query($conn, "SELECT SUM(subtotal) total FROM transaksi_detail_sparepart WHERE no_faktur='$no_faktur'");
-    $q2 = mysqli_query($conn, "SELECT SUM(biaya) total FROM transaksi_detail_servis WHERE no_faktur='$no_faktur'");
+    $q1 = mysqli_query($conn, "SELECT IFNULL(SUM(subtotal),0) total FROM transaksi_detail_sparepart WHERE no_faktur='$no_faktur'");
+    $q2 = mysqli_query($conn, "SELECT IFNULL(SUM(biaya),0) total FROM transaksi_detail_servis WHERE no_faktur='$no_faktur'");
+    $total = floatval(mysqli_fetch_assoc($q1)['total']) + floatval(mysqli_fetch_assoc($q2)['total']);
 
-    $total_sparepart = floatval(mysqli_fetch_assoc($q1)['total'] ?? 0);
-    $total_servis    = floatval(mysqli_fetch_assoc($q2)['total'] ?? 0);
-    $total = $total_sparepart + $total_servis;
-
-    /* =========================
-       STATUS PEMBAYARAN
-    ========================= */
     $status_pembayaran = ($uangBayar >= $total_bayar) ? 'lunas' : 'belum lunas';
     $selisih = $total_bayar;
 
     /* =========================
-       HEADER TRANSAKSI
+       TRANSAKSI HEADER
     ========================= */
     $cek = mysqli_query($conn, "SELECT no_faktur FROM transaksi WHERE no_faktur='$no_faktur' LIMIT 1");
 
     if (mysqli_num_rows($cek)) {
-        mysqli_query($conn, "UPDATE transaksi SET
-            id_user='$id_user',
-            id_bengkel='$id_bengkel',
+        $sql = "UPDATE transaksi SET
             id_pelanggan=".($id_pelanggan?"'$id_pelanggan'":"NULL").",
             id_teknisi=".($id_teknisi?"'$id_teknisi'":"NULL").",
             id_supplier=".($id_supplier?"'$id_supplier'":"NULL").",
@@ -85,60 +77,49 @@ try {
             metode_bayar='$metode_bayar',
             total_bayar='$total_bayar',
             discount='$discount',
-            jenis='$jenis',
-            tanggal='$tanggal',
             deskripsi='$deskripsi'
-        WHERE no_faktur='$no_faktur' LIMIT 1");
+        WHERE no_faktur='$no_faktur' LIMIT 1";
     } else {
-        mysqli_query($conn, "INSERT INTO transaksi VALUES (
-            NULL,
-            '$no_faktur',
-            '$id_user',
-            '$id_bengkel',
+        $sql = "INSERT INTO transaksi
+        (no_faktur,id_user,id_bengkel,id_pelanggan,id_teknisi,id_supplier,kendaraan,no_polisi,status,status_pembayaran,total,uang_bayar,kembalian,tanggal,jenis,metode_bayar,total_bayar,discount,deskripsi)
+        VALUES (
+            '$no_faktur','$id_user','$id_bengkel',
             ".($id_pelanggan?"'$id_pelanggan'":"NULL").",
             ".($id_teknisi?"'$id_teknisi'":"NULL").",
             ".($id_supplier?"'$id_supplier'":"NULL").",
             ".($kendaraan?"'$kendaraan'":"NULL").",
             ".($no_polisi?"'$no_polisi'":"NULL").",
-            '$status',
-            '$status_pembayaran',
-            '$total',
-            '$uangBayar',
-            '$kembalian',
-            '$tanggal',
-            '$jenis',
-            '$metode_bayar',
-            '$total_bayar',
-            '$discount',
-            '$deskripsi'
-        )");
+            '$status','$status_pembayaran','$total','$uangBayar','$kembalian',
+            '$tanggal','$jenis','$metode_bayar','$total_bayar','$discount','$deskripsi'
+        )";
     }
+    if (!mysqli_query($conn, $sql)) throw new Exception(mysqli_error($conn),500);
 
     /* =========================
-       HUTANG / PIUTANG
+       HUTANG / PIUTANG (NO DUPLICATE KEY)
     ========================= */
     if ($metode_bayar === 'Non Tunai' && $selisih > 0) {
 
-        if ($jenis === 'pembelian') {
-            mysqli_query($conn, "INSERT INTO hutang (no_faktur,tanggal_hutang,jumlah,status,tanggal_pelunasan)
-            VALUES ('$no_faktur','$tanggal','$selisih','belum lunas','$tanggal_pelunasan')
-            ON DUPLICATE KEY UPDATE
-            jumlah='$selisih', status='belum lunas', tanggal_pelunasan='$tanggal_pelunasan'");
+        $table = ($jenis === 'pembelian') ? 'hutang' : 'piutang';
+        $tgl   = ($jenis === 'pembelian') ? 'tanggal_hutang' : 'tanggal_piutang';
+
+        $cek = mysqli_query($conn, "SELECT no_faktur FROM $table WHERE no_faktur='$no_faktur' LIMIT 1");
+
+        if (mysqli_num_rows($cek)) {
+            mysqli_query($conn, "UPDATE $table SET
+                jumlah='$selisih',
+                status='belum lunas',
+                tanggal_pelunasan='$tanggal_pelunasan'
+            WHERE no_faktur='$no_faktur' LIMIT 1");
         } else {
-            mysqli_query($conn, "INSERT INTO piutang (no_faktur,tanggal_piutang,jumlah,status,tanggal_pelunasan)
-            VALUES ('$no_faktur','$tanggal','$selisih','belum lunas','$tanggal_pelunasan')
-            ON DUPLICATE KEY UPDATE
-            jumlah='$selisih', status='belum lunas', tanggal_pelunasan='$tanggal_pelunasan'");
+            mysqli_query($conn, "INSERT INTO $table
+                (no_faktur,$tgl,jumlah,status,tanggal_pelunasan)
+            VALUES ('$no_faktur','$tanggal','$selisih','belum lunas','$tanggal_pelunasan')");
         }
 
     } else {
-        if ($jenis === 'pembelian') {
-            mysqli_query($conn, "UPDATE hutang SET status='lunas', tanggal_pelunasan='$tanggal'
-            WHERE no_faktur='$no_faktur' LIMIT 1");
-        } else {
-            mysqli_query($conn, "UPDATE piutang SET status='lunas', tanggal_pelunasan='$tanggal'
-            WHERE no_faktur='$no_faktur' LIMIT 1");
-        }
+        mysqli_query($conn, "UPDATE hutang SET status='lunas', tanggal_pelunasan='$tanggal' WHERE no_faktur='$no_faktur' LIMIT 1");
+        mysqli_query($conn, "UPDATE piutang SET status='lunas', tanggal_pelunasan='$tanggal' WHERE no_faktur='$no_faktur' LIMIT 1");
     }
 
     mysqli_commit($conn);
