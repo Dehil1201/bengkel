@@ -845,10 +845,8 @@ $(document).ready(function() {
       const metode = $('input[name="metode_bayar"]:checked').val();
       if (metode === 'Tunai' || metode === 'Qris' || metode === 'Debit') {
         $('#jatuhTempo').prop('disabled', true).prop('readonly', true).val('');
-        $('#uangBayar').prop('disabled', false).prop('readonly', false);
       } else {
         $('#jatuhTempo').prop('disabled', false).prop('readonly', false);
-        $('#uangBayar').prop('disabled', true).prop('readonly', true).val('');
       }
     }
 

@@ -49,7 +49,7 @@ try {
     $totalBayarNum = floatval($total_bayar);
 
     
-    $selisih = $totalBayarNum - $uangBayarNum; // Ini yang jadi jumlah hutang/piutang
+    $selisih = $totalBayarNum; // Ini yang jadi jumlah hutang/piutang
 
     if ($uangBayarNum >= $totalBayarNum) {
         $status_pembayaran = 'lunas';
