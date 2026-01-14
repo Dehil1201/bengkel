@@ -5,15 +5,13 @@ $tgl_sampai = $_GET['tgl_sampai'] ?? date('Y-m-d');
 $id_supplier = $_GET['id_supplier'] ?? '';
 $id_user = $_GET['id_user'] ?? '';
 
-function generateNoFaktur($conn, $tanggal_transaksi = null) {
-
-    if (session_status() == PHP_SESSION_NONE) {
+function generateNoFaktur($conn, $tanggal_transaksi = null)
+{
+    if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
-    if (!$tanggal_transaksi) {
-        $tanggal_transaksi = date("Y-m-d");
-    }
+    $tanggal_transaksi ??= date("Y-m-d");
 
     $id_user = $_SESSION['id_user'] ?? null;
     if (!$id_user) {
@@ -30,45 +28,55 @@ function generateNoFaktur($conn, $tanggal_transaksi = null) {
     mysqli_stmt_bind_param($stmtUser, "i", $id_user);
     mysqli_stmt_execute($stmtUser);
     $resUser = mysqli_stmt_get_result($stmtUser);
-    $d_user  = mysqli_fetch_assoc($resUser);
+    $user = mysqli_fetch_assoc($resUser);
 
-    $id_bengkel = $d_user['bengkel_id'] ?? null;
+    $id_bengkel = $user['bengkel_id'] ?? null;
     if (!$id_bengkel) {
         throw new Exception("Bengkel user tidak ditemukan");
     }
 
-    $todayYmd = date("Ymd", strtotime($tanggal_transaksi));
-    $todaySql = date("Y-m-d", strtotime($tanggal_transaksi));
+    $ymd = date("Ymd", strtotime($tanggal_transaksi));
 
     mysqli_begin_transaction($conn);
 
     try {
-
-        // 🔥 FILTER BERDASAR FAKTUR + TANGGAL + BENGKEL (PALING AMAN)
+        // 🔒 LOCK BARIS FAKTUR
         $stmt = mysqli_prepare($conn, "
-            SELECT MAX(CAST(SUBSTRING_INDEX(no_faktur, '.', -1) AS UNSIGNED)) AS max_urut
+            SELECT MAX(
+                CAST(SUBSTRING_INDEX(no_faktur, '.', -1) AS UNSIGNED)
+            ) AS max_urut
             FROM transaksi
             WHERE id_bengkel = ?
-              AND no_faktur LIKE CONCAT('PB.', ?, '.%')
+              AND no_faktur LIKE CONCAT('PB.', ?, '.', ?, '.', ?, '.%')
+            FOR UPDATE
         ");
 
-        mysqli_stmt_bind_param($stmt, "is", $id_bengkel, $todayYmd);
+        mysqli_stmt_bind_param(
+            $stmt,
+            "isii",
+            $id_bengkel,
+            $ymd,
+            $id_user,
+            $id_bengkel
+        );
+
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($res);
 
-        $max_urut = (int)($row['max_urut'] ?? 0);
-        $no_urut  = str_pad($max_urut + 1, 4, "0", STR_PAD_LEFT);
+        $next = ((int)($row['max_urut'] ?? 0)) + 1;
+        $urut = str_pad($next, 4, '0', STR_PAD_LEFT);
 
         mysqli_commit($conn);
 
-    } catch (Exception $e) {
+        return "PB.$ymd.$id_user.$id_bengkel.$urut";
+
+    } catch (Throwable $e) {
         mysqli_rollback($conn);
         throw $e;
     }
-
-    return "PB.$todayYmd.$id_user.$id_bengkel.$no_urut";
 }
+
 
 
 
