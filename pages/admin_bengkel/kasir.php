@@ -821,10 +821,9 @@ $(document).ready(function() {
                         title: "Berhasil",
                         text: res.message
                     }).then(() => {
-                        
                         kosongkanModal();
                         // redirect ke halaman cetak dan auto print
-                        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur + "&auto_print=1";
+                        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + res.no_faktur + "&auto_print=1";
 
                         // window.open("pages/admin_bengkel/print_struk.php?no_faktur=" + res.data.no_faktur, "_blank");
 

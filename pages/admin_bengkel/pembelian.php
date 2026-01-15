@@ -926,7 +926,7 @@ $(document).ready(function () {
                         loadTotalPembelian();
                         window.location.href =
                             "pages/admin_bengkel/print_struk.php?no_faktur=" +
-                            res.data.no_faktur + "&auto_print=1";
+                            res.no_faktur + "&auto_print=1";
                     });
                 } else {
                     Swal.fire("Error", res.message, "error");
