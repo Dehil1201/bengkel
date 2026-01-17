@@ -177,7 +177,9 @@ try {
             // PEMBELIAN → HAPUS DETAIL → KURANGI STOK
             mysqli_query($conn, "
                 UPDATE spareparts 
-                SET stok_pcs = stok_pcs - ".$old['qty']." 
+                SET stok_pcs = stok_pcs - ".$old['qty'].",
+                harga_beli = $harga,
+                hpp_per_pcs = $harga
                 WHERE kode_sparepart='".$old['kode_sparepart']."'
             ");
         } else {
