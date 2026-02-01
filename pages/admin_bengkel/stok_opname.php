@@ -119,6 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="box-header with-border">
                 <h3 class="box-title">Stok Opname Spare Part</h3>
                 <div class="box-tools pull-right">
+                    <button id="printPdfOpname" type="button" class="btn btn-primary btn-sm"><i class="fa fa-print"></i> Print</button>
                     <button id="btnSelesaiOpname" type="button" class="btn btn-success btn-sm"><i class="fa fa-check"></i> Selesaikan Opname</button>
                 </div>
             </div>
@@ -164,51 +165,88 @@ $(document).ready(function() {
 
     // Fungsi untuk memuat data spare part
     function loadSparepartData(bengkelId) {
-        if (dataTable) {
-            dataTable.destroy();
+
+        // Destroy dulu kalau sudah pernah dibuat
+        if ($.fn.DataTable.isDataTable('#dataTableStokOpname')) {
+            dataTable.clear().destroy();
         }
 
-        $.ajax({
-            url: 'pages/admin_bengkel/get_sparepart_by_bengkel.php', // Buat file ini
-            type: 'GET',
-            data: { bengkel_id: bengkelId },
-            dataType: 'json',
-            success: function(response) {
-                let tableBody = $('#dataTableStokOpname tbody');
-                tableBody.empty();
-                if (response.length > 0) {
-                    let no = 1;
-                    response.forEach(function(item) {
-                        tableBody.append(`
-                            <tr>
-                                <td>${no++}</td>
-                                <td><input type="hidden" class="sparepart-id" value="${item.id_sparepart}">${item.nama_sparepart}</td>
-                                <td class="stok-sistem">${item.stok_pcs}</td>
-                                <td><input type="number" class="form-control stok-fisik" value="${item.stok_pcs}" min="0"></td>
-                                <td class="selisih">${0}</td>
-                                <td><input type="text" class="form-control keterangan"></td>
-                            </tr>
-                        `);
-                    });
-                } else {
-                    tableBody.append(`<tr><td colspan="6" class="text-center">Tidak ada data spare part.</td></tr>`);
+        dataTable = $('#dataTableStokOpname').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: 'pages/admin_bengkel/get_sparepart_by_bengkel.php',
+                type: 'POST',
+                data: function (d) {
+                    d.bengkel_id = bengkelId;
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Gagal memuat data spare part.', 'error');
                 }
-                
-                // Inisialisasi DataTable setelah data dimuat
-                dataTable = $('#dataTableStokOpname').DataTable({
-                    "paging": true,
-                    "lengthChange": true,
-                    "searching": true,
-                    "ordering": true,
-                    "info": true,
-                    "autoWidth": false
-                });
             },
-            error: function() {
-                Swal.fire('Error!', 'Gagal memuat data spare part.', 'error');
-            }
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
+                },
+                {
+                    data: 'nama_sparepart',
+                    render: function (data, type, row) {
+                        return `
+                            <input type="hidden" class="sparepart-id" value="${row.id_sparepart}">
+                            ${data}
+                        `;
+                    }
+                },
+                {
+                    data: 'stok_pcs',
+                    className: 'stok-sistem'
+                },
+                {
+                    data: 'stok_pcs',
+                    orderable: false,
+                    searchable: false,
+                    render: function (data) {
+                        return `
+                            <input type="number"
+                                class="form-control stok-fisik"
+                                value="${data}"
+                                min="0">
+                        `;
+                    }
+                },
+                {
+                    data: null,
+                    className: 'selisih',
+                    orderable: false,
+                    searchable: false,
+                    render: function () {
+                        return 0;
+                    }
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: function () {
+                        return `<input type="text" class="form-control keterangan">`;
+                    }
+                }
+            ],
+            paging: true,
+            lengthChange: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            autoWidth: false,
+            order: [[1, 'asc']]
         });
     }
+
 
     // Panggil fungsi saat halaman pertama kali dimuat
     const initialBengkelId = $('#selectBengkel').val();
@@ -229,72 +267,112 @@ $(document).ready(function() {
         const selisih = stokFisik - stokSistem;
         $(this).closest('tr').find('.selisih').text(selisih);
     });
-
     // Tombol Selesaikan Opname
-    $('#btnSelesaiOpname').on('click', function() {
+    $('#btnSelesaiOpname').on('click', function () {
         Swal.fire({
             title: 'Selesaikan Stok Opname?',
-            text: "Jumlah stok di sistem akan diperbarui.",
+            text: 'Jumlah stok di sistem akan diperbarui.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
             confirmButtonText: 'Ya, Selesaikan!'
         }).then((result) => {
-            if (result.isConfirmed) {
-                let dataOpname = [];
-                $('#dataTableStokOpname tbody tr').each(function() {
-                    let id = $(this).find('.sparepart-id').val();
-                    let stokFisik = $(this).find('.stok-fisik').val();
-                    let keterangan = $(this).find('.keterangan').val();
-                    if (id && stokFisik) { // Hanya proses baris yang valid
-                        dataOpname.push({
-                            spare_part_id: id,
-                            stok_fisik: stokFisik,
-                            keterangan: keterangan
-                        });
-                    }
-                });
+            if (!result.isConfirmed) return;
 
-                if (dataOpname.length === 0) {
-                    Swal.fire('Info', 'Tidak ada data untuk diproses.', 'info');
-                    return;
-                }
-
-                $.ajax({
-                    url: 'pages/admin_bengkel/proses_opname.php',
-                    type: 'POST',
-                    data: {
-                        action: 'simpan_opname',
-                        data_opname: JSON.stringify(dataOpname),
-                        bengkel_id: $('#selectBengkel').val()
-                    },
-                    success: function(response) {
-                        // Respons akan ditangani oleh redirect PHP
-                        window.location.reload();
-                    },
-                    error: function() {
-                        Swal.fire('Error!', 'Gagal menyimpan data stok opname.', 'error');
-                    }
-                });
+            // 🔒 Pastikan DataTable sudah terinisialisasi
+            if (!$.fn.DataTable.isDataTable('#dataTableStokOpname')) {
+                Swal.fire('Error', 'Data tabel belum siap.', 'error');
+                return;
             }
+
+            let dataOpname = [];
+
+            // 🔥 AMAN UNTUK DATATABLE (server / client)
+            dataTable.rows({ page: 'current' }).every(function () {
+                let row = $(this.node());
+
+                let id = row.find('.sparepart-id').val();
+                let stokFisik = row.find('.stok-fisik').val();
+                let keterangan = row.find('.keterangan').val();
+
+                if (id && stokFisik !== '') {
+                    dataOpname.push({
+                        spare_part_id: id,
+                        stok_fisik: parseInt(stokFisik),
+                        keterangan: keterangan || ''
+                    });
+                }
+            });
+
+            if (dataOpname.length === 0) {
+                Swal.fire('Info', 'Tidak ada data untuk diproses.', 'info');
+                return;
+            }
+
+            // 🔒 Disable tombol biar tidak double submit
+            $('#btnSelesaiOpname').prop('disabled', true);
+
+            $.ajax({
+                url: 'pages/admin_bengkel/proses_opname.php',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'simpan_opname',
+                    data_opname: JSON.stringify(dataOpname),
+                    bengkel_id: $('#selectBengkel').val()
+                },
+                success: function (res) {
+                    if (res.success) {
+                        Swal.fire('Berhasil!', res.message, 'success')
+                            .then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Gagal!', res.message || 'Terjadi kesalahan', 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Gagal menyimpan data stok opname.', 'error');
+                },
+                complete: function () {
+                    $('#btnSelesaiOpname').prop('disabled', false);
+                }
+            });
         });
     });
 
-    // Tampilkan pesan status dari URL
+
+    // ============================
+    // NOTIFIKASI DARI URL
+    // ============================
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get('status');
     const message = urlParams.get('message');
 
     if (status && message) {
         Swal.fire({
-            icon: status === 'success' ? 'success' : status === 'warning' ? 'warning' : 'error',
+            icon: status === 'success'
+                ? 'success'
+                : status === 'warning'
+                ? 'warning'
+                : 'error',
             title: status === 'success' ? 'Berhasil!' : 'Peringatan!',
             text: decodeURIComponent(message),
             showConfirmButton: false,
             timer: 3000
         });
+
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    $('#printPdfOpname').on('click', function () {
+        const bengkelId = $('#selectBengkel').val();
+        window.open(
+            'pages/admin_bengkel/print_opname_pdf.php?bengkel_id=' + bengkelId,
+            '_blank'
+        );
+    });
+
+
+
 });
 </script>

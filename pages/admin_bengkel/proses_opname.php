@@ -1,131 +1,243 @@
 <?php
-// Pastikan sesi sudah dimulai dan file koneksi disertakan
-if (session_status() == PHP_SESSION_NONE) {
+// ==========================================================
+// INIT
+// ==========================================================
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-// Sesuaikan jalur file koneksi dan functions
+
 include '../../inc/koneksi.php';
 include '../../inc/functions.php';
 
-// Atur header untuk respons JSON
 header('Content-Type: application/json');
 
-// Fungsi untuk membersihkan dan mengamankan input
-function sanitize_input($data) {
+// ==========================================================
+// HELPER
+// ==========================================================
+function sanitize($val) {
     global $conn;
-    return mysqli_real_escape_string($conn, trim($data));
+    return mysqli_real_escape_string($conn, trim($val));
+}
+
+function response($status, $message) {
+    echo json_encode([
+        'success' => $status === 'success',
+        'status'  => $status,
+        'message' => $message
+    ]);
+    exit;
 }
 
 // ==========================================================
-// Pengecekan Akses Berdasarkan Role dan Bengkel ID
+// VALIDASI DASAR
+// ==========================================================
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    response('error', 'Invalid request method');
+}
+
+if (!isset($_SESSION['id_user'])) {
+    response('error', 'Session tidak valid');
+}
+
+// ==========================================================
+// ROLE & AKSES
 // ==========================================================
 $user_role = get_user_role();
-$allowed_roles = ['owner_bengkel', 'admin_bengkel'];
-
-if (!in_array($user_role, $allowed_roles)) {
-    echo json_encode(['status' => 'error', 'message' => 'Anda tidak memiliki akses ke halaman ini.']);
-    exit();
+if (!in_array($user_role, ['owner_bengkel', 'admin_bengkel'])) {
+    response('error', 'Anda tidak memiliki akses');
 }
 
-// Tentukan ID bengkel yang bisa diakses oleh user
+$user_id = $_SESSION['id_user'];
 $accessible_bengkel_ids = [];
+
+// Owner → banyak bengkel
 if ($user_role === 'owner_bengkel') {
-    $owner_id = $_SESSION['id_user'];
-    $query_bengkel_ids = mysqli_query($conn, "SELECT id_bengkel FROM bengkels WHERE owner_id = '$owner_id'");
-    while ($row = mysqli_fetch_assoc($query_bengkel_ids)) {
-        $accessible_bengkel_ids[] = $row['id_bengkel'];
-    }
-} else if ($user_role === 'admin_bengkel') {
-    $user_id = $_SESSION['id_user'];
-    $query_bengkel_admin = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user = '$user_id'");
-    if ($row = mysqli_fetch_assoc($query_bengkel_admin)) {
-        $accessible_bengkel_ids[] = $row['bengkel_id'];
+    $q = mysqli_query($conn, "
+        SELECT id_bengkel 
+        FROM bengkels 
+        WHERE owner_id = '$user_id'
+    ");
+    while ($r = mysqli_fetch_assoc($q)) {
+        $accessible_bengkel_ids[] = $r['id_bengkel'];
     }
 }
+
+// Admin → satu bengkel
+if ($user_role === 'admin_bengkel') {
+    $q = mysqli_query($conn, "
+        SELECT bengkel_id 
+        FROM users 
+        WHERE id_user = '$user_id'
+        LIMIT 1
+    ");
+    if ($r = mysqli_fetch_assoc($q)) {
+        $accessible_bengkel_ids[] = $r['bengkel_id'];
+    }
+}
+
 if (empty($accessible_bengkel_ids)) {
-    echo json_encode(['status' => 'error', 'message' => 'Anda tidak terdaftar di bengkel manapun.']);
-    exit();
+    response('error', 'Anda tidak terdaftar di bengkel manapun');
 }
-$bengkel_ids_string = "'" . implode("','", $accessible_bengkel_ids) . "'";
 
 // ==========================================================
-// LOGIKA PEMROSESAN STOK OPNAME
+// ACTION
 // ==========================================================
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $action = $_POST['action'] ?? '';
+if (($_POST['action'] ?? '') !== 'simpan_opname') {
+    response('error', 'Action tidak valid');
+}
 
-    if ($action == 'simpan_opname') {
-        $data_opname = json_decode($_POST['data_opname'], true);
-        $bengkel_id = sanitize_input($_POST['bengkel_id']);
-        
-        if (!in_array($bengkel_id, $accessible_bengkel_ids)) {
-            echo json_encode(['status' => 'error', 'message' => 'Akses ditolak. Bengkel tidak valid.']);
-            exit();
+// ==========================================================
+// INPUT
+// ==========================================================
+$bengkel_id = sanitize($_POST['bengkel_id'] ?? '');
+if (!in_array($bengkel_id, $accessible_bengkel_ids)) {
+    response('error', 'Akses bengkel ditolak');
+}
+
+$data_opname = json_decode($_POST['data_opname'] ?? '', true);
+if (!is_array($data_opname) || empty($data_opname)) {
+    response('error', 'Data opname kosong');
+}
+
+// ==========================================================
+// PROSES
+// ==========================================================
+$tanggal_full = date('Y-m-d H:i:s');
+$tanggal_hari = date('Y-m-d');
+
+$success = 0;
+$failed  = 0;
+
+mysqli_begin_transaction($conn);
+
+try {
+
+    foreach ($data_opname as $item) {
+
+        $sparepart_id = sanitize($item['spare_part_id'] ?? '');
+        $stok_fisik   = (int)($item['stok_fisik'] ?? 0);
+        $keterangan   = sanitize($item['keterangan'] ?? '');
+
+        if (!$sparepart_id) {
+            $failed++;
+            continue;
         }
 
-        $tanggal_opname = date('Y-m-d H:i:s');
-        $success_count = 0;
-        $error_count = 0;
-        $error_messages = [];
+        // ===============================
+        // LOCK stok sparepart
+        // ===============================
+        $q = mysqli_query($conn, "
+            SELECT stok_pcs 
+            FROM spareparts 
+            WHERE id_sparepart = '$sparepart_id'
+              AND bengkel_id = '$bengkel_id'
+            FOR UPDATE
+        ");
 
-        foreach ($data_opname as $item) {
-            $spare_part_id = sanitize_input($item['spare_part_id']);
-            $stok_fisik = (int)sanitize_input($item['stok_fisik']);
-            $keterangan = sanitize_input($item['keterangan']);
+        if (!$q || mysqli_num_rows($q) === 0) {
+            $failed++;
+            continue;
+        }
 
-            // Dapatkan stok dari sistem
-            // Ubah nama tabel dari `spareparts` menjadi `spareparts`
-            // Ubah nama kolom id dari `id_sparepart` menjadi `id`
-            $query_get_stok = "SELECT stok_pcs, bengkel_id FROM spareparts WHERE id_sparepart = '$spare_part_id'";
-            $result_get_stok = mysqli_query($conn, $query_get_stok);
-            $row_stok = mysqli_fetch_assoc($result_get_stok);
+        $row = mysqli_fetch_assoc($q);
+        $stok_sistem = (int)$row['stok_pcs'];
+        $selisih = $stok_fisik - $stok_sistem;
 
-            if ($row_stok && in_array($row_stok['bengkel_id'], $accessible_bengkel_ids)) {
-                $stok_sistem = (int)$row_stok['stok_pcs'];
-                $selisih = $stok_fisik - $stok_sistem;
+        // ===============================
+        // CEK OPNAME HARI INI
+        // ===============================
+        $cek = mysqli_query($conn, "
+            SELECT id_stok_opname 
+            FROM stok_opnames
+            WHERE spare_part_id = '$sparepart_id'
+              AND bengkel_id = '$bengkel_id'
+              AND DATE(tanggal_opname) = '$tanggal_hari'
+            LIMIT 1
+        ");
 
-                // Transaksi: Mulai
-                mysqli_begin_transaction($conn);
-                try {
-                    // Simpan ke tabel stok_opnames
-                    $query_insert_opname = "INSERT INTO stok_opnames (tanggal_opname, spare_part_id, stok_sistem, stok_fisik, selisih, keterangan, bengkel_id) VALUES ('$tanggal_opname', '$spare_part_id', '$stok_sistem', '$stok_fisik', '$selisih', '$keterangan', '$bengkel_id')";
-                    
-                    if (mysqli_query($conn, $query_insert_opname)) {
-                        // Perbarui stok di tabel spareparts
-                        // Ubah nama tabel dari `spareparts` menjadi `spareparts`
-                        // Ubah nama kolom id dari `id_sparepart` menjadi `id`
-                        $query_update_stok = "UPDATE spareparts SET stok_pcs = '$stok_fisik' WHERE id_sparepart = '$spare_part_id'";
-                        if (mysqli_query($conn, $query_update_stok)) {
-                            mysqli_commit($conn);
-                            $success_count++;
-                        } else {
-                            throw new Exception("Gagal memperbarui stok sparepart: " . mysqli_error($conn));
-                        }
-                    } else {
-                        throw new Exception("Gagal menyimpan data opname: " . mysqli_error($conn));
-                    }
-                } catch (Exception $e) {
-                    mysqli_rollback($conn);
-                    $error_count++;
-                    $error_messages[] = $e->getMessage();
+        $adaOpname = mysqli_num_rows($cek) > 0;
+
+        // ===============================
+        // KASUS SELISIH = 0
+        // ===============================
+        if ($selisih === 0) {
+
+            // Jika sebelumnya ada opname → hapus
+            if ($adaOpname) {
+                $rowOp = mysqli_fetch_assoc($cek);
+                mysqli_query($conn, "
+                    DELETE FROM stok_opnames
+                    WHERE id_stok_opname = '{$rowOp['id_stok_opname']}'
+                ");
+            }
+
+        } else {
+
+            // ===========================
+            // SELISIH ≠ 0
+            // ===========================
+            if ($adaOpname) {
+
+                // UPDATE
+                $rowOp = mysqli_fetch_assoc($cek);
+                $update = mysqli_query($conn, "
+                    UPDATE stok_opnames
+                    SET 
+                        stok_sistem = '$stok_sistem',
+                        stok_fisik  = '$stok_fisik',
+                        selisih     = '$selisih',
+                        keterangan  = '$keterangan',
+                        tanggal_opname = '$tanggal_full'
+                    WHERE id_stok_opname = '{$rowOp['id_stok_opname']}'
+                ");
+
+                if (!$update) {
+                    throw new Exception('Gagal update opname');
                 }
+
             } else {
-                $error_count++;
-                $error_messages[] = "Spare part dengan ID '$spare_part_id' tidak ditemukan atau tidak valid.";
+
+                // INSERT BARU
+                $insert = mysqli_query($conn, "
+                    INSERT INTO stok_opnames
+                    (tanggal_opname, spare_part_id, stok_sistem, stok_fisik, selisih, keterangan, bengkel_id)
+                    VALUES
+                    ('$tanggal_full', '$sparepart_id', '$stok_sistem', '$stok_fisik', '$selisih', '$keterangan', '$bengkel_id')
+                ");
+
+                if (!$insert) {
+                    throw new Exception('Gagal insert opname');
+                }
             }
         }
-        
-        $message = "Stok Opname Selesai. Berhasil: $success_count, Gagal: $error_count.";
-        if (!empty($error_messages)) {
-            $message .= " Detail: " . implode(", ", $error_messages);
+
+        // ===============================
+        // UPDATE STOK (TETAP)
+        // ===============================
+        $updateStok = mysqli_query($conn, "
+            UPDATE spareparts 
+            SET stok_pcs = '$stok_fisik'
+            WHERE id_sparepart = '$sparepart_id'
+        ");
+
+        if (!$updateStok) {
+            throw new Exception('Gagal update stok');
         }
 
-        $status = ($error_count > 0) ? 'warning' : 'success';
-        echo json_encode(['status' => $status, 'message' => $message]);
-        exit();
+        $success++;
     }
+
+    mysqli_commit($conn);
+
+} catch (Exception $e) {
+    mysqli_rollback($conn);
+    response('error', 'Transaksi gagal: ' . $e->getMessage());
 }
 
-// Tambahkan logika jika request bukan POST atau action tidak valid
-echo json_encode(['status' => 'error', 'message' => 'Invalid request.']);
-?>
+// ==========================================================
+// RESPONSE
+// ==========================================================
+$status = $failed > 0 ? 'warning' : 'success';
+$message = "Stok opname selesai. Berhasil: $success, Gagal: $failed";
+
+response($status, $message);

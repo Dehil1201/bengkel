@@ -118,3 +118,65 @@ if (!empty($alert)) echo $alert;
         </div> <!-- /.box -->
     </div> <!-- /.col -->
 </div>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="box box-primary">
+            
+            <div class="box-header with-border">
+                <h4><i class="fa fa-database"></i> Backup & Restore Data</h4>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" action="pages/admin_bengkel/backup_process.php">
+
+                <input type="hidden" name="action" value="backup_restore">
+
+                <table class="table table-bordered">
+                    <tr>
+                        <th colspan="2">Backup Data</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <select name="jenis" class="form-control" required>
+                                <option value="">-- Pilih Data --</option>
+                                <option value="sparepart">Sparepart</option>
+                                <option value="transaksi">Transaksi</option>
+                                <option value="hutang">Hutang</option>
+                                <option value="piutang">Piutang</option>
+                            </select>
+                            <hr>
+                            <label>Format File</label>
+                            <select name="format" class="form-control" required>
+                                <option value="sql">SQL</option>
+                                <option value="excel">Excel</option>
+                            </select>
+                        </td>
+                        <td width="220">
+                            <button name="do_backup" class="btn btn-success btn-block">
+                                <i class="fa fa-download"></i> Backup
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Restore Data (SQL / Excel)</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="file" name="file_restore" accept=".sql,.xlsx" >
+                        </td>
+                        <td width="220">
+                            <button name="do_restore" class="btn btn-warning btn-block">
+                                <i class="fa fa-upload"></i> Restore
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+
+            </form>
+
+        </div>
+    </div>
+</div>

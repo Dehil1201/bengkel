@@ -1,5 +1,12 @@
 <?php
 // asumsi session sudah start dan koneksi sudah tersedia ($conn)
+
+
+function sanitize_input($data) {
+  global $conn;
+  return mysqli_real_escape_string($conn, trim($data));
+}
+
 function generateNoFaktur($conn, $tanggal_transaksi = null) {
   if (!$tanggal_transaksi) {
       $tanggal_transaksi = date("Y-m-d"); // default hari ini
@@ -37,7 +44,63 @@ function generateNoFaktur($conn, $tanggal_transaksi = null) {
   return "PJ." . $today . "." . $id_user . "." . $id_bengkel . "." . $no_urut;
 }
 
+$user_role = get_user_role();
+$allowed_roles = ['owner_bengkel', 'admin_bengkel', 'kasir'];
 
+if (!in_array($user_role, $allowed_roles)) {
+    echo "<div class='alert alert-danger'>Anda tidak memiliki akses ke halaman ini.</div>";
+    exit();
+}
+
+
+// Tentukan ID bengkel yang bisa diakses oleh user
+$accessible_bengkel_ids = [];
+if ($user_role === 'owner_bengkel') {
+    $owner_id = $_SESSION['id_user'];
+    $query_bengkel_ids = mysqli_query($conn, "SELECT id_bengkel FROM bengkels WHERE owner_id = '$owner_id'");
+    while ($row = mysqli_fetch_assoc($query_bengkel_ids)) {
+        $accessible_bengkel_ids[] = $row['id_bengkel'];
+    }
+} else if ($user_role === 'admin_bengkel' || $user_role === 'kasir') {
+    $user_id = $_SESSION['id_user'];
+    $query_bengkel_admin = mysqli_query($conn, "SELECT bengkel_id FROM users WHERE id_user = '$user_id'");
+    if ($row = mysqli_fetch_assoc($query_bengkel_admin)) {
+        $accessible_bengkel_ids[] = $row['bengkel_id'];
+    }
+}
+if (empty($accessible_bengkel_ids)) {
+    echo "<div class='alert alert-danger'>Anda tidak terdaftar di bengkel manapun.</div>";
+    exit();
+}
+$bengkel_ids_string = "'" . implode("','", $accessible_bengkel_ids) . "'";
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  $action = $_POST['action'] ?? '';
+  $current_page = '?page=kasir';
+  
+  if ($action == 'tambah') {
+      $nama_pelanggan = sanitize_input($_POST['nama_pelanggan']);
+      $alamat = sanitize_input($_POST['alamat']);
+      $telepon = sanitize_input($_POST['telepon']);
+      $bengkel_id = sanitize_input($_POST['bengkel_id']);
+      
+      // Pastikan bengkel ID yang dikirim valid dan sesuai dengan yang diakses user
+      if (!in_array($bengkel_id, $accessible_bengkel_ids)) {
+          header("Location: $current_page&status=error&message=Akses ditolak. Bengkel tidak valid.");
+          exit();
+      }
+
+      $query_tambah = "INSERT INTO pelanggans (nama_pelanggan, alamat, telepon, bengkel_id) VALUES ('$nama_pelanggan', '$alamat', '$telepon', '$bengkel_id')";
+      if (mysqli_query($conn, $query_tambah)) {
+          header("Location: $current_page&status=success&message=Pelanggan berhasil ditambahkan.");
+      } else {
+          header("Location: $current_page&status=error&message=Gagal menambahkan pelanggan.");
+      }
+      exit();
+
+  }
+}
 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -257,6 +320,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="col-md-6">
               <div class="form-group">
                 <label for="pelanggan">Pelanggan</label>
+                <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modalTambahPelanggan"><i class="fa fa-plus"></i> Tambah Pelanggan</button>
                 <select id="pelanggan" name="id_pelanggan" class="form-control" style="width:100%">
                   <option value="">-- Pilih Pelanggan --</option>
                   <?php
@@ -336,6 +400,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   </div>
 </div>
 
+<div class="modal fade" id="modalTambahPelanggan" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Tambah Pelanggan</h4>
+            </div>
+            <form id="formTambahPelanggan" method="POST" action="">
+                <input type="hidden" name="action" value="tambah">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nama_pelanggan">Nama Pelanggan</label>
+                        <input type="text" class="form-control" id="nama_pelanggan" name="nama_pelanggan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="alamat">Alamat</label>
+                        <textarea class="form-control" id="alamat" name="alamat" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="telepon">Telepon</label>
+                        <input type="text" class="form-control" id="telepon" name="telepon">
+                    </div>
+                    <div class="form-group">
+                        <label for="bengkel_id_add">Bengkel</label>
+                        <select class="form-control" id="bengkel_id_add" name="bengkel_id" required>
+                            <?php 
+                            $query_bengkel_add = mysqli_query($conn, "SELECT id_bengkel, nama_bengkel FROM bengkels WHERE id_bengkel IN ($bengkel_ids_string)");
+                            while ($row_bengkel = mysqli_fetch_assoc($query_bengkel_add)) {
+                                echo "<option value='{$row_bengkel['id_bengkel']}'>{$row_bengkel['nama_bengkel']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <script>
 $(document).ready(function() {
     $('#sparepart-select').select2({
