@@ -99,7 +99,8 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
         'laporan_pembelian' => 'Laporan Pembelian',
         'laporan_keuangan' => 'Laporan Keuangan',
         'laporan_stok' => 'Laporan Stok',
-        'laporan_piutang_hutang' => 'Laporan Piutang & Hutang'
+        'laporan_piutang_hutang' => 'Laporan Piutang & Hutang',
+        'laporan_barang_keluar' => 'Laporan Barang Keluar'
     ];
 
     // Ambil judul berdasarkan halaman, default 'Aplikasi Bengkel'
@@ -396,7 +397,7 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                         </li>
                     </ul>
                 </li>
-                <li class="treeview <?php echo (in_array($page, ['transactions', 'kas_report', 'laba_rugi_penjualan', 'laba_rugi', 'grafik', 'neraca'])) ? 'active menu-open' : ''; ?>">
+                <li class="treeview <?php echo (in_array($page, ['transactions', 'kas_report', 'laba_rugi_penjualan', 'laba_rugi', 'grafik', 'neraca','laporan_barang_keluar'])) ? 'active menu-open' : ''; ?>">
                     <a href="#">
                         <i class="fa fa-files-o"></i><span>Laporan</span>
                         <span class="pull-right-container">
@@ -406,6 +407,9 @@ if (!isset($_SESSION['email']) || $_SESSION['email'] == "") {
                     <ul class="treeview-menu">
                         <li class="<?php echo ($page === 'transactions') ? 'active' : ''; ?>">
                             <a href="?page=transactions"><i class="fa fa-files-o"></i> Semua Transaksi</a>
+                        </li>
+                        <li class="<?php echo ($page === 'transactions') ? 'active' : ''; ?>">
+                            <a href="?page=laporan_barang_keluar"><i class="fa fa-files-o"></i> Barang Keluar</a>
                         </li>
                         <li class="<?php echo ($page === 'kas_report') ? 'active' : ''; ?>">
                             <a href="?page=kas_report"><i class="fa fa-files-o"></i> Kas</a>

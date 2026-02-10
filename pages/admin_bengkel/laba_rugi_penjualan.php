@@ -79,7 +79,9 @@
                         <th>Faktur</th>
                         <th>Customer / Supplier</th>
                         <th>Jenis</th>
+                        <th>HPP</th>
                         <th>Total</th>
+                        <th>Laba</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
