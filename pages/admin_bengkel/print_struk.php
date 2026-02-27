@@ -234,7 +234,7 @@ $kembali = max($dibayar - $transaksi['total_bayar'], 0);
 <tr><td class="text-right"><strong>Total</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($total_setelah_diskon) ?></td></tr>
 <tr><td class="text-right"><strong>PPN 11%</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($ppn_nilai) ?></td></tr>
 <tr><td class="text-right"><strong>Grand Total</strong></td><td class="text-right" style="padding-right:100px"><strong><?= rupiah($grand) ?><br><i>(<?= terbilang($grand) ?> Rupiah)</i></strong></td></tr>
-<tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($dibayar) ?></td></tr>
+<tr><td class="text-right"><strong>Dibayar</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($grand) ?></td></tr>
 <tr><td class="text-right"><strong>Kembali</strong></td><td class="text-right" style="padding-right:100px"><?= rupiah($kembali) ?></td></tr>
 </tbody>
 </table>
