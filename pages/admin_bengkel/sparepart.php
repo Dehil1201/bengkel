@@ -70,6 +70,9 @@ while($row_aset = mysqli_fetch_assoc($query_aset)) {
                 <h3 class="box-title">Manajemen Sparepart</h3>
                 <div class="box-tools pull-right">
                     <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalTambahSparepart" id="btn-tambah-sparepart"><i class="fa fa-plus"></i> Tambah Spare Part</a>
+                    <a href="#" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modalImportExcel">
+                        <i class="fa fa-file-excel-o"></i> Import Excel
+                    </a>
                 </div>
             </div>
             <div class="box-body">
@@ -284,6 +287,31 @@ foreach ($master_data_config as $type => $config): ?>
                         </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalImportExcel" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formImportExcel" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h4 class="modal-title">Import Data Sparepart</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Upload File Excel (.xlsx / .csv)</label>
+                        <input type="file" name="file_excel" class="form-control" required>
+                    </div>
+
+                    <small>
+                        Format kolom:<br>
+                        kode | nama | merk | kategori | stok | harga_beli | harga_jual
+                    </small>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -717,6 +745,36 @@ $(document).ready(function() {
 
     // Jalankan saat harga beli atau isi per pcs berubah
     $(document).on('input', '#harga_beli, #isi_per_pcs_beli', hitungHPP);
+
+    $('#formImportExcel').on('submit', function(e) {
+        e.preventDefault();
+
+        let formData = new FormData(this);
+
+        Swal.fire({
+            title: 'Mengimport data...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        $.ajax({
+            url: 'pages/admin_bengkel/import_sparepart.php',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(res) {
+                let response = JSON.parse(res);
+
+                if (response.status === 'success') {
+                    Swal.fire('Berhasil!', response.message, 'success')
+                    .then(() => location.reload());
+                } else {
+                    Swal.fire('Gagal!', response.message, 'error');
+                }
+            }
+        });
+    });
 
     
 });
