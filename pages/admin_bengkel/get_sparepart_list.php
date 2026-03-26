@@ -79,8 +79,8 @@ if (!$cq) respondWithError("Gagal hitung total filter: " . mysqli_error($conn));
 $totalFiltered = mysqli_fetch_assoc($cq)['total'];
 
 // ===== Sorting =====
-$orderColumnIndex = $_GET['order'][0]['column'] ?? 1;
-$orderColumnDir   = $_GET['order'][0]['dir'] ?? 'asc';
+$orderColumnIndex = $_POST['order'][0]['column'] ?? 1;
+$orderColumnDir   = $_POST['order'][0]['dir'] ?? 'asc';
 
 $columns = [
     1 => 'sp.kode_sparepart',
