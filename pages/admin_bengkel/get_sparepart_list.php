@@ -181,12 +181,13 @@ $terjualSql = "
     SELECT tds.kode_sparepart, SUM(tds.qty) AS terjual
     FROM transaksi_detail_sparepart tds
     JOIN transaksi t ON t.no_faktur = tds.no_faktur
-    WHERE t.jenis = 'penjualan' 
-      AND tds.kode_sparepart IN (
-          SELECT kode_sparepart FROM spareparts WHERE id_sparepart IN ($idSparepartStr)
-      )
-    GROUP BY tds.kode_sparepart
+    JOIN spareparts sp ON tds.kode_sparepart = sp.kode_sparepart
+    WHERE t.jenis = 'penjualan'
+      AND t.id_bengkel = '$id_bengkel'
+      AND sp.id_sparepart IN ($idSparepartStr)
 ";
+
+$terjualSql .= " GROUP BY tds.kode_sparepart";
 
 $resTerjual = mysqli_query($conn, $terjualSql);
 if (!$resTerjual) respondWithError("Gagal ambil data terjual: " . mysqli_error($conn));
