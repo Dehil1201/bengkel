@@ -32,7 +32,7 @@ $merk      = mysqli_real_escape_string($conn, $merk);
 $id_bengkel = mysqli_real_escape_string($conn, $id_bengkel);
 
 // ================== WHERE ==================
-$where = "WHERE t.id_bengkel = '$id_bengkel'";
+$where = "WHERE t.id_bengkel = '$id_bengkel' and jenis = 'penjualan'";
 
 if (!empty($startDate) && !empty($endDate)) {
     $where .= " AND DATE(t.tanggal) BETWEEN '$startDate' AND '$endDate'";
