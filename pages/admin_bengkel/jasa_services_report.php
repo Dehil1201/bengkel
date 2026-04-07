@@ -213,6 +213,7 @@ if (!$list_pelanggan || !$list_user || !$list_teknisi) {
                 </table>
             </div>
             <div class="modal-footer">
+                <button class="btn btn-primary" id="btnPrint"><i class="fa fa-print"></i> Print</button>
                 <button class="btn btn-default" data-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -284,6 +285,8 @@ $(document).ready(function () {
     $('#tableLaporan').on('click', '.btn-detail', function () {
         const faktur = $(this).data('faktur');
         const data   = table.row($(this).closest('tr')).data();
+        
+        $('#btnPrint').data('faktur', faktur);
 
         $("#headTanggal").html(data[1]);
         $("#headNoFaktur").html(data[0]);
@@ -392,6 +395,11 @@ $(document).ready(function () {
             }
         );
     }
+
+    $('#btnPrint').on('click', function () {
+        const faktur = $(this).data('faktur');
+        window.location.href = "pages/admin_bengkel/print_struk.php?no_faktur=" + faktur + "&auto_print=1";
+    });
 
 });
 </script>
