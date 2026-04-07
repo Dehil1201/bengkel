@@ -184,28 +184,45 @@ foreach ($chunks as $page => $batch) :
     <!-- BARIS SPAREPART -->
 <?php endforeach; ?>
 
-<?php if (!empty($servis_items)): ?>
-<tr>
-    <td colspan="9" style="background:#eee"><strong>JASA SERVIS</strong></td>
-</tr>
+</tbody>
+</table>
 
-<?php foreach ($servis_items as $sv): ?>
+<?php if (!empty($servis_items)): ?>
+<div class="invoice-box">
+
+<h4>Jasa Servis</h4>
+<table class="items">
+<thead>
 <tr>
-    <td><?= $i++ ?></td>
-    <td>-</td>
+    <th>No</th>
+    <th>Nama Servis</th>
+    <th>Qty</th>
+    <th>Satuan</th>
+    <th class="text-right">Harga</th>
+    <th class="text-right">Total</th>
+</tr>
+</thead>
+<tbody>
+
+<?php 
+$no_servis = 1;
+foreach ($servis_items as $sv): 
+?>
+<tr>
+    <td><?= $no_servis++ ?></td>
     <td><?= htmlspecialchars($sv['nama_servis']) ?></td>
     <td>1</td>
     <td>Jasa</td>
     <td class="text-right"><?= rupiah($sv['biaya']) ?></td>
     <td class="text-right"><?= rupiah($sv['biaya']) ?></td>
-    <td class="text-right">-</td>
-    <td class="text-right"><?= rupiah($sv['biaya']) ?></td>
 </tr>
 <?php endforeach; ?>
-<?php endif; ?>
 
 </tbody>
 </table>
+
+</div>
+<?php endif; ?>
 
 <?php
 $total_servis = 0;
