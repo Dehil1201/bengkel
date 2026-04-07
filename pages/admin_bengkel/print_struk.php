@@ -187,6 +187,26 @@ foreach ($chunks as $page => $batch) :
 </tbody>
 </table>
 
+<?php
+$total_servis = 0;
+if ($servis_q) {
+    mysqli_data_seek($servis_q, 0);
+    while ($sv = mysqli_fetch_assoc($servis_q)) {
+        $total_servis += $sv['biaya'];
+    }
+}
+
+$subtotal = $total_spare + $total_servis;
+$diskon = (float) ($transaksi['discount'] ?? 0);
+$diskon_nilai = ($diskon / 100) * $subtotal;
+$total_setelah_diskon = max($subtotal - $diskon_nilai, 0);
+$ppn_nilai = 0.11 * $total_setelah_diskon;
+$grand = $total_setelah_diskon + $ppn_nilai - $ppn_nilai;
+$dibayar = $transaksi['uang_bayar'] ?? 0;
+$kembali = max($dibayar - $transaksi['total_bayar'], 0);
+?>
+
+
 <?php if (!empty($servis_items)): ?>
 <div class="invoice-box">
 
@@ -224,24 +244,6 @@ foreach ($servis_items as $sv):
 </div>
 <?php endif; ?>
 
-<?php
-$total_servis = 0;
-if ($servis_q) {
-    mysqli_data_seek($servis_q, 0);
-    while ($sv = mysqli_fetch_assoc($servis_q)) {
-        $total_servis += $sv['biaya'];
-    }
-}
-
-$subtotal = $total_spare + $total_servis;
-$diskon = (float) ($transaksi['discount'] ?? 0);
-$diskon_nilai = ($diskon / 100) * $subtotal;
-$total_setelah_diskon = max($subtotal - $diskon_nilai, 0);
-$ppn_nilai = 0.11 * $total_setelah_diskon;
-$grand = $total_setelah_diskon + $ppn_nilai - $ppn_nilai;
-$dibayar = $transaksi['uang_bayar'] ?? 0;
-$kembali = max($dibayar - $transaksi['total_bayar'], 0);
-?>
 
 <h4>Total Pembayaran</h4>
 <table class="items">
