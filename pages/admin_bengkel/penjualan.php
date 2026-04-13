@@ -146,6 +146,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                             <?php endwhile; ?>
                         </select>
                     </div>
+                    <button onclick="downloadExcel()">Download Excel</button>
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </form>
             </div>
@@ -607,4 +608,21 @@ $(document).ready(function () {
     });
 
 });
+
+function downloadExcel() {
+    let params = new URLSearchParams();
+
+    let table = $('#datatable').DataTable();
+
+    let search = table.search() || ""; // FIX undefined
+
+    params.append("tgl_dari", $('#tgl_dari').val() || "");
+    params.append("tgl_sampai", $('#tgl_sampai').val() || "");
+    params.append("id_pelanggan", $('#id_pelanggan').val() || "");
+    params.append("id_user", $('#id_user').val() || "");
+    params.append("search", search);
+    params.append("jenis", "penjualan");
+
+    window.open("pages/admin_bengkel/export_penjualan.php?" + params.toString(), "_blank");
+}
 </script>
