@@ -17,11 +17,12 @@ $search = $_GET['search']['value'] ?? "";
 $minDate = $_GET['minDate'] ?? "";
 $maxDate = $_GET['maxDate'] ?? "";
 $jenis   = $_GET['jenis'] ?? "pembelian"; // pembelian / penjualan
+$id_bengkel = $_SESSION['id_bengkel'];
 
 // ========================
 // WHERE CONDITION
 // ========================
-$where = " WHERE t.jenis = '$jenis' ";
+$where = " WHERE t.jenis = '$jenis' and t.id_bengkel = '$id_bengkel' ";
 
 if ($search != "") {
     $where .= " AND (
