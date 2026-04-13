@@ -146,7 +146,7 @@ $list_user = mysqli_query($conn, "SELECT id_user, nama_lengkap FROM users WHERE 
                             <?php endwhile; ?>
                         </select>
                     </div>
-                    <button onclick="downloadExcel()">Download Excel</button>
+                    <button class="btn btn-primary" onclick="downloadExcel()">Download Excel</button>
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </form>
             </div>
