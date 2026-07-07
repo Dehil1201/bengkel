@@ -38,12 +38,18 @@ $jenis       = $_POST['jenis'] ?? "";
 // BASE QUERY
 // =====================
 $baseQuery = "
-    FROM transaksi t
-    LEFT JOIN pelanggans c ON c.id_pelanggan = t.id_pelanggan
-    LEFT JOIN suppliers s ON s.id_supplier = t.id_supplier
-    LEFT JOIN transaksi_detail_sparepart td ON td.no_faktur = t.no_faktur
-    LEFT JOIN spareparts sp ON sp.kode_sparepart = td.kode_sparepart
-    WHERE t.id_bengkel = '$id_bengkel'
+FROM transaksi t
+LEFT JOIN pelanggans c
+    ON c.id_pelanggan = t.id_pelanggan
+LEFT JOIN suppliers s
+    ON s.id_supplier = t.id_supplier
+LEFT JOIN transaksi_detail_sparepart td
+    ON td.no_faktur = t.no_faktur
+LEFT JOIN spareparts sp
+    ON sp.kode_sparepart = td.kode_sparepart
+LEFT JOIN kas k
+    ON k.kas_id = t.kas_id
+WHERE t.id_bengkel = '$id_bengkel'
 ";
 
 $filter = "";
@@ -105,6 +111,7 @@ $queryData = "
         t.jenis,
         t.total,
         t.status,
+        k.nama_kas,
 
         c.nama_pelanggan,
         s.nama_supplier,
@@ -139,6 +146,7 @@ while ($row = mysqli_fetch_assoc($qData)) {
     $hpp   = (float)$row['hpp'];
     $total = (float)$row['total'];
     $laba  = $total - $hpp;
+    $kas  = $row['nama_kas'];
 
     // Status badge
     $badge = "<span class='badge bg-success'>Selesai</span>";
@@ -157,7 +165,8 @@ while ($row = mysqli_fetch_assoc($qData)) {
         "Rp " . number_format($hpp, 0, ',', '.'),
         "Rp " . number_format($total, 0, ',', '.'),
         "Rp " . number_format($laba, 0, ',', '.'),
-        $badge
+        $badge,
+        $kas
     ];
 }
 

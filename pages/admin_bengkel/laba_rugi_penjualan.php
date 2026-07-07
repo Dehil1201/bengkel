@@ -101,6 +101,36 @@
             processing: true,
             serverSide: true,
             scrollY: true, 
+            dom: '<"row"<"col-md-6"lB><"col-md-6"f>>rtip',   // ⬅️ WAJIB
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)' // kecuali kolom Detail
+                    }
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: 'Laporan_Penjualan',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: 'Laporan Penjualan',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':not(:last-child)'
+                    },
+                    customize: function (doc) {
+                        doc.defaultStyle.fontSize = 9;
+                        doc.styles.tableHeader.fontSize = 10;
+                    }
+                }
+            ],
             ajax: {
                 url: 'pages/admin_bengkel/api_laporan_transaksi.php',
                 type: 'POST',

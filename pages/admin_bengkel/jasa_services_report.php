@@ -258,6 +258,7 @@ $(document).ready(function () {
                 }
             ],
         order: [[1, 'desc']],
+        lengthMenu: [100, 250, 500],
         ajax: {
             url: 'pages/admin_bengkel/api_laporan_jasa_service.php',
             type: 'GET',

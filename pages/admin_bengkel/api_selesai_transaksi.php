@@ -8,6 +8,7 @@ header('Content-Type: application/json');
 ========================= */
 $no_faktur  = $_POST['no_faktur'] ?? '';
 $id_user    = $_SESSION['id_user'] ?? null;
+$kas_id = $_POST['kas_id'] ?? 1;
 
 $id_pelanggan = $_POST['id_pelanggan'] ?? null;
 $kendaraan = $_POST['kendaraan'] ?? null;
@@ -27,6 +28,8 @@ $metode_bayar = $_POST['metode_bayar'] ?? 'Tunai';
 $tanggal = ($_POST['tanggal'] ?? date('Y-m-d')) . ' ' . date('H:i:s');
 $tanggal_pelunasan = $_POST['tanggal_pelunasan'] ?? null;
 $deskripsi = $_POST['deskripsi'] ?? null;
+
+
 
 if (!$no_faktur || !$id_user) {
     echo json_encode(["status_code"=>400,"message"=>"No faktur & user wajib diisi"]);
@@ -62,6 +65,23 @@ try {
     ========================= */
     $cek = mysqli_query($conn, "SELECT no_faktur FROM transaksi WHERE no_faktur='$no_faktur' LIMIT 1");
 
+        
+        
+    $tipe = null;
+
+    if ($status == 'selesai' && $status_pembayaran == 'lunas') {
+
+        if ($jenis == 'penjualan' || $jenis == 'pemasukan lain') {
+            $tipe = 'pemasukan';
+            $deskripsi = "Penjualan : ".$no_faktur;
+        } elseif ($jenis == 'pembelian' || $jenis == 'pengeluaran lain') {
+            $tipe = 'pengeluaran';
+            $deskripsi = "Pembelian : ".$no_faktur;
+        }
+
+    }
+
+
     if (mysqli_num_rows($cek)) {
         $sql = "UPDATE transaksi SET
             id_pelanggan=".($id_pelanggan?"'$id_pelanggan'":"NULL").",
@@ -77,11 +97,13 @@ try {
             metode_bayar='$metode_bayar',
             total_bayar='$total_bayar',
             discount='$discount',
-            deskripsi='$deskripsi'
+            deskripsi='$deskripsi',
+            kas_id=".($kas_id?"'$kas_id'":"1").",
+            tipe=".($tipe?"'$tipe'":"NULL")."
         WHERE no_faktur='$no_faktur' LIMIT 1";
     } else {
         $sql = "INSERT INTO transaksi
-        (no_faktur,id_user,id_bengkel,id_pelanggan,id_teknisi,id_supplier,kendaraan,no_polisi,status,status_pembayaran,total,uang_bayar,kembalian,tanggal,jenis,metode_bayar,total_bayar,discount,deskripsi)
+        (no_faktur,id_user,id_bengkel,id_pelanggan,id_teknisi,id_supplier,kendaraan,no_polisi,status,status_pembayaran,total,uang_bayar,kembalian,tanggal,jenis,metode_bayar,total_bayar,discount,deskripsi,kas_id,tipe)
         VALUES (
             '$no_faktur','$id_user','$id_bengkel',
             ".($id_pelanggan?"'$id_pelanggan'":"NULL").",
@@ -90,7 +112,7 @@ try {
             ".($kendaraan?"'$kendaraan'":"NULL").",
             ".($no_polisi?"'$no_polisi'":"NULL").",
             '$status','$status_pembayaran','$total','$uangBayar','$kembalian',
-            '$tanggal','$jenis','$metode_bayar','$total_bayar','$discount','$deskripsi'
+            '$tanggal','$jenis','$metode_bayar','$total_bayar','$discount','$deskripsi',".($kas_id?"'$kas_id'":"1").",".($tipe?"'$tipe'":"NULL")."
         )";
     }
     if (!mysqli_query($conn, $sql)) throw new Exception(mysqli_error($conn),500);

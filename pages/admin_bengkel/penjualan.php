@@ -489,7 +489,7 @@ $(document).ready(function () {
                 }
             ],
             scrollY: true,
-            lengthMenu: [10, 25, 50],
+            lengthMenu: [100, 250, 500],
             pageLength: 10
         });
     }
